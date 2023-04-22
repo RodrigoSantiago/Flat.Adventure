@@ -23,7 +23,7 @@ namespace Adventure.Logic {
         
         private World world;
         private Noise noise;
-        private Map map;
+        public Map Map { get; protected set; }
         
         // Noise Variables
         protected int width;
@@ -43,7 +43,7 @@ namespace Adventure.Logic {
         protected float islandCutOut = 0.4f;
         protected float seaCutOut = 0.5f;
         protected float beachCutOut = 0.495f;
-        protected ContinentalType continentalType;
+        protected ContinentalType continentalType = ContinentalType.SQUARE;
         protected float latTemperatureInfluence = 1.15f;
         protected float heightTemperatureInfluence = 0.75f;
         protected float seaMoistureInfluence = 0.05f;
@@ -78,23 +78,23 @@ namespace Adventure.Logic {
         }
 
         public IEnumerator GenerateMap() {
-            int level = 32;
+            const int level = 1;
             
             Map map = new Map();
             map.level = level;
-            map.geology = new float[world.Width * world.Height];
-            map.moisture = new float[world.Width * world.Height];
-            map.temperature = new float[world.Width * world.Height];
-            for (int y = 0; y < world.Height / level; y++) {
-                for (int x = 0; x < world.Width / level; x++) {
-                    int i = y * world.Width + x;
+            map.geology = new float[width / level * height / level];
+            map.moisture = new float[width / level * height / level];
+            map.temperature = new float[width / level * height / level];
+            for (int y = 0; y < height / level; y++) {
+                for (int x = 0; x < width / level; x++) {
+                    int i = y * width + x;
                     GenerateMapValues(x * level, y * level, out map.geology[i], out map.moisture[i], out map.temperature[i]);
                 }
 
                 yield return null;
             }
 
-            this.map = map;
+            Map = map;
         }
 
         private float Lerp(float a, float b, float t) {
@@ -102,7 +102,7 @@ namespace Adventure.Logic {
         }
 
         private float Clamp01(float val) {
-            return val < 0 ? 0 : val > 1 ? 1 : 0;
+            return val < 0 ? 0 : val > 1 ? 1 : val;
         }
         
         public void GenerateMapValues(int x, int y, out float geology, out float moisture, out float temperature) {
@@ -154,7 +154,6 @@ namespace Adventure.Logic {
 
             // Wet Mask
             float wetMask = 1 - (Clamp01(gH - seaCutOut) / (1 - seaCutOut));
-            wetMask = wetMask;
 
             // Island Earth
             float iE = Interpolation.Smooth(i);
@@ -172,8 +171,8 @@ namespace Adventure.Logic {
             float lat = MathF.Abs(y / (float) height - 0.5f) * 2.0f;
 
             // Cold
-            float lCold = Interpolation.Pow2OutInverse(lat) * 1.15f;
-            float hCold = (h < seaCutOut ? (1 - h / seaCutOut) * 0.5f : (h - seaCutOut) / (1 - seaCutOut)) * 0.75f;
+            float lCold = Interpolation.Pow2OutInverse(lat) * latTemperatureInfluence;
+            float hCold = (h < seaCutOut ? (1 - h / seaCutOut) * 0.5f : (h - seaCutOut) / (1 - seaCutOut)) * heightTemperatureInfluence;
 
             // Final Cold
             float c = Clamp01(hCold + lCold); // COLD
@@ -183,7 +182,7 @@ namespace Adventure.Logic {
             float m2 = (float) noise.Wave2D(x / wOctaveScale[1] + wOctaveOffset[2], y / wOctaveScale[1] + wOctaveOffset[3]) * wOctavePower[0];
             float m = (m1 + m2) / wOctaveSumPower;
             m = Interpolation.Smooth(m * 0.5f + 0.5f);
-            float w = h < beachCutOut ? 1 : Lerp(m, wetMask, 0.05f); // WET
+            float w = h < beachCutOut ? 1 : Lerp(m, wetMask, seaMoistureInfluence); // WET
 
             geology = h;
             moisture = w;
@@ -227,16 +226,19 @@ namespace Adventure.Logic {
         }
         
         public void GenerateLine(Point3 local, int x, int y, int offset, short[] blocks, byte[] volume) {
-            Point3 position = new Point3(local.x * 16 + x, local.y * 16 + y, 0);
-            
-            // Find Biome
-            // Find Closer 3 Biomes
-            // 1 Biome : Fast Generate
-            // 2/3 Biomes : Mix Generate > Use Distance Mixer + Block Mixer + Block Dissaper
-            
-            // Biome Result : 
-            // Generate distance field value + block { }
-            // Fetch : clear empty blocks to Air
+            Point3 position = new Point3(local.x * 16 + x, local.y * 16 + y, local.z * 16);
+            GenerateMapValues(position.x, position.y, out var g, out var m, out var t);
+
+            Biome biome = FindBiome(x, y, g, m, t);
+            for (int i = 0; i < 16; i++) {
+                Voxel vox = biome.Generate(new Point3(position.x, position.y, position.z + i), g, m, t);
+                blocks[offset] = vox.block;
+                volume[offset++] = Voxel.ToByte(vox.distance);
+            }
+        }
+
+        public Biome FindBiome(int x, int y, float g, float m, float t) {
+            return null;
         }
     }
 }

@@ -10,7 +10,7 @@ namespace Adventure.Logic {
             
         }
         
-        public virtual Voxel Generate(Point3 position) {
+        public virtual Voxel Generate(Point3 position, float g, float m, float t) {
             return default;
         }
     }

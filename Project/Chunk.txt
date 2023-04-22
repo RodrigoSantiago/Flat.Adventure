@@ -1,0 +1,39 @@
+Chunks:
+[ground data]
+- 4096 Block types / (4 Rotations for complex structs)
+- Simplex Index (256) : [16x16x16] {
+    pallet index = 1...8 bits
+  }
+- Complex Index (4096) : [16x16x16] {
+    block index = 12 bits
+  }
+- Volume (Optional) : [16x16x16] {
+    volume/rot = 4 bits
+  }
+- Pallet: {1/2/4/8/16/32/64/128/256}. The chunk can use 'COMMUNS PALLETS', indexed staticaly{cumputed} as 32bit ['much large']
+[Items data]
+- [N] {
+    id = 8 bits
+    x = 4 bits
+    y = 4 bits
+    z = 4 bits
+  }
+[chest data]
+- [N] {
+    xyz : 12 bits
+    pallet[24] : 16 bits {low 12 bits for blocks}
+    count[24] : 6 bits
+    index[24] : 4 bits
+  }
+[unit data]
+- [N] {
+    position = x,y,z : single
+    speed = x,y,z : single
+    rotation = x,y,z : single
+    persist = 1bit
+    type = 16bit
+    hp = 16bit
+    level = 8bit
+    name = "UP TO 16"
+    data = [byte array]
+  }

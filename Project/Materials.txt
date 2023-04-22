@@ -1,0 +1,43 @@
+Chunks:
+[ground data]
+- 256 Block types
+- Simplex Index (256) : [16x16x16] {
+    pallet index = 1...8 bits
+  }
+- Volume (Optional) : [16x16x16] {
+    volume/rot = 4 bits
+  }
+- Pallet: {1/2/4/8/16/32/64/128/256}. The chunk can use 'COMMUNS PALLETS', indexed staticaly{cumputed} as 32bit ['much large']
+
+Types                                       | Bits
+(8 * 16*16*16)                              = 32.768  = *
+(7 * 16*16*16) + (128 * 8) = 28.672 + 1.024 = 29.696  = 
+(6 * 16*16*16) + (64 * 8) = 24.576 + 512    = 25.088  = 
+(5 * 16*16*16) + (32 * 8) = 20.480 + 256    = 20.736  = 
+(4 * 16*16*16) + (16 * 8) = 16.384 + 128    = 16.512  = *
+(3 * 16*16*16) + (8 * 8) = 12.288 + 64      = 12.352  = 
+(2 * 16*16*16) + (4 * 8) = 8.192 + 32       = 8.208   = *
+(1 * 16*16*16) + (2 * 8) = 4.096 + 16       = 4.112   = *
+(1 * 8)                                     = 8       = 
+
+Volume
+(4 * 16*16*16) 
+
+Chunk Material Pallets
+64 = 8x8 materials 4096 tex
+
+256
+São no total 256 MATERIAIS de terra
+3 Texturas para cada >
+[RGB][RGB][RGBA]
+
+3 * 4 = 12 Texturas de 4096/2048/1024/512/256
+
+[ID][16 16 16][8 8 8]
+Nao usar atlas, mas arrays
+
+
+1 = ((16 * 16))            * 32 = 8192  * 37.768
+2 = ((40 * 40) - 8 * 8)    * 16 = 24576
+3 = ((52 * 52) - 20 * 20)  * 8  = 18432
+4 = ((58 * 58) - 26 * 26)  * 4  = 10752

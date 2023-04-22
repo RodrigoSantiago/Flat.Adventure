@@ -1,0 +1,16 @@
+{
+    "name": "AsmGraphic",
+    "rootNamespace": "",
+    "references": [
+        "GUID:3a97748fb02acb345ba2ef4cc072989a"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

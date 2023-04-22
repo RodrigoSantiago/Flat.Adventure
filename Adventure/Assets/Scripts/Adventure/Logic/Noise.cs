@@ -4,8 +4,9 @@ using UnityEngine;
 
 namespace Adventure.Logic {
     public class Noise {
-
+        
         private long seed;
+        private int subSeed;
         private byte[] perm;
         private byte[] perm2D;
         private byte[] perm3D;
@@ -37,6 +38,15 @@ namespace Adventure.Logic {
                 perm3D[i] = (byte)((perm[i] % 24) * 3);
                 source[r] = source[i];
             }
+        }
+
+        public void RandomReset(int subSeed) {
+            this.subSeed = subSeed;
+        }
+
+        public float NextRandom() {
+            subSeed = (int) ((ulong) subSeed * 48271 % 0x7fffffff);
+            return Random(subSeed);
         }
 
         public float Random(int entry) {

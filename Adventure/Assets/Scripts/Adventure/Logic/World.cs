@@ -8,30 +8,30 @@ namespace Adventure.Logic {
      */
     public class World {
 
-        public int Seed { get; protected set; }
+        public long Seed { get; protected set; }
         public int Width { get; protected set; }
         public int Height { get; protected set; }
         public int Depth { get; protected set; }
+        public WorldMap WorldMap { get; protected set; }
         protected Noise noise;
-        protected WorldMap worldMap;
         protected Dictionary<Point3, Chunk> chunks = new Dictionary<Point3, Chunk>();
         
         // - Cache X/Y Biome
         // - Cache Clean Lines
         // - Cache Joined Lines
 
-        protected World(int seed) {
+        protected World(long seed) {
             Seed = seed;
             noise = new Noise(seed);
         }
         
-        public World(int seed, int width, int height, int depth) {
+        public World(long seed, int width, int height, int depth) {
             Seed = seed;
             Width = width;
             Height = height;
             Depth = depth;
             noise = new Noise(seed);
-            worldMap = new WorldMap(this, noise);
+            WorldMap = new WorldMap(this, noise);
         }
 
         public Chunk LoadChunk(Point3 local) {
@@ -39,7 +39,7 @@ namespace Adventure.Logic {
             if (chunks.TryGetValue(local, out chunk)) {
                 return chunk;
             } else {
-                chunk = worldMap.GenerateChunk(local);
+                chunk = WorldMap.GenerateChunk(local);
                 chunks.Add(local, chunk);
             }
 

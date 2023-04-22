@@ -3,7 +3,9 @@ using UnityEngine;
 
 namespace Adventure.Logic {
 	public abstract class Interpolation {
-
+		
+		public delegate float Interpolator(float a);
+		
 		const float EPSILON = 0.0001F;
 		
 		public static float Linear(float a) {
@@ -160,6 +162,14 @@ namespace Adventure.Logic {
 
 		public static float SineOut(float a) {
 			return MathF.Sin(a * MathF.PI / 2);
+		}
+
+		public static float CircleReverse(float a) {
+			if (a <= 0.5f) {
+				return CircleOut(a) / 2;
+			} else {
+				return CircleIn(a) / 2 + 0.5f;
+			}
 		}
 
 		public static float Circle(float a) {
