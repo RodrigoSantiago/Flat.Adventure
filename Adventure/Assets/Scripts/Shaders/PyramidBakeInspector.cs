@@ -12,7 +12,8 @@ public class PyramidBakeInspector : MonoBehaviour {
 	public struct GeneratedVertex {
 		public Vector3 position;
 		public Vector3 normal;
-		public Vector2 uv;
+		public Vector3 uv0;
+		public Vector3 uv1;
 
 		public override string ToString() {
 			return position+"";
@@ -28,7 +29,7 @@ public class PyramidBakeInspector : MonoBehaviour {
     // Per Mesh
     public Mesh mesh;
     float[] voxels;
-    byte[] materials;
+    float[] materials;
     
     // Source
     GraphicsBuffer voxelBuffer;
@@ -43,23 +44,24 @@ public class PyramidBakeInspector : MonoBehaviour {
     private int kernel;
     GraphicsBuffer triangleTable;
     GraphicsBuffer counterIndex;
-    GraphicsBuffer counterVertex;
-    GraphicsBuffer debugC;
     
     void Start() {
         voxels = new float[9 * 9 * 9];
-        materials = new byte[9 * 9 * 9];
+        materials = new float[9 * 9 * 9];
         for (int i = 0; i < 9; i++) {
             for (int j = 0; j < 9; j++) {
                 for (int k = 0; k < 9; k++) {
-	                float dist = MathF.Sqrt((i - 4) * (i - 4) + (j - 4) * (j - 4) + (k - 4) * (k - 4));
+	                /*float dist = MathF.Sqrt((i - 4) * (i - 4) + (j - 4) * (j - 4) + (k - 4) * (k - 4));
 	                dist = Mathf.Clamp((dist - 2 + 1) * 0.5f, 0, 1);
-	                voxels[i * 9 * 9 + j * 9 + k] = dist;
-                    materials[i * 9 * 9 + j * 9 + k] = (byte)(j < 5 ? 1 : 0);
+	                voxels[i * 9 * 9 + j * 9 + k] = MathF.Abs(dist - 0.5f) < 0.001 ? 0.51f : dist;
+                    materials[i * 9 * 9 + j * 9 + k] = j < 5 ? 1 : 0;*/
+	                voxels[i * 9 * 9 + j * 9 + k] = i > 1 && i < 7 && j > 1 && j < 7 && k > 1 && k < 7 ? 1 : 0;
+	                materials[i * 9 * 9 + j * 9 + k] = j < 4 ? 2 : j < 5 ? 1 : 0;
                 }
             }
         }
 
+        voxels[(4 * 9 * 9) + (7 * 9) + 4] = 1; 
         Init();
     }
 
@@ -74,22 +76,18 @@ public class PyramidBakeInspector : MonoBehaviour {
         
         triangleTable = new GraphicsBuffer(GraphicsBuffer.Target.Structured, TriangleConnectionTable.Length, sizeof(int));
         counterIndex = new GraphicsBuffer(GraphicsBuffer.Target.Structured, 1, sizeof(int));
-        counterVertex = new GraphicsBuffer(GraphicsBuffer.Target.Structured, 1, sizeof(int));
-        debugC = new GraphicsBuffer(GraphicsBuffer.Target.Structured, CHUNK_GROUP_SIZE_01, sizeof(float));
         
         voxelBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Structured, CHUNK_GROUP_SIZE_01, sizeof(float));
-        //materialBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Raw, CHUNK_GROUP_SIZE_01, sizeof(byte));
+        materialBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Structured, CHUNK_GROUP_SIZE_01, sizeof(float));
         
-        vertexBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Structured, CHUNK_GROUP_SIZE_01 * 6, sizeof(float) * (3 + 3 + 2));
+        vertexBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Structured, CHUNK_GROUP_SIZE_01 * 6, sizeof(float) * (3 + 3 + 3 + 3));
         indexBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Structured, CHUNK_GROUP_SIZE_01 * 6, sizeof(int));
 
         shader.SetBuffer(kernel, "TriangleTable", triangleTable);
         shader.SetBuffer(kernel, "CounterIndex", counterIndex);
-        shader.SetBuffer(kernel, "CounterVertex", counterVertex);
-        shader.SetBuffer(kernel, "DebugC", debugC);
         
         shader.SetBuffer(kernel, "VoxelBuffer", voxelBuffer);
-        //shader.SetBuffer(kernel, "MaterialBuffer", materialBuffer);
+        shader.SetBuffer(kernel, "MaterialBuffer", materialBuffer);
         
         shader.SetBuffer(kernel, "VertexBuffer", vertexBuffer);
         shader.SetBuffer(kernel, "IndexBuffer", indexBuffer);
@@ -99,35 +97,19 @@ public class PyramidBakeInspector : MonoBehaviour {
 
     private GeneratedVertex[] vertices;
     private int[] indices;
-    private int vertexCount = -1;
     private int indexCount = -1;
     
-    public void RemeshChunk(byte[] material, float[] chunk) {
-	    //materialBuffer.SetData(material);
+    public void RemeshChunk(float[] material, float[] chunk) {
         voxelBuffer.SetData(chunk);
+        materialBuffer.SetData(material);
+        
         counterIndex.SetData(new uint[]{0});
-        counterVertex.SetData(new uint[]{0});
-        int[] debugData = new int[CHUNK_GROUP_SIZE_01];
-        debugC.SetData(debugData);
         
         shader.Dispatch(kernel, 1, 1, 1);
-        
-       /* GeneratedVertex[] vertices = new GeneratedVertex[CHUNK_GROUP_SIZE_01 * 6];
-        int[] indices = new int[CHUNK_GROUP_SIZE_01 * 6];
-        vertexBuffer.GetData(vertices);
-        indexBuffer.GetData(indices);
-        
-        uint[] countIndex = new uint[1];
-        counterIndex.GetData(countIndex);
-        uint[] countVertex = new uint[1];
-        counterVertex.GetData(countVertex);
-        Debug.Log("Total Indices: " + countIndex[0]);
-        Debug.Log("Total Vertex: " + countVertex[0]);*/
         
         AsyncGPUReadback.Request(vertexBuffer, OnDataRetrievedV);
         AsyncGPUReadback.Request(indexBuffer, OnDataRetrievedI);
         AsyncGPUReadback.Request(counterIndex, OnDataRetrievedIC);
-        AsyncGPUReadback.Request(counterVertex, OnDataRetrievedVC);
     }
     
     private void OnDataRetrievedV(AsyncGPUReadbackRequest request) {
@@ -164,21 +146,10 @@ public class PyramidBakeInspector : MonoBehaviour {
 	    indexCount = outputArray[0];
 	    ReadAll();
     }
-    
-    private void OnDataRetrievedVC(AsyncGPUReadbackRequest request) {
-	    if (request.hasError) {
-		    Debug.LogError("GPU readback error detected.");
-		    return;
-	    }
-	    
-	    NativeArray<int> outputArray = request.GetData<int>();
-	    vertexCount = outputArray[0];
-	    ReadAll();
-    }
 
     private void ReadAll() {
-	    if (indices != null && vertices != null && indexCount > 0 && vertexCount > 0) {
-		    mesh = ComposeMesh(vertices, indices, vertexCount, indexCount);
+	    if (indices != null && vertices != null && indexCount > 0) {
+		    mesh = ComposeMesh(vertices, indices, indexCount, indexCount);
 		    GetComponent<MeshFilter>().mesh = mesh;
 	    }
     }
@@ -193,18 +164,21 @@ public class PyramidBakeInspector : MonoBehaviour {
 	    Mesh mesh = new Mesh();
 	    Vector3[] vertices = new Vector3[ver];
 	    Vector3[] normals = new Vector3[ver];
-	    Vector2[] uvs = new Vector2[ver];
+	    Vector3[] uv0 = new Vector3[ver];
+	    Vector3[] uv1 = new Vector3[ver];
 	    for(int i = 0; i < ver; i++) {
 		    var v = verts[i];
 		    vertices[i] = v.position;
 		    normals[i] = v.normal;
-		    uvs[i] = v.uv;
+		    uv0[i] = v.uv0;
+		    uv1[i] = v.uv1;
 	    }
 	    mesh.SetVertices(vertices);
 	    mesh.SetNormals(normals);
-	    mesh.SetUVs(0, uvs); // TEXCOORD0
-	    mesh.SetIndices(indices, MeshTopology.Triangles, 0, true); // This sets the index list as triangles
-	    mesh.Optimize(); // Let Unity optimize the buffer orders
+	    mesh.SetUVs(0, uv0);
+	    mesh.SetUVs(1, uv1);
+	    mesh.SetIndices(indices, MeshTopology.Triangles, 0, true);
+	    mesh.Optimize();
 	    return mesh;
     }
     

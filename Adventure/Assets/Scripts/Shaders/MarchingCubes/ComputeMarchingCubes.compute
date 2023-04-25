@@ -3,24 +3,28 @@
 struct GeneratedVertex {
     float3 position;
     float3 normal;
-    float2 uv;
+    float3 uv0;
+    float3 uv1;
 };
 
 StructuredBuffer<int> TriangleTable;
 RWStructuredBuffer<uint> CounterIndex;
-RWStructuredBuffer<uint> CounterVertex;
 
 RWStructuredBuffer<GeneratedVertex> VertexBuffer;
 RWStructuredBuffer<uint> IndexBuffer;
         
 StructuredBuffer<float> VoxelBuffer;
-//RWByteAddressBuffer MaterialBuffer;
+StructuredBuffer<float> MaterialBuffer;
 
 //
 // Input Voxels
 //
 float SampleVoxel(uint3 pos) {
     return VoxelBuffer[pos.x + pos.y * 9 + pos.z * 81];
+}
+
+float SampleMaterial(uint3 pos) {
+    return MaterialBuffer[pos.x + pos.y * 9 + pos.z * 81];
 }
 
 float SampleFloatVoxel(float x, float y, float z) {
@@ -50,7 +54,7 @@ float SampleFloatVoxel(float x, float y, float z) {
     return lerp(iy1, iy2, z - mz);
 }
 
-float3 GetSurfaceNormal(uint3 pos) {
+float3 GetSurfaceNormal(float3 pos) {
     float d = 0.025f;
     float v_nx = SampleFloatVoxel(pos.x - d, pos.y, pos.z) - .5f;
     float v_px = SampleFloatVoxel(pos.x + d, pos.y, pos.z) - .5f;
@@ -61,29 +65,25 @@ float3 GetSurfaceNormal(uint3 pos) {
     return -normalize(float3(v_px - v_nx, v_py - v_ny, v_pz - v_nz));
 }
 
-float4 VoxelValue(uint3 pos) {
-    float3 v = GetSurfaceNormal(pos);
-    return float4(v.x, v.y, v.z, SampleVoxel(pos));
-}
-
 //
 // Output buffer and counter
 //
 
 // Vertex buffer accessor
-void WriteVertex(uint offset, float3 p, float3 n) {
+void WriteVertex(uint offset, float3 p, float3 n, float3 uv0, float3 uv1) {
     GeneratedVertex vertex;
     vertex.position = p;
     vertex.normal = n;
-    vertex.uv = float2(0, 0);
+    vertex.uv0 = uv0;
+    vertex.uv1 = uv1;
     VertexBuffer[offset] = vertex;
 }
 
 // Index buffer accessor
-void WriteIndex(uint offset, uint index, uint index2, uint index3) {
-    IndexBuffer[offset] = index;
-    IndexBuffer[offset + 1] = index2;
-    IndexBuffer[offset + 2] = index3;
+void WriteIndex(uint index) {
+    IndexBuffer[index] = index;
+    IndexBuffer[index + 1] = index + 1;
+    IndexBuffer[index + 2] = index + 2;
 }
 
 //
@@ -110,45 +110,48 @@ uint2 EdgeVertexPair(uint index) {
 
 [numthreads(8, 8, 8)]
 void Marche(uint3 id : SV_DispatchThreadID) {
-    
-    // Cube configuration selector
     uint selector = 0;
-    float4 samples[8];
+    float samples[8];
     for (uint i = 0; i < 8; i++) {
-        samples[i] = VoxelValue(id + CubeVertex(i));
-        selector |= (samples[i].w > 0.5) << i;
+        samples[i] = SampleVoxel(id + CubeVertex(i));
+        selector |= (samples[i] < 0.5) << i;
     }
     
     if (selector == 0 || selector == 0xff) return;
     
-    uint indices[12];
     float3 vertices[12];
     float3 normals[12];
+    float material[12];
     for (uint i = 0; i < 12; i++) {
-        uint2 pair = EdgeVertexPair(i);
-        float4 sample1 = samples[pair.x];
-        float4 sample2 = samples[pair.y];
-        float3 vertex1 = id + CubeVertex(pair.x);
-        float3 vertex2 = id + CubeVertex(pair.y);
-        float param = (0.5 - sample1.w) / (sample2.w - sample1.w);
+        const uint2 pair = EdgeVertexPair(i);
+        const float sample1 = samples[pair.x];
+        const float sample2 = samples[pair.y];
+        const float3 vertex1 = id + CubeVertex(pair.x);
+        const float3 vertex2 = id + CubeVertex(pair.y);
+        const float param = (0.5 - sample1) / (sample2 - sample1);
+        
         vertices[i] = lerp(vertex1, vertex2, param);
-        normals[i] = -normalize(lerp(sample1.xyz, sample2.xyz, param));
+        normals[i] = GetSurfaceNormal(vertices[i]);
+        material[i] = SampleMaterial(sample1 > sample2 ? vertex1 : vertex2);
 
-        if (sample1.w > 0.5 != sample2.w > 0.5) {
-            InterlockedAdd(CounterVertex[0], 1, indices[i]);
-            WriteVertex(indices[i], vertices[i], normals[i]);
-        }
+        if (normals[i].x > 0.99 && abs(normals[i].y) < 0.01 && abs(normals[i].z) < 0.01) normals[i].xyz = float3(0.99, 0.01, 0.01);
+        if (normals[i].x < -0.99 && abs(normals[i].y) < 0.01 && abs(normals[i].z) < 0.01) normals[i].xyz = float3(-0.99, 0.01, 0.01);
     }
 
-    const uint tableIndex = selector * 18;
+    const uint table_index = selector * 18;
     for (uint i = 0; i < 18; i+= 3) {
-        int tIndex = TriangleTable[tableIndex + i];
-        int tIndex1 = TriangleTable[tableIndex + i + 1];
-        int tIndex2 = TriangleTable[tableIndex + i + 2];
-        if (tIndex < 0) return;
+        const int t_index0 = TriangleTable[table_index + i];
+        const int t_index1 = TriangleTable[table_index + i + 1];
+        const int t_index2 = TriangleTable[table_index + i + 2];
+        if (t_index0 < 0) return;
         
         uint index;
         InterlockedAdd(CounterIndex[0], 3, index);
-        WriteIndex(index, indices[tIndex], indices[tIndex1], indices[tIndex2]);
+
+        const float3 uv0 = float3(material[t_index0], material[t_index1], material[t_index2]);
+        WriteVertex(index    , vertices[t_index0], normals[t_index0], uv0, float3(1, 0, 0));
+        WriteVertex(index + 1, vertices[t_index1], normals[t_index1], uv0, float3(0, 1, 0));
+        WriteVertex(index + 2, vertices[t_index2], normals[t_index2], uv0, float3(0, 0, 1));
+        WriteIndex(index);
     }
 }
