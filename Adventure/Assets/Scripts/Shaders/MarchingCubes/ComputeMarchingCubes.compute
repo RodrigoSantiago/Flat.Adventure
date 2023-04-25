@@ -68,17 +68,45 @@ float SampleFloatVoxel(float x, float y, float z) {
     return lerp(iy1, iy2, z - mz);
 }
 
-// 96 PER VERTEX
-// PODE SER ATÉ APENAS 10 POR VERTEX
 float3 GetSurfaceNormal(float3 pos) {
     float d = 0.025f;
-    float v_nx = SampleFloatVoxel(pos.x - d, pos.y, pos.z) - .5f;
-    float v_px = SampleFloatVoxel(pos.x + d, pos.y, pos.z) - .5f;
-    float v_ny = SampleFloatVoxel(pos.x, pos.y - d, pos.z) - .5f;
-    float v_py = SampleFloatVoxel(pos.x, pos.y + d, pos.z) - .5f;
-    float v_nz = SampleFloatVoxel(pos.x, pos.y, pos.z - d) - .5f;
-    float v_pz = SampleFloatVoxel(pos.x, pos.y, pos.z + d) - .5f;
-    return -normalize(float3(v_px - v_nx, v_py - v_ny, v_pz - v_nz));
+    
+    const int3 base = floor(pos);
+    const float3 fra = pos - base;
+    const float3 si0 = ceil(pos - base);
+    const float3 si1 = float3(si0.z, si0.x, si0.y);
+    const float3 si2 = float3(si0.y, si0.z, si0.x);
+    
+    float coord_a0 = SampleVoxel(base);
+    float coord_a1 = SampleVoxel(base + si0);
+        
+    float coord_b0 = SampleVoxel(base + si1);
+    float coord_b1 = SampleVoxel(base + si1 + si0);
+    float coord_b2 = SampleVoxel(base - si1);
+    float coord_b3 = SampleVoxel(base - si1 + si0);
+        
+    float coord_c0 = SampleVoxel(base + si2);
+    float coord_c1 = SampleVoxel(base + si2 + si0);
+    float coord_c2 = SampleVoxel(base - si2);
+    float coord_c3 = SampleVoxel(base - si2 + si0);
+
+    float lerp_a0 = lerp(coord_a0, coord_a1, fra); // The Center. Always 0.5 = On Surface
+    float lerp_b0 = lerp(coord_b0, coord_b1, fra);
+    float lerp_b2 = lerp(coord_b2, coord_b3, fra);
+    float lerp_c0 = lerp(coord_c0, coord_c1, fra);
+    float lerp_c2 = lerp(coord_c2, coord_c3, fra);
+
+    float na0 = lerp(coord_a0, coord_a1, fra + d) - .5f;
+    float na2 = lerp(coord_a0, coord_a1, fra - d) - .5f;
+    float nb0 = lerp(lerp_a0, lerp_b0, d) - .5f;
+    float nb2 = lerp(lerp_a0, lerp_b2, d) - .5f;
+    float nc0 = lerp(lerp_a0, lerp_c0, d) - .5f;
+    float nc2 = lerp(lerp_a0, lerp_c2, d) - .5f;
+
+    float3 sa = si0 * (na0 - na2);
+    float3 sb = si1 * (nb0 - nb2);
+    float3 sc = si2 * (nc0 - nc2);
+    return -normalize(sa + sb + sc);
 }
 
 //
