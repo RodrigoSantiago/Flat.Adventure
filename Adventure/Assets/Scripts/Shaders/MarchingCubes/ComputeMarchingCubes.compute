@@ -7,24 +7,38 @@ struct GeneratedVertex {
     float3 uv1;
 };
 
+struct Voxel {
+    float val;
+    float mat;
+};
+
 StructuredBuffer<int> TriangleTable;
 RWStructuredBuffer<uint> CounterIndex;
 
 RWStructuredBuffer<GeneratedVertex> VertexBuffer;
 RWStructuredBuffer<uint> IndexBuffer;
         
-StructuredBuffer<float> VoxelBuffer;
-StructuredBuffer<float> MaterialBuffer;
+StructuredBuffer<Voxel> VoxelBuffer;
 
 //
 // Input Voxels
 //
+float SampleSolid(uint3 pos) {
+    Voxel vox = VoxelBuffer[pos.x + pos.y * 9 + pos.z * 81];
+    return max(sign(vox.mat + 1), 0) * vox.val; 
+}
+
+float SampleLiquid(uint3 pos) {
+    Voxel vox = VoxelBuffer[pos.x + pos.y * 9 + pos.z * 81];
+    return max(-sign(vox.mat + 1), 0) * vox.val; 
+}
+
 float SampleVoxel(uint3 pos) {
-    return VoxelBuffer[pos.x + pos.y * 9 + pos.z * 81];
+    return VoxelBuffer[pos.x + pos.y * 9 + pos.z * 81].val;
 }
 
 float SampleMaterial(uint3 pos) {
-    return MaterialBuffer[pos.x + pos.y * 9 + pos.z * 81];
+    return VoxelBuffer[pos.x + pos.y * 9 + pos.z * 81].mat;
 }
 
 float SampleFloatVoxel(float x, float y, float z) {
@@ -54,6 +68,8 @@ float SampleFloatVoxel(float x, float y, float z) {
     return lerp(iy1, iy2, z - mz);
 }
 
+// 96 PER VERTEX
+// PODE SER ATÉ APENAS 10 POR VERTEX
 float3 GetSurfaceNormal(float3 pos) {
     float d = 0.025f;
     float v_nx = SampleFloatVoxel(pos.x - d, pos.y, pos.z) - .5f;
@@ -110,8 +126,9 @@ uint2 EdgeVertexPair(uint index) {
 
 [numthreads(8, 8, 8)]
 void Marche(uint3 id : SV_DispatchThreadID) {
+    
     uint selector = 0;
-    float samples[8];
+    float2 samples[8];
     for (uint i = 0; i < 8; i++) {
         samples[i] = SampleVoxel(id + CubeVertex(i));
         selector |= (samples[i] < 0.5) << i;

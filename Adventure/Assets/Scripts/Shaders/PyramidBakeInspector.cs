@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using Unity.Collections;
+using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Rendering;
 
@@ -20,6 +21,12 @@ public class PyramidBakeInspector : MonoBehaviour {
 		}
 	}
     
+	[StructLayout(LayoutKind.Sequential)]
+	public struct Voxel {
+		public float val;
+		public float mat;
+	}
+	
     // Constants
     private const int CHUNK_GROUP_SIZE_01 = 16 * 16 * 16 * 8;// * 8 * 8;
     private const int CHUNK_GROUP_SIZE_02 = 16 * 16 * 16 * 8 * 8;
@@ -28,12 +35,10 @@ public class PyramidBakeInspector : MonoBehaviour {
 
     // Per Mesh
     public Mesh mesh;
-    float[] voxels;
-    float[] materials;
+    Voxel[] voxels;
     
     // Source
     GraphicsBuffer voxelBuffer;
-    GraphicsBuffer materialBuffer;
     
     // Destination
     GraphicsBuffer vertexBuffer;
@@ -46,8 +51,8 @@ public class PyramidBakeInspector : MonoBehaviour {
     GraphicsBuffer counterIndex;
     
     void Start() {
-        voxels = new float[9 * 9 * 9];
-        materials = new float[9 * 9 * 9];
+	    int size = (9 * 9 * 9);//Mathf.CeilToInt((9 * 9 * 9) / 4f) * 4;
+        voxels = new Voxel[size];
         for (int i = 0; i < 9; i++) {
             for (int j = 0; j < 9; j++) {
                 for (int k = 0; k < 9; k++) {
@@ -55,19 +60,20 @@ public class PyramidBakeInspector : MonoBehaviour {
 	                dist = Mathf.Clamp((dist - 2 + 1) * 0.5f, 0, 1);
 	                voxels[i * 9 * 9 + j * 9 + k] = MathF.Abs(dist - 0.5f) < 0.001 ? 0.51f : dist;
                     materials[i * 9 * 9 + j * 9 + k] = j < 5 ? 1 : 0;*/
-	                voxels[i * 9 * 9 + j * 9 + k] = i > 1 && i < 7 && j > 1 && j < 7 && k > 1 && k < 7 ? 1 : 0;
-	                materials[i * 9 * 9 + j * 9 + k] = j < 4 ? 2 : j < 5 ? 1 : 0;
+	                Voxel voxel = new Voxel();
+	                voxel.val = i > 1 && i < 7 && j > 1 && j < 7 && k > 1 && k < 7 ? 1 : 0;
+	                voxel.mat = j < 4 ? 2 : j < 5 ? 0 : 1;
+	                voxels[i * 9 * 9 + j * 9 + k] = voxel;
                 }
             }
         }
 
-        voxels[(4 * 9 * 9) + (7 * 9) + 4] = 1; 
         Init();
     }
 
     private void Update() {
 	    if (Input.GetKeyDown(KeyCode.Space)) {
-		    RemeshChunk(materials, voxels);
+		    RemeshChunk(voxels);
 	    }
     }
 
@@ -77,8 +83,7 @@ public class PyramidBakeInspector : MonoBehaviour {
         triangleTable = new GraphicsBuffer(GraphicsBuffer.Target.Structured, TriangleConnectionTable.Length, sizeof(int));
         counterIndex = new GraphicsBuffer(GraphicsBuffer.Target.Structured, 1, sizeof(int));
         
-        voxelBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Structured, CHUNK_GROUP_SIZE_01, sizeof(float));
-        materialBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Structured, CHUNK_GROUP_SIZE_01, sizeof(float));
+        voxelBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Structured, CHUNK_GROUP_SIZE_01, sizeof(float) * (2));
         
         vertexBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Structured, CHUNK_GROUP_SIZE_01 * 6, sizeof(float) * (3 + 3 + 3 + 3));
         indexBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Structured, CHUNK_GROUP_SIZE_01 * 6, sizeof(int));
@@ -87,7 +92,6 @@ public class PyramidBakeInspector : MonoBehaviour {
         shader.SetBuffer(kernel, "CounterIndex", counterIndex);
         
         shader.SetBuffer(kernel, "VoxelBuffer", voxelBuffer);
-        shader.SetBuffer(kernel, "MaterialBuffer", materialBuffer);
         
         shader.SetBuffer(kernel, "VertexBuffer", vertexBuffer);
         shader.SetBuffer(kernel, "IndexBuffer", indexBuffer);
@@ -99,9 +103,8 @@ public class PyramidBakeInspector : MonoBehaviour {
     private int[] indices;
     private int indexCount = -1;
     
-    public void RemeshChunk(float[] material, float[] chunk) {
+    public void RemeshChunk(Voxel[] chunk) {
         voxelBuffer.SetData(chunk);
-        materialBuffer.SetData(material);
         
         counterIndex.SetData(new uint[]{0});
         
