@@ -54,7 +54,7 @@ public class MenuTextureArrayGenerator : EditorWindow {
                         Graphics.CopyTexture(temp, 0, mipMapLevel, array, t, mipMapLevel);
                     };
                 }
-
+                
                 savePath = savePath.Substring(savePath.IndexOf("Assets/"));
                 if (!savePath.EndsWith(".asset")) savePath += ".asset";
                 AssetDatabase.CreateAsset(array, savePath);

@@ -34,36 +34,52 @@ public class PyramidBakeInspector : MonoBehaviour {
     private const int CHUNK_GROUP_SIZE_08 = 16 * 16 * 16;
 
     // Per Mesh
-    public Mesh mesh;
+    public Mesh meshA;
+    public Mesh meshB;
+    public MeshFilter renderA;
+    public MeshFilter renderB;
     Voxel[] voxels;
     
     // Source
     GraphicsBuffer voxelBuffer;
     
     // Destination
-    GraphicsBuffer vertexBuffer;
-    GraphicsBuffer indexBuffer;
+    GraphicsBuffer vertexSolid;
+    GraphicsBuffer indexSolid;
+    GraphicsBuffer counterSolid;
+    
+    GraphicsBuffer vertexLiquid;
+    GraphicsBuffer indexLiquid;
+    GraphicsBuffer counterLiquid;
 
     // Global
     public ComputeShader shader;
-    private int kernel;
+    private int solid, liquid;
     GraphicsBuffer triangleTable;
-    GraphicsBuffer counterIndex;
     
     void Start() {
-	    int size = (9 * 9 * 9);//Mathf.CeilToInt((9 * 9 * 9) / 4f) * 4;
+	    int size = (10 * 10 * 10);//Mathf.CeilToInt((9 * 9 * 9) / 4f) * 4;
         voxels = new Voxel[size];
-        for (int i = 0; i < 9; i++) {
-            for (int j = 0; j < 9; j++) {
-                for (int k = 0; k < 9; k++) {
-	                /*float dist = MathF.Sqrt((i - 4) * (i - 4) + (j - 4) * (j - 4) + (k - 4) * (k - 4));
-	                dist = Mathf.Clamp((dist - 2 + 1) * 0.5f, 0, 1);
-	                voxels[i * 9 * 9 + j * 9 + k] = MathF.Abs(dist - 0.5f) < 0.001 ? 0.51f : dist;
-                    materials[i * 9 * 9 + j * 9 + k] = j < 5 ? 1 : 0;*/
+        for (int i = 0; i < 10; i++) {
+            for (int j = 0; j < 10; j++) {
+                for (int k = 0; k < 10; k++) {
 	                Voxel voxel = new Voxel();
-	                voxel.val = i > 1 && i < 7 && j > 1 && j < 7 && k > 1 && k < 7 ? 1 : 0;
-	                voxel.mat = j < 4 ? 2 : j < 5 ? 0 : 1;
-	                voxels[i * 9 * 9 + j * 9 + k] = voxel;
+	                /*float dist = MathF.Sqrt((i - 4) * (i - 4) + (j - 4) * (j - 4) + (k - 4) * (k - 4));
+	                voxel.val = 1-Mathf.Clamp01(dist - 3);
+	                voxel.mat = j < 5 ? 1 : 0;*/
+	                
+	                voxel.val = i > 2 && i < 7 && j < 7 && k > 2 && k < 7 ? 1 : 0;
+	                voxel.mat = j % 2 == 0 ? 1 : 0;
+	                if (j < 3 && !(i > 2 && i < 7 && k > 2 && k < 7)) {
+		                voxel.val = 1;
+		                voxel.mat = -2;
+	                }
+	                if (i == 2 && (k == 4 || k == 5) && j < 7) {
+		                voxel.val = 1;
+		                voxel.mat = -2;
+	                }
+
+	                voxels[i * 100 + j * 10 + k] = voxel;
                 }
             }
         }
@@ -73,54 +89,68 @@ public class PyramidBakeInspector : MonoBehaviour {
 
     private void Update() {
 	    if (Input.GetKeyDown(KeyCode.Space)) {
-		    RemeshChunk(voxels);
+		    RemeshChunk(8, 8, 8, voxels);
 	    }
     }
 
     public void Init() {
-        kernel = shader.FindKernel("Marche");
+	    solid = shader.FindKernel("Marche");
+	    liquid = shader.FindKernel("Swim");
         
         triangleTable = new GraphicsBuffer(GraphicsBuffer.Target.Structured, TriangleConnectionTable.Length, sizeof(int));
-        counterIndex = new GraphicsBuffer(GraphicsBuffer.Target.Structured, 1, sizeof(int));
-        
         voxelBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Structured, CHUNK_GROUP_SIZE_01, sizeof(float) * (2));
         
-        vertexBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Structured, CHUNK_GROUP_SIZE_01 * 6, sizeof(float) * (3 + 3 + 3 + 3));
-        indexBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Structured, CHUNK_GROUP_SIZE_01 * 6, sizeof(int));
-
-        shader.SetBuffer(kernel, "TriangleTable", triangleTable);
-        shader.SetBuffer(kernel, "CounterIndex", counterIndex);
+        vertexSolid = new GraphicsBuffer(GraphicsBuffer.Target.Structured, CHUNK_GROUP_SIZE_01 * 6, sizeof(float) * (3 + 3 + 3 + 3));
+        indexSolid = new GraphicsBuffer(GraphicsBuffer.Target.Structured, CHUNK_GROUP_SIZE_01 * 6, sizeof(int));
+        counterSolid = new GraphicsBuffer(GraphicsBuffer.Target.Structured, 1, sizeof(int));
         
-        shader.SetBuffer(kernel, "VoxelBuffer", voxelBuffer);
+        vertexLiquid = new GraphicsBuffer(GraphicsBuffer.Target.Structured, CHUNK_GROUP_SIZE_01 * 6, sizeof(float) * (3 + 3 + 3 + 3));
+        indexLiquid = new GraphicsBuffer(GraphicsBuffer.Target.Structured, CHUNK_GROUP_SIZE_01 * 6, sizeof(int));
+        counterLiquid = new GraphicsBuffer(GraphicsBuffer.Target.Structured, 1, sizeof(int));
         
-        shader.SetBuffer(kernel, "VertexBuffer", vertexBuffer);
-        shader.SetBuffer(kernel, "IndexBuffer", indexBuffer);
+        shader.SetBuffer(solid, "TriangleTable", triangleTable);
+        shader.SetBuffer(solid, "VoxelBuffer", voxelBuffer);
+        shader.SetBuffer(solid, "VertexSolid", vertexSolid);
+        shader.SetBuffer(solid, "IndexSolid", indexSolid);
+        shader.SetBuffer(solid, "CounterSolid", counterSolid);
+        
+        shader.SetBuffer(liquid, "TriangleTable", triangleTable);
+        shader.SetBuffer(liquid, "VoxelBuffer", voxelBuffer);
+        shader.SetBuffer(liquid, "VertexLiquid", vertexLiquid);
+        shader.SetBuffer(liquid, "IndexLiquid", indexLiquid);
+        shader.SetBuffer(liquid, "CounterLiquid", counterLiquid);
         
         triangleTable.SetData(TriangleConnectionTable);
     }
 
     private GeneratedVertex[] vertices;
+    private GeneratedVertex[] verticesLiquid;
     private int[] indices;
+    private int[] indicesLiquid;
     private int indexCount = -1;
+    private int indexCountLiquid = -1;
     
-    public void RemeshChunk(Voxel[] chunk) {
+    public void RemeshChunk(int x, int y, int z, Voxel[] chunk) {
+	    shader.SetInt("size", x + 2);
+	    shader.SetInt("size2", (x + 2) * (x + 2));
+	    
         voxelBuffer.SetData(chunk);
+        counterSolid.SetData(new uint[]{0});
+        counterLiquid.SetData(new uint[]{0});
         
-        counterIndex.SetData(new uint[]{0});
+        shader.Dispatch(solid, x/8, y/8, z/8);
+        shader.Dispatch(liquid, x/8, y/8, z/8);
         
-        shader.Dispatch(kernel, 1, 1, 1);
+        AsyncGPUReadback.Request(vertexSolid, OnDataRetrievedV);
+        AsyncGPUReadback.Request(indexSolid, OnDataRetrievedI);
+        AsyncGPUReadback.Request(counterSolid, OnDataRetrievedIC);
         
-        AsyncGPUReadback.Request(vertexBuffer, OnDataRetrievedV);
-        AsyncGPUReadback.Request(indexBuffer, OnDataRetrievedI);
-        AsyncGPUReadback.Request(counterIndex, OnDataRetrievedIC);
+        AsyncGPUReadback.Request(vertexLiquid, OnDataRetrievedVL);
+        AsyncGPUReadback.Request(indexLiquid, OnDataRetrievedIL);
+        AsyncGPUReadback.Request(counterLiquid, OnDataRetrievedICL);
     }
     
     private void OnDataRetrievedV(AsyncGPUReadbackRequest request) {
-	    if (request.hasError) {
-		    Debug.LogError("GPU readback error detected.");
-		    return;
-	    }
-	    
 	    NativeArray<GeneratedVertex> outputArray = request.GetData<GeneratedVertex>();
 	    vertices = new GeneratedVertex[outputArray.Length];
 	    outputArray.CopyTo(vertices);
@@ -128,11 +158,6 @@ public class PyramidBakeInspector : MonoBehaviour {
     }
     
     private void OnDataRetrievedI(AsyncGPUReadbackRequest request) {
-	    if (request.hasError) {
-		    Debug.LogError("GPU readback error detected.");
-		    return;
-	    }
-	    
 	    NativeArray<int> outputArray = request.GetData<int>();
 	    indices = new int[outputArray.Length];
 	    outputArray.CopyTo(indices);
@@ -140,20 +165,43 @@ public class PyramidBakeInspector : MonoBehaviour {
     }
     
     private void OnDataRetrievedIC(AsyncGPUReadbackRequest request) {
-	    if (request.hasError) {
-		    Debug.LogError("GPU readback error detected.");
-		    return;
-	    }
-	    
 	    NativeArray<int> outputArray = request.GetData<int>();
 	    indexCount = outputArray[0];
 	    ReadAll();
     }
+    
+    private void OnDataRetrievedVL(AsyncGPUReadbackRequest request) {
+	    if (request.hasError) {
+		    Debug.Log(request.ToString());
+	    }
+	    
+	    NativeArray<GeneratedVertex> outputArray = request.GetData<GeneratedVertex>();
+	    verticesLiquid = new GeneratedVertex[outputArray.Length];
+	    outputArray.CopyTo(verticesLiquid);
+	    ReadAll();
+    }
+    
+    private void OnDataRetrievedIL(AsyncGPUReadbackRequest request) {
+	    NativeArray<int> outputArray = request.GetData<int>();
+	    indicesLiquid = new int[outputArray.Length];
+	    outputArray.CopyTo(indicesLiquid);
+	    ReadAll();
+    }
+    
+    private void OnDataRetrievedICL(AsyncGPUReadbackRequest request) {
+	    NativeArray<int> outputArray = request.GetData<int>();
+	    indexCountLiquid = outputArray[0];
+	    ReadAll();
+    }
 
     private void ReadAll() {
-	    if (indices != null && vertices != null && indexCount > 0) {
-		    mesh = ComposeMesh(vertices, indices, indexCount, indexCount);
-		    GetComponent<MeshFilter>().mesh = mesh;
+	    if (indices != null && vertices != null && indexCount > 0 && meshA == null) {
+		    meshA = ComposeMesh(vertices, indices, indexCount, indexCount);
+		    renderA.mesh = meshA;
+	    }
+	    if (indicesLiquid != null && verticesLiquid != null && indexCountLiquid > 0 && meshB == null) {
+		    meshB = ComposeMesh(verticesLiquid, indicesLiquid, indexCountLiquid, indexCountLiquid);
+		    renderB.mesh = meshB;
 	    }
     }
     

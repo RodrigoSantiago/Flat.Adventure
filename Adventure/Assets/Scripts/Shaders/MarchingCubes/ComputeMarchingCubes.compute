@@ -1,4 +1,5 @@
 #pragma kernel Marche
+#pragma kernel Swim
 
 struct GeneratedVertex {
     float3 position;
@@ -12,60 +13,57 @@ struct Voxel {
     float mat;
 };
 
-StructuredBuffer<int> TriangleTable;
-RWStructuredBuffer<uint> CounterIndex;
+uint size;
+uint size2;
 
-RWStructuredBuffer<GeneratedVertex> VertexBuffer;
-RWStructuredBuffer<uint> IndexBuffer;
+StructuredBuffer<int> TriangleTable;
         
 StructuredBuffer<Voxel> VoxelBuffer;
+RWStructuredBuffer<uint> CounterSolid;
+RWStructuredBuffer<uint> CounterLiquid;
+
+RWStructuredBuffer<GeneratedVertex> VertexSolid;
+RWStructuredBuffer<uint> IndexSolid;
+
+RWStructuredBuffer<GeneratedVertex> VertexLiquid;
+RWStructuredBuffer<uint> IndexLiquid;
 
 //
 // Input Voxels
 //
-float SampleSolid(uint3 pos) {
-    Voxel vox = VoxelBuffer[pos.x + pos.y * 9 + pos.z * 81];
-    return max(sign(vox.mat + 1), 0) * vox.val; 
+Voxel GetVox(uint x, uint y, uint z) {
+    return VoxelBuffer[x + 1 + (y + 1) * size + (z + 1) * size2];
 }
 
-float SampleLiquid(uint3 pos) {
-    Voxel vox = VoxelBuffer[pos.x + pos.y * 9 + pos.z * 81];
-    return max(-sign(vox.mat + 1), 0) * vox.val; 
+float2 SampleSolid(uint3 pos) {
+    const Voxel vox = GetVox(pos.x, pos.y, pos.z);
+    return float2(max(sign(vox.mat + 1), 0) * vox.val, vox.mat);
+}
+
+float3 SampleLiquid(uint3 pos) {
+    const Voxel vox = GetVox(pos.x, pos.y, pos.z);
+    return float3(max(-sign(vox.mat + 1), 0) * vox.val, vox.mat, ceil(vox.val));
 }
 
 float SampleVoxel(uint3 pos) {
-    return VoxelBuffer[pos.x + pos.y * 9 + pos.z * 81].val;
+    const Voxel vox = GetVox(pos.x, pos.y, pos.z);
+    return max(sign(vox.mat + 1), 0) * vox.val;
 }
 
-float SampleMaterial(uint3 pos) {
-    return VoxelBuffer[pos.x + pos.y * 9 + pos.z * 81].mat;
+float SampleVoxelL(uint x, uint y, uint z) {
+    const Voxel vox = GetVox(x, y, z);
+    return max(-sign(vox.mat + 1), 0) * vox.val;
 }
 
-float SampleFloatVoxel(float x, float y, float z) {
-    int mx = floor(x);
-    int my = floor(y);
-    int mz = floor(z);
-    int bx = mx + 1;
-    int by = my + 1;
-    int bz = mz + 1;
-    float c = SampleVoxel(uint3(mx, my, mz));
-    float x1 = SampleVoxel(uint3(bx, my, mz));
-    float y1 = SampleVoxel(uint3(mx, by, mz));
-    float z1 = SampleVoxel(uint3(mx, my, bz));
-    float xy = SampleVoxel(uint3(bx, by, mz));
-    float yz = SampleVoxel(uint3(mx, by, bz));
-    float zx = SampleVoxel(uint3(bx, my, bz));
-    float xyz = SampleVoxel(uint3(bx, by, bz));
-
-    float ix1 = lerp(c, x1, x - mx);
-    float ix2 = lerp(y1, xy, x - mx);
-    float iy1 = lerp(ix1, ix2, y - my);
-	    
-    float ix3 = lerp(z1, zx, x - mx);
-    float ix4 = lerp(yz, xyz, x - mx);
-    float iy2 = lerp(ix3, ix4, y - my);
-
-    return lerp(iy1, iy2, z - mz);
+float SampleVoxelLiquid(uint3 pos) {
+    Voxel vox0 = GetVox(pos.x, pos.y, pos.z);
+    float vox1 = SampleVoxelL(pos.x+1, pos.y, pos.z);
+    float vox2 = SampleVoxelL(pos.x-1, pos.y, pos.z);
+    float vox3 = SampleVoxelL(pos.x, pos.y+1, pos.z);
+    float vox4 = SampleVoxelL(pos.x, pos.y-1, pos.z);
+    float vox5 = SampleVoxelL(pos.x, pos.y, pos.z+1);
+    float vox6 = SampleVoxelL(pos.x, pos.y, pos.z-1);
+    return vox0.mat < 0 || vox0.val <= 0 ? vox0.val : max(max(max(max(max(vox1, vox2), vox3), vox4), vox5), vox6);
 }
 
 float3 GetSurfaceNormal(float3 pos) {
@@ -109,6 +107,47 @@ float3 GetSurfaceNormal(float3 pos) {
     return -normalize(sa + sb + sc);
 }
 
+float3 GetSurfaceNormalLiquid(float3 pos) {
+    float d = 0.025f;
+    
+    const int3 base = floor(pos);
+    const float3 fra = pos - base;
+    const float3 si0 = ceil(pos - base);
+    const float3 si1 = float3(si0.z, si0.x, si0.y);
+    const float3 si2 = float3(si0.y, si0.z, si0.x);
+    
+    float coord_a0 = SampleVoxelLiquid(base);
+    float coord_a1 = SampleVoxelLiquid(base + si0);
+        
+    float coord_b0 = SampleVoxelLiquid(base + si1);
+    float coord_b1 = SampleVoxelLiquid(base + si1 + si0);
+    float coord_b2 = SampleVoxelLiquid(base - si1);
+    float coord_b3 = SampleVoxelLiquid(base - si1 + si0);
+        
+    float coord_c0 = SampleVoxelLiquid(base + si2);
+    float coord_c1 = SampleVoxelLiquid(base + si2 + si0);
+    float coord_c2 = SampleVoxelLiquid(base - si2);
+    float coord_c3 = SampleVoxelLiquid(base - si2 + si0);
+
+    float lerp_a0 = lerp(coord_a0, coord_a1, fra); // The Center. Always 0.5 = On Surface
+    float lerp_b0 = lerp(coord_b0, coord_b1, fra);
+    float lerp_b2 = lerp(coord_b2, coord_b3, fra);
+    float lerp_c0 = lerp(coord_c0, coord_c1, fra);
+    float lerp_c2 = lerp(coord_c2, coord_c3, fra);
+
+    float na0 = lerp(coord_a0, coord_a1, fra + d) - .5f;
+    float na2 = lerp(coord_a0, coord_a1, fra - d) - .5f;
+    float nb0 = lerp(lerp_a0, lerp_b0, d) - .5f;
+    float nb2 = lerp(lerp_a0, lerp_b2, d) - .5f;
+    float nc0 = lerp(lerp_a0, lerp_c0, d) - .5f;
+    float nc2 = lerp(lerp_a0, lerp_c2, d) - .5f;
+
+    float3 sa = si0 * (na0 - na2);
+    float3 sb = si1 * (nb0 - nb2);
+    float3 sc = si2 * (nc0 - nc2);
+    return -normalize(sa + sb + sc);
+}
+
 //
 // Output buffer and counter
 //
@@ -120,14 +159,30 @@ void WriteVertex(uint offset, float3 p, float3 n, float3 uv0, float3 uv1) {
     vertex.normal = n;
     vertex.uv0 = uv0;
     vertex.uv1 = uv1;
-    VertexBuffer[offset] = vertex;
+    VertexSolid[offset] = vertex;
 }
 
 // Index buffer accessor
 void WriteIndex(uint index) {
-    IndexBuffer[index] = index;
-    IndexBuffer[index + 1] = index + 1;
-    IndexBuffer[index + 2] = index + 2;
+    IndexSolid[index] = index;
+    IndexSolid[index + 1] = index + 1;
+    IndexSolid[index + 2] = index + 2;
+}
+
+void WriteVertexLiquid(uint offset, float3 p, float3 n, float3 uv0, float3 uv1) {
+    GeneratedVertex vertex;
+    vertex.position = p;
+    vertex.normal = n;
+    vertex.uv0 = uv0;
+    vertex.uv1 = uv1;
+    VertexLiquid[offset] = vertex;
+}
+
+// Index buffer accessor
+void WriteIndexLiquid(uint index) {
+    IndexLiquid[index] = index;
+    IndexLiquid[index + 1] = index + 1;
+    IndexLiquid[index + 2] = index + 2;
 }
 
 //
@@ -158,7 +213,7 @@ void Marche(uint3 id : SV_DispatchThreadID) {
     uint selector = 0;
     float2 samples[8];
     for (uint i = 0; i < 8; i++) {
-        samples[i] = SampleVoxel(id + CubeVertex(i));
+        samples[i] = SampleSolid(id + CubeVertex(i));
         selector |= (samples[i] < 0.5) << i;
     }
     
@@ -169,18 +224,18 @@ void Marche(uint3 id : SV_DispatchThreadID) {
     float material[12];
     for (uint i = 0; i < 12; i++) {
         const uint2 pair = EdgeVertexPair(i);
-        const float sample1 = samples[pair.x];
-        const float sample2 = samples[pair.y];
+        const float2 sample1 = samples[pair.x];
+        const float2 sample2 = samples[pair.y];
         const float3 vertex1 = id + CubeVertex(pair.x);
         const float3 vertex2 = id + CubeVertex(pair.y);
-        const float param = (0.5 - sample1) / (sample2 - sample1);
+        const float param = (0.5 - sample1.x) / (sample2.x - sample1.x);
         
         vertices[i] = lerp(vertex1, vertex2, param);
         normals[i] = GetSurfaceNormal(vertices[i]);
-        material[i] = SampleMaterial(sample1 > sample2 ? vertex1 : vertex2);
+        material[i] = abs(sample1.x > sample2.x ? sample1.y : sample2.y);
 
-        if (normals[i].x > 0.99 && abs(normals[i].y) < 0.01 && abs(normals[i].z) < 0.01) normals[i].xyz = float3(0.99, 0.01, 0.01);
-        if (normals[i].x < -0.99 && abs(normals[i].y) < 0.01 && abs(normals[i].z) < 0.01) normals[i].xyz = float3(-0.99, 0.01, 0.01);
+        const uint condition = abs(normals[i].x) > 0.99 && abs(normals[i].y) < 0.01 && abs(normals[i].z) < 0.01;
+        normals[i].xyz = lerp(normals[i].xyz, float3(sign(normals[i].x) * 0.99, 0.01, 0.01), condition);
     }
 
     const uint table_index = selector * 18;
@@ -191,12 +246,72 @@ void Marche(uint3 id : SV_DispatchThreadID) {
         if (t_index0 < 0) return;
         
         uint index;
-        InterlockedAdd(CounterIndex[0], 3, index);
+        InterlockedAdd(CounterSolid[0], 3, index);
 
         const float3 uv0 = float3(material[t_index0], material[t_index1], material[t_index2]);
         WriteVertex(index    , vertices[t_index0], normals[t_index0], uv0, float3(1, 0, 0));
         WriteVertex(index + 1, vertices[t_index1], normals[t_index1], uv0, float3(0, 1, 0));
         WriteVertex(index + 2, vertices[t_index2], normals[t_index2], uv0, float3(0, 0, 1));
         WriteIndex(index);
+    }
+}
+
+[numthreads(8, 8, 8)]
+void Swim(uint3 id : SV_DispatchThreadID) {
+    uint left[8]  = {4, 0, 1, 2, 7, 4, 5, 3};
+    uint right[8] = {3, 2, 3, 0, 5, 1, 7, 6};
+    uint top[8]   = {1, 5, 6, 7, 0, 6, 2, 4};
+    
+    float samplesi[8];
+    float3 samples[8];
+    for (uint i = 0; i < 8; i++) {
+        samples[i] = SampleLiquid(id + CubeVertex(i));
+        samplesi[i] = samples[i].x;
+    }
+
+    uint selector = 0;
+    for (uint i = 0; i < 8; i++) {
+        samples[i].x += (samples[i].y >= 0) * samples[i].z *
+                        max(max(samplesi[left[i]], samplesi[right[i]]), samplesi[top[i]]);
+        
+        selector |= (samples[i] < 0.5) << i;
+    }
+    
+    if (selector == 0 || selector == 0xff) return;
+    
+    float3 vertices[12];
+    float3 normals[12];
+    float material[12];
+    for (uint i = 0; i < 12; i++) {
+        const uint2 pair = EdgeVertexPair(i);
+        const float3 sample1 = samples[pair.x];
+        const float3 sample2 = samples[pair.y];
+        const float3 vertex1 = id + CubeVertex(pair.x);
+        const float3 vertex2 = id + CubeVertex(pair.y);
+        const float param = (0.5 - sample1.x) / (sample2.x - sample1.x);
+        
+        vertices[i] = lerp(vertex1, vertex2, param);
+        normals[i] = GetSurfaceNormalLiquid(vertices[i]);
+        material[i] = abs(sample1.x > sample2.x ? sample1.y : sample2.y);
+
+        const uint condition = abs(normals[i].x) > 0.99 && abs(normals[i].y) < 0.01 && abs(normals[i].z) < 0.01;
+        normals[i].xyz = lerp(normals[i].xyz, float3(sign(normals[i].x) * 0.99, 0.01, 0.01), condition);
+    }
+
+    const uint table_index = selector * 18;
+    for (uint i = 0; i < 18; i+= 3) {
+        const int t_index0 = TriangleTable[table_index + i];
+        const int t_index1 = TriangleTable[table_index + i + 1];
+        const int t_index2 = TriangleTable[table_index + i + 2];
+        if (t_index0 < 0) return;
+        
+        uint index;
+        InterlockedAdd(CounterLiquid[0], 3, index);
+
+        const float3 uv0 = float3(material[t_index0], material[t_index1], material[t_index2]);
+        WriteVertexLiquid(index    , vertices[t_index0], normals[t_index0], uv0, float3(1, 0, 0));
+        WriteVertexLiquid(index + 1, vertices[t_index1], normals[t_index1], uv0, float3(0, 1, 0));
+        WriteVertexLiquid(index + 2, vertices[t_index2], normals[t_index2], uv0, float3(0, 0, 1));
+        WriteIndexLiquid(index);
     }
 }

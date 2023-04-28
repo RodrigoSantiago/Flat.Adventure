@@ -264,10 +264,10 @@
         "m_Expanded": true,
         "m_Position": {
             "serializedVersion": "2",
-            "x": 328.0000305175781,
-            "y": 514.0,
-            "width": 207.99996948242188,
-            "height": 301.99993896484377
+            "x": -259.0000305175781,
+            "y": 615.9999389648438,
+            "width": 129.99996948242188,
+            "height": 118.00006103515625
         }
     },
     "m_Slots": [
@@ -287,7 +287,7 @@
         "plus"
     ],
     "m_Precision": 0,
-    "m_PreviewExpanded": true,
+    "m_PreviewExpanded": false,
     "m_PreviewMode": 0,
     "m_CustomColors": {
         "m_SerializableColors": []
@@ -580,10 +580,10 @@
         "m_Expanded": true,
         "m_Position": {
             "serializedVersion": "2",
-            "x": -624.0,
-            "y": 665.0,
-            "width": 123.99996948242188,
-            "height": 34.0
+            "x": -814.9999389648438,
+            "y": 282.0,
+            "width": 123.99993896484375,
+            "height": 33.999969482421878
         }
     },
     "m_Slots": [
@@ -716,10 +716,10 @@
     "m_Guid": {
         "m_GuidSerialized": "e98a9f84-c460-4ee7-8e56-a004ae0b22c3"
     },
-    "m_Name": "Texture2D",
+    "m_Name": "Albedo",
     "m_DefaultRefNameVersion": 1,
-    "m_RefNameGeneratedByDisplayName": "Texture2D",
-    "m_DefaultReferenceName": "_Texture2D",
+    "m_RefNameGeneratedByDisplayName": "Albedo",
+    "m_DefaultReferenceName": "_Albedo",
     "m_OverrideReferenceName": "",
     "m_GeneratePropertyBlock": true,
     "m_UseCustomSlotLabel": false,
@@ -988,10 +988,10 @@
         "m_Expanded": true,
         "m_Position": {
             "serializedVersion": "2",
-            "x": -483.0,
-            "y": 114.0,
-            "width": 139.0,
-            "height": 34.0
+            "x": -786.0,
+            "y": -50.00000762939453,
+            "width": 139.00006103515626,
+            "height": 33.99999237060547
         }
     },
     "m_Slots": [
@@ -1044,7 +1044,7 @@
     "m_Type": "UnityEditor.ShaderGraph.Texture2DMaterialSlot",
     "m_ObjectId": "8c775abdac1c4dd490c90c5ce1afb194",
     "m_Id": 0,
-    "m_DisplayName": "Texture2D",
+    "m_DisplayName": "Albedo",
     "m_SlotType": 1,
     "m_Hidden": false,
     "m_ShaderOutputName": "Out",
@@ -1148,10 +1148,10 @@
         "m_Expanded": true,
         "m_Position": {
             "serializedVersion": "2",
-            "x": -104.00006103515625,
-            "y": 790.0,
-            "width": 208.0000762939453,
-            "height": 433.0
+            "x": -642.9999389648438,
+            "y": 537.9999389648438,
+            "width": 171.99996948242188,
+            "height": 249.00006103515626
         }
     },
     "m_Slots": [
@@ -1181,7 +1181,7 @@
         "project"
     ],
     "m_Precision": 0,
-    "m_PreviewExpanded": true,
+    "m_PreviewExpanded": false,
     "m_PreviewMode": 2,
     "m_CustomColors": {
         "m_SerializableColors": []
@@ -1201,10 +1201,10 @@
         "m_Expanded": true,
         "m_Position": {
             "serializedVersion": "2",
-            "x": 120.00000762939453,
-            "y": 682.0000610351563,
-            "width": 208.00003051757813,
-            "height": 302.0
+            "x": -431.0000305175781,
+            "y": 734.0,
+            "width": 129.99996948242188,
+            "height": 117.99993896484375
         }
     },
     "m_Slots": [
@@ -1224,7 +1224,7 @@
         "x"
     ],
     "m_Precision": 0,
-    "m_PreviewExpanded": true,
+    "m_PreviewExpanded": false,
     "m_PreviewMode": 0,
     "m_CustomColors": {
         "m_SerializableColors": []
@@ -1238,10 +1238,10 @@
     "m_Guid": {
         "m_GuidSerialized": "d151530c-83a0-4ad3-bc0b-e2550ce5b153"
     },
-    "m_Name": "Smooth",
+    "m_Name": "Smoothness",
     "m_DefaultRefNameVersion": 1,
-    "m_RefNameGeneratedByDisplayName": "Smooth",
-    "m_DefaultReferenceName": "_Smooth",
+    "m_RefNameGeneratedByDisplayName": "Smoothness",
+    "m_DefaultReferenceName": "_Smoothness",
     "m_OverrideReferenceName": "",
     "m_GeneratePropertyBlock": true,
     "m_UseCustomSlotLabel": false,
@@ -1369,10 +1369,10 @@
         "m_Expanded": true,
         "m_Position": {
             "serializedVersion": "2",
-            "x": -469.0000305175781,
-            "y": 632.0,
+            "x": -660.0,
+            "y": 249.0,
             "width": 208.00003051757813,
-            "height": 433.0
+            "height": 432.99993896484377
         }
     },
     "m_Slots": [
@@ -1402,7 +1402,7 @@
         "project"
     ],
     "m_Precision": 0,
-    "m_PreviewExpanded": true,
+    "m_PreviewExpanded": false,
     "m_PreviewMode": 2,
     "m_CustomColors": {
         "m_SerializableColors": []
@@ -1455,9 +1455,9 @@
         "m_Expanded": true,
         "m_Position": {
             "serializedVersion": "2",
-            "x": -321.0,
-            "y": 148.0,
-            "width": 208.0,
+            "x": -624.0,
+            "y": -16.00001335144043,
+            "width": 207.99996948242188,
             "height": 433.0
         }
     },
@@ -1488,7 +1488,7 @@
         "project"
     ],
     "m_Precision": 0,
-    "m_PreviewExpanded": true,
+    "m_PreviewExpanded": false,
     "m_PreviewMode": 2,
     "m_CustomColors": {
         "m_SerializableColors": []
@@ -1661,10 +1661,10 @@
         "m_Expanded": true,
         "m_Position": {
             "serializedVersion": "2",
-            "x": -234.0,
-            "y": 756.0,
+            "x": -780.9999389648438,
+            "y": 521.0,
             "width": 121.0,
-            "height": 34.0
+            "height": 33.99993896484375
         }
     },
     "m_Slots": [
@@ -1689,7 +1689,7 @@
     "m_Type": "UnityEditor.ShaderGraph.Texture2DMaterialSlot",
     "m_ObjectId": "d6608026b07d44c3b3735b70b1aaa0b5",
     "m_Id": 0,
-    "m_DisplayName": "Smooth",
+    "m_DisplayName": "Smoothness",
     "m_SlotType": 1,
     "m_Hidden": false,
     "m_ShaderOutputName": "Out",
