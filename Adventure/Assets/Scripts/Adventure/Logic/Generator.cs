@@ -1,9 +1,10 @@
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace Adventure.Logic {
     public class Generator {
 
-        private Dictionary<Point3, BlockLine> cacheLines = new Dictionary<Point3, BlockLine>();
+        private Dictionary<Vector3Int, BlockLine> cacheLines = new Dictionary<Vector3Int, BlockLine>();
         
         
     }

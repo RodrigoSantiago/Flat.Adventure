@@ -1,8 +1,7 @@
 using System;
-using UnityEngine;
 
-namespace Adventure.Logic {
-	public abstract class Interpolation {
+namespace Adventure.Data {
+	public static class Interpolation {
 		
 		public delegate float Interpolator(float a);
 		
@@ -228,9 +227,8 @@ namespace Adventure.Logic {
 
 			private float getXForTime(float time) {
 				float x = time;
-				float z;
 				for (int i = 1; i < 14; i++) {
-					z = getBezierCoordinateX(x) - time;
+					float z = getBezierCoordinateX(x) - time;
 					if (Math.Abs(z) < 1e-3) {
 						break;
 					}

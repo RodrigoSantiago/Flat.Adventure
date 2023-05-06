@@ -1,9 +1,7 @@
-﻿using System;
-using Adventure.Logic;
+﻿using Adventure.Data;
 using NUnit.Framework;
-using UnityEngine;
 
-namespace Tests.Logic {
+namespace Tests.Data {
 	public class InterpolationTest {
 
 		private const float delta = 0.00001f;

@@ -1,10 +1,12 @@
 {
-    "name": "AsmLogic",
+    "name": "AsmGame",
     "rootNamespace": "",
-    "references": ["GUID:e6bda6252fba07f4ba606c651a363a05"],
+    "references": [
+        "GUID:3a97748fb02acb345ba2ef4cc072989a"
+    ],
     "includePlatforms": [],
     "excludePlatforms": [],
-    "allowUnsafeCode": true,
+    "allowUnsafeCode": false,
     "overrideReferences": false,
     "precompiledReferences": [],
     "autoReferenced": true,

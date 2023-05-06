@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Adventure.Data;
 using Adventure.Logic;
 using UnityEngine;
 using Random = Unity.Mathematics.Random;

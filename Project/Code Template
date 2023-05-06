@@ -1,0 +1,74 @@
+class ServerConnector {
+    RequestChunkGroup(x, y, z) { return "chunk [x,y,z] <=> [x+7,y+7,z+7]" }
+    
+}
+
+Server {
+    Create : (settings) => ,
+}
+
+World {
+    settings : Settings,
+    GetChunk : (x, y, z) => "",
+}
+
+
+Logic {
+    Generation {
+        Biomes {
+            Tree
+            Bushes
+            Creatures
+        }
+        Buildings {
+            House
+            Castle
+            Defenses
+        }
+        Maze {
+            RogueLike
+            Voronoi
+        }
+    }
+    Story {
+        Dungeon {
+            Treasure
+            Enemies
+            Bosses
+            Quests[]
+        }
+        Town {
+            Size : village, town, city
+            Type : wooden, stone, dezert, forest, mining, mountain, swamp, port, snow, underwater
+            Race : human, half-creature, fairy, orcs, elf, dwarves, giants
+            Story
+            Economy
+            Culture : 
+            Relationships :
+            Base : {
+                Infirmary
+                Government
+                Defenses
+                Tavern
+                Jail
+                Marketplace
+                Church
+                Guild
+                Residence
+            }
+            Quests[]
+        }
+        Events {
+            War {
+                TownA, TownB
+            }
+            MonsterAttack {
+                Wave
+                Duration
+            }
+            NaturalDisaster {
+                type : earthquake, tornado, disease, meteor, doomsday
+            }
+        }
+    }
+}

@@ -1,10 +1,10 @@
 {
-    "name": "AsmLogicTest",
+    "name": "AsmDataTest",
     "rootNamespace": "",
     "references": [
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner",
-        "AsmLogic"
+        "AsmData"
     ],
     "includePlatforms": [
         "Editor"

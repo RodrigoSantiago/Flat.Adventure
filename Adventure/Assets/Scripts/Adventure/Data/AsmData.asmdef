@@ -1,12 +1,10 @@
 {
-    "name": "AsmGraphic",
+    "name": "AsmData",
     "rootNamespace": "",
-    "references": [
-        "GUID:3a97748fb02acb345ba2ef4cc072989a"
-    ],
+    "references": [],
     "includePlatforms": [],
     "excludePlatforms": [],
-    "allowUnsafeCode": false,
+    "allowUnsafeCode": true,
     "overrideReferences": false,
     "precompiledReferences": [],
     "autoReferenced": true,

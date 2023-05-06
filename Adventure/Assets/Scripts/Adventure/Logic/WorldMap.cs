@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections;
+using Adventure.Data;
+using UnityEngine;
 
 namespace Adventure.Logic {
     
@@ -189,7 +191,7 @@ namespace Adventure.Logic {
             temperature = 1 - c;
         }
 
-        public Chunk GenerateChunk(Point3 local) {
+        public Chunk GenerateChunk(Vector3Int local) {
             tempReadTypeTag++;
             
             int usedTypes = 0;
@@ -214,26 +216,21 @@ namespace Adventure.Logic {
                 }
             }
 
-            Palette palette = null;
-            if (usePalette) {
-                Array.Sort(readTypes, 0, usedTypes);
-                palette = world.LoadPalette(readTypes, usedTypes);
-            }
-            Chunk chunk = new Chunk(palette, readBlocks, readVolume);
+            Chunk chunk = null;//new Chunk(16, local, true, palette, readBlocks, readVolume);
 
 
             return chunk;
         }
         
-        public void GenerateLine(Point3 local, int x, int y, int offset, short[] blocks, byte[] volume) {
-            Point3 position = new Point3(local.x * 16 + x, local.y * 16 + y, local.z * 16);
+        public void GenerateLine(Vector3Int local, int x, int y, int offset, short[] blocks, byte[] volume) {
+            Vector3Int position = new Vector3Int(local.x * 16 + x, local.y * 16 + y, local.z * 16);
             GenerateMapValues(position.x, position.y, out var g, out var m, out var t);
 
             Biome biome = FindBiome(x, y, g, m, t);
             for (int i = 0; i < 16; i++) {
-                Voxel vox = biome.Generate(new Point3(position.x, position.y, position.z + i), g, m, t);
-                blocks[offset] = vox.block;
-                volume[offset++] = Voxel.ToByte(vox.distance);
+                Voxel vox = biome.Generate(new Vector3Int(position.x, position.y, position.z + i), g, m, t);
+                blocks[offset] = vox.material;
+                volume[offset++] = vox.volume;
             }
         }
 

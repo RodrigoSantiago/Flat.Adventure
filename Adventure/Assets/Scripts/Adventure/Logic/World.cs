@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using Adventure.Data;
+using UnityEngine;
 
 namespace Adventure.Logic {
     
@@ -14,7 +16,7 @@ namespace Adventure.Logic {
         public int Depth { get; protected set; }
         public WorldMap WorldMap { get; protected set; }
         protected Noise noise;
-        protected Dictionary<Point3, Chunk> chunks = new Dictionary<Point3, Chunk>();
+        protected Dictionary<Vector3Int, Chunk> chunks = new Dictionary<Vector3Int, Chunk>();
         
         // - Cache X/Y Biome
         // - Cache Clean Lines
@@ -34,7 +36,7 @@ namespace Adventure.Logic {
             WorldMap = new WorldMap(this, noise);
         }
 
-        public Chunk LoadChunk(Point3 local) {
+        public Chunk LoadChunk(Vector3Int local) {
             Chunk chunk;
             if (chunks.TryGetValue(local, out chunk)) {
                 return chunk;
@@ -47,7 +49,7 @@ namespace Adventure.Logic {
         }
 
         public void UnloadChunk(Chunk chunk) {
-            if (!chunk.IsIntact) {
+            if (!chunk.IsOriginal) {
                 // save to file
             }
             
@@ -58,15 +60,7 @@ namespace Adventure.Logic {
             
         }
 
-        public Palette LoadPalette(short[] readTypes, int usedTypes) {
-            return null;
-        }
-
         private void mixLines(BlockLine lineA, BlockLine lineB, BlockLine line) {
-            
-        }
-        
-        private void mixLines(BlockLine lineA, BlockLine lineB, BlockLine lineC, BlockLine line) {
             
         }
     }

@@ -2,7 +2,7 @@
 using System.Runtime.CompilerServices;
 using UnityEngine;
 
-namespace Adventure.Logic {
+namespace Adventure.Data {
     public class Noise {
         
         private long seed;

@@ -1,7 +1,7 @@
 namespace Adventure.Logic {
     public class Block {
         
-        public static readonly Block[] blocks = new Block[4096];
+        public static readonly Block[] blocks = new Block[256];
 
         public short id;
         public string name;

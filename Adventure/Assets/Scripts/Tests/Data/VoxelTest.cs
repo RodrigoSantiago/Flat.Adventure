@@ -1,7 +1,7 @@
-﻿using Adventure.Logic;
+﻿using Adventure.Data;
 using NUnit.Framework;
 
-namespace Tests.Logic {
+namespace Tests.Data {
     public class VoxelTest {
 
         private static float[] byteToFloat = {
@@ -24,6 +24,14 @@ namespace Tests.Logic {
         public void ToFloat() {
             for (int i = 0; i < 16; i++) {
                 Assert.AreEqual(byteToFloat[i], Voxel.ToFloat((byte) i), 1E-05, "Value was (" + i + ")");
+            }
+        }
+
+        [Test]
+        public void Pack() {
+            for (int i = 0; i < 65535; i++) {
+                var voxel = new Voxel(i);
+                Assert.AreEqual(i, voxel.Pack, "Value was (" + i + ")");
             }
         }
         
