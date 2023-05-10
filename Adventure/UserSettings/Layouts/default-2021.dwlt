@@ -19,7 +19,7 @@ MonoBehaviour:
     width: 1920
     height: 997
   m_ShowMode: 4
-  m_Title: Test Runner
+  m_Title: Console
   m_RootView: {fileID: 2}
   m_MinSize: {x: 875, y: 300}
   m_MaxSize: {x: 10000, y: 10000}
@@ -120,7 +120,7 @@ MonoBehaviour:
   m_MinSize: {x: 400, y: 200}
   m_MaxSize: {x: 32384, y: 16192}
   vertical: 0
-  controlID: 87
+  controlID: 83
 --- !u!114 &6
 MonoBehaviour:
   m_ObjectHideFlags: 52
@@ -138,7 +138,7 @@ MonoBehaviour:
     serializedVersion: 2
     x: 0
     y: 0
-    width: 298
+    width: 297
     height: 947
   m_MinSize: {x: 231, y: 271}
   m_MaxSize: {x: 10001, y: 10021}
@@ -164,14 +164,14 @@ MonoBehaviour:
   - {fileID: 11}
   m_Position:
     serializedVersion: 2
-    x: 298
+    x: 297
     y: 0
-    width: 920
+    width: 1094
     height: 947
   m_MinSize: {x: 200, y: 200}
   m_MaxSize: {x: 16192, y: 16192}
   vertical: 1
-  controlID: 53
+  controlID: 128
 --- !u!114 &8
 MonoBehaviour:
   m_ObjectHideFlags: 52
@@ -191,12 +191,12 @@ MonoBehaviour:
     serializedVersion: 2
     x: 0
     y: 0
-    width: 920
-    height: 656
+    width: 1094
+    height: 567
   m_MinSize: {x: 200, y: 100}
   m_MaxSize: {x: 16192, y: 8096}
   vertical: 0
-  controlID: 54
+  controlID: 129
 --- !u!114 &9
 MonoBehaviour:
   m_ObjectHideFlags: 52
@@ -214,8 +214,8 @@ MonoBehaviour:
     serializedVersion: 2
     x: 0
     y: 0
-    width: 148
-    height: 656
+    width: 175
+    height: 567
   m_MinSize: {x: 200, y: 200}
   m_MaxSize: {x: 4000, y: 4000}
   m_ActualView: {fileID: 17}
@@ -238,10 +238,10 @@ MonoBehaviour:
   m_Children: []
   m_Position:
     serializedVersion: 2
-    x: 148
+    x: 175
     y: 0
-    width: 772
-    height: 656
+    width: 919
+    height: 567
   m_MinSize: {x: 202, y: 221}
   m_MaxSize: {x: 4002, y: 4021}
   m_ActualView: {fileID: 18}
@@ -268,11 +268,11 @@ MonoBehaviour:
   m_Position:
     serializedVersion: 2
     x: 0
-    y: 656
-    width: 920
-    height: 291
-  m_MinSize: {x: 100, y: 100}
-  m_MaxSize: {x: 4000, y: 4000}
+    y: 567
+    width: 1094
+    height: 380
+  m_MinSize: {x: 102, y: 121}
+  m_MaxSize: {x: 4002, y: 4021}
   m_ActualView: {fileID: 19}
   m_Panes:
   - {fileID: 19}
@@ -288,23 +288,23 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 1
   m_Script: {fileID: 12006, guid: 0000000000000000e000000000000000, type: 0}
-  m_Name: TestRunnerWindow
+  m_Name: InspectorWindow
   m_EditorClassIdentifier: 
   m_Children: []
   m_Position:
     serializedVersion: 2
-    x: 1218
+    x: 1391
     y: 0
-    width: 702
+    width: 529
     height: 947
-  m_MinSize: {x: 100, y: 100}
+  m_MinSize: {x: 275, y: 50}
   m_MaxSize: {x: 4000, y: 4000}
-  m_ActualView: {fileID: 21}
+  m_ActualView: {fileID: 20}
   m_Panes:
   - {fileID: 20}
   - {fileID: 21}
-  m_Selected: 1
-  m_LastSelected: 0
+  m_Selected: 0
+  m_LastSelected: 1
 --- !u!114 &13
 MonoBehaviour:
   m_ObjectHideFlags: 52
@@ -1634,10 +1634,10 @@ MonoBehaviour:
     m_Tooltip: 
   m_Pos:
     serializedVersion: 2
-    x: 487
+    x: 472
     y: 73
-    width: 957
-    height: 635
+    width: 917
+    height: 546
   m_ViewDataDictionary: {fileID: 0}
   m_OverlayCanvas:
     m_LastAppliedPresetName: Default
@@ -1649,7 +1649,7 @@ MonoBehaviour:
   m_ShowGizmos: 0
   m_TargetDisplay: 0
   m_ClearColor: {r: 0, g: 0, b: 0, a: 0}
-  m_TargetSize: {x: 957, y: 614}
+  m_TargetSize: {x: 917, y: 525}
   m_TextureFilterMode: 0
   m_TextureHideFlags: 61
   m_RenderIMGUI: 1
@@ -1664,10 +1664,10 @@ MonoBehaviour:
     m_VRangeLocked: 0
     hZoomLockedByDefault: 0
     vZoomLockedByDefault: 0
-    m_HBaseRangeMin: -478.5
-    m_HBaseRangeMax: 478.5
-    m_VBaseRangeMin: -307
-    m_VBaseRangeMax: 307
+    m_HBaseRangeMin: -458.5
+    m_HBaseRangeMax: 458.5
+    m_VBaseRangeMin: -262.5
+    m_VBaseRangeMax: 262.5
     m_HAllowExceedBaseRangeMin: 1
     m_HAllowExceedBaseRangeMax: 1
     m_VAllowExceedBaseRangeMin: 1
@@ -1685,23 +1685,23 @@ MonoBehaviour:
       serializedVersion: 2
       x: 0
       y: 21
-      width: 957
-      height: 614
+      width: 917
+      height: 525
     m_Scale: {x: 1, y: 1}
-    m_Translation: {x: 478.5, y: 307}
+    m_Translation: {x: 458.5, y: 262.5}
     m_MarginLeft: 0
     m_MarginRight: 0
     m_MarginTop: 0
     m_MarginBottom: 0
     m_LastShownAreaInsideMargins:
       serializedVersion: 2
-      x: -478.5
-      y: -307
-      width: 957
-      height: 614
+      x: -458.5
+      y: -262.5
+      width: 917
+      height: 525
     m_MinimalGUI: 1
   m_defaultScale: 1
-  m_LastWindowPixelSize: {x: 957, y: 635}
+  m_LastWindowPixelSize: {x: 917, y: 546}
   m_ClearInEditMode: 1
   m_NoCameraWarning: 1
   m_LowResolutionForAspectRatios: 01000000000000000000
@@ -1729,7 +1729,7 @@ MonoBehaviour:
     serializedVersion: 2
     x: 0
     y: 73
-    width: 297
+    width: 296
     height: 926
   m_ViewDataDictionary: {fileID: 0}
   m_OverlayCanvas:
@@ -1749,7 +1749,7 @@ MonoBehaviour:
     m_SkipHidden: 0
     m_SearchArea: 1
     m_Folders:
-    - Assets/Scripts/Adventure/Data
+    - Assets/Scripts/Tests/Logic/Data
     m_Globs: []
     m_OriginalText: 
   m_ViewMode: 0
@@ -1763,7 +1763,7 @@ MonoBehaviour:
     scrollPos: {x: 0, y: 0}
     m_SelectedIDs: bcc00000
     m_LastClickedID: 49340
-    m_ExpandedIDs: 00000000846b0000866b0000886b00008a6b00008c6b00008e6b0000906b0000926b0000946b0000966b0000986b00009a6b00009c6b00009e6b0000a06b0000a26b0000a46b0000a66b0000a86b0000aa6b0000ac6b0000ae6b0000b06b0000b26b0000b46b0000b66b0000b86b0000ba6b0000
+    m_ExpandedIDs: 00000000446b0000466b0000486b00004a6b00004c6b00004e6b0000506b0000526b0000546b0000566b0000586b00005a6b00005c6b00005e6b0000
     m_RenameOverlay:
       m_UserAcceptedRename: 0
       m_Name: 
@@ -1788,24 +1788,24 @@ MonoBehaviour:
       m_Icon: {fileID: 0}
       m_ResourceFile: 
   m_AssetTreeState:
-    scrollPos: {x: 0, y: 0}
+    scrollPos: {x: 0, y: 136}
     m_SelectedIDs: 
     m_LastClickedID: 0
-    m_ExpandedIDs: ffffffff00000000846b0000866b0000886b00008a6b00008c6b00008e6b0000906b0000926b0000946b0000966b0000986b00009a6b00009c6b00009e6b0000a06b0000a26b0000a46b0000a66b0000a86b0000aa6b0000ac6b0000ae6b0000b06b0000b26b0000b86b0000ba6b00009c6d0000ba6d0000
+    m_ExpandedIDs: ffffffff00000000446b0000466b0000486b00004a6b00004c6b00004e6b0000506b0000526b0000546b0000566b0000586b00005a6b00005c6b00005e6b0000c06b0000ea6d0000
     m_RenameOverlay:
       m_UserAcceptedRename: 0
-      m_Name: ChunkTest
-      m_OriginalName: ChunkTest
+      m_Name: 
+      m_OriginalName: 
       m_EditFieldRect:
         serializedVersion: 2
         x: 0
         y: 0
         width: 0
         height: 0
-      m_UserData: 28250
+      m_UserData: 0
       m_IsWaitingForDelay: 0
       m_IsRenaming: 0
-      m_OriginalEventType: 0
+      m_OriginalEventType: 11
       m_IsRenamingFilename: 1
       m_ClientGUIView: {fileID: 6}
     m_SearchString: 
@@ -1867,10 +1867,10 @@ MonoBehaviour:
     m_Tooltip: 
   m_Pos:
     serializedVersion: 2
-    x: 298
+    x: 297
     y: 73
-    width: 146
-    height: 635
+    width: 173
+    height: 546
   m_ViewDataDictionary: {fileID: 0}
   m_OverlayCanvas:
     m_LastAppliedPresetName: Default
@@ -1879,9 +1879,9 @@ MonoBehaviour:
   m_SceneHierarchy:
     m_TreeViewState:
       scrollPos: {x: 0, y: 0}
-      m_SelectedIDs: 4a2f0000
+      m_SelectedIDs: 
       m_LastClickedID: 0
-      m_ExpandedIDs: 46b1ffffb0b3fffff0b4ffff12b6ffff9cb8ffff6abbffff5abcffff3abdffff7cbeffffe8c0ffff7cc3ffff6ec4ffffe6c8ffff28ccffffdeceffff82d2ffffcefaffff
+      m_ExpandedIDs: fcfaffff
       m_RenameOverlay:
         m_UserAcceptedRename: 0
         m_Name: 
@@ -1897,7 +1897,7 @@ MonoBehaviour:
         m_IsRenaming: 0
         m_OriginalEventType: 11
         m_IsRenamingFilename: 0
-        m_ClientGUIView: {fileID: 9}
+        m_ClientGUIView: {fileID: 10}
       m_SearchString: 
     m_ExpandedScenes: []
     m_CurrenRootInstanceID: 0
@@ -1925,10 +1925,10 @@ MonoBehaviour:
     m_Tooltip: 
   m_Pos:
     serializedVersion: 2
-    x: 446
+    x: 472
     y: 73
-    width: 770
-    height: 635
+    width: 917
+    height: 546
   m_ViewDataDictionary: {fileID: 0}
   m_OverlayCanvas:
     m_LastAppliedPresetName: Default
@@ -2153,9 +2153,9 @@ MonoBehaviour:
   m_PlayAudio: 0
   m_AudioPlay: 0
   m_Position:
-    m_Target: {x: 3.2242103, y: 3.0731187, z: 3.7057946}
+    m_Target: {x: 3.1537147, y: -0.528167, z: 2.3631659}
     speed: 2
-    m_Value: {x: 3.2242103, y: 3.0731187, z: 3.7057946}
+    m_Value: {x: 3.1537147, y: -0.528167, z: 2.3631659}
   m_RenderMode: 0
   m_CameraMode:
     drawMode: 2
@@ -2202,13 +2202,13 @@ MonoBehaviour:
     m_GridAxis: 1
     m_gridOpacity: 0.5
   m_Rotation:
-    m_Target: {x: 0.40496984, y: 0.34291485, z: -0.16661984, w: 0.8317156}
+    m_Target: {x: 0.070774555, y: 0.9207821, z: -0.19620936, w: 0.3314165}
     speed: 2
-    m_Value: {x: 0.40474644, y: 0.3427257, z: -0.16652793, w: 0.8312568}
+    m_Value: {x: 0.0707327, y: 0.92023754, z: -0.19609332, w: 0.33122048}
   m_Size:
-    m_Target: 2.8798769
+    m_Target: 4.0101514
     speed: 2
-    m_Value: 2.8798769
+    m_Value: 4.0101514
   m_Ortho:
     m_Target: 0
     speed: 2
@@ -2226,7 +2226,7 @@ MonoBehaviour:
     m_FarClip: 10000
     m_DynamicClip: 1
     m_OcclusionCulling: 0
-  m_LastSceneViewRotation: {x: -0.119412936, y: 0.832399, z: -0.19710253, w: -0.5043806}
+  m_LastSceneViewRotation: {x: 0.2119712, y: 0.68140304, z: -0.21629474, w: 0.6671453}
   m_LastSceneViewOrtho: 0
   m_ReplacementShader: {fileID: 0}
   m_ReplacementString: 
@@ -2253,10 +2253,10 @@ MonoBehaviour:
     m_Tooltip: 
   m_Pos:
     serializedVersion: 2
-    x: 298
-    y: 729
-    width: 918
-    height: 270
+    x: 297
+    y: 640
+    width: 1092
+    height: 359
   m_ViewDataDictionary: {fileID: 0}
   m_OverlayCanvas:
     m_LastAppliedPresetName: Default
@@ -2282,9 +2282,9 @@ MonoBehaviour:
     m_Tooltip: 
   m_Pos:
     serializedVersion: 2
-    x: 1446
+    x: 1391
     y: 73
-    width: 473
+    width: 528
     height: 926
   m_ViewDataDictionary: {fileID: 0}
   m_OverlayCanvas:
@@ -2297,7 +2297,7 @@ MonoBehaviour:
     m_CachedPref: 511
     m_ControlHash: -371814159
     m_PrefName: Preview_InspectorPreview
-  m_LastInspectedObjectInstanceID: 12106
+  m_LastInspectedObjectInstanceID: -1
   m_LastVerticalScrollValue: 0
   m_GlobalObjectId: 
   m_InspectorMode: 0
@@ -2324,9 +2324,9 @@ MonoBehaviour:
     m_Tooltip: 
   m_Pos:
     serializedVersion: 2
-    x: 1218
+    x: 1419
     y: 73
-    width: 701
+    width: 500
     height: 926
   m_ViewDataDictionary: {fileID: 0}
   m_OverlayCanvas:
@@ -2334,7 +2334,7 @@ MonoBehaviour:
     m_SaveData: []
     m_OverlaysVisible: 1
   m_Spl:
-    ID: 2328
+    ID: 157
     splitterInitialOffset: 0
     currentActiveSplitter: -1
     realSizes:
@@ -2418,7 +2418,7 @@ MonoBehaviour:
       name: Adventure
       fullName: Adventure
       resultStatus: 1
-      duration: 18.249878
+      duration: 0.7267268
       messages: 
       output: 
       stacktrace: 
@@ -2434,7 +2434,7 @@ MonoBehaviour:
       name: AsmDataTest.dll
       fullName: D:/Github/Flat.Adventure/Adventure/Library/ScriptAssemblies/AsmDataTest.dll
       resultStatus: 1
-      duration: 18.17133
+      duration: 0.6663518
       messages: 
       output: 
       stacktrace: 
@@ -2450,7 +2450,7 @@ MonoBehaviour:
       name: Tests
       fullName: Tests
       resultStatus: 1
-      duration: 18.170578
+      duration: 0.6655941
       messages: 
       output: 
       stacktrace: 
@@ -2466,7 +2466,7 @@ MonoBehaviour:
       name: Data
       fullName: Tests.Data
       resultStatus: 1
-      duration: 18.169344
+      duration: 0.6651084
       messages: 
       output: 
       stacktrace: 
@@ -2482,7 +2482,7 @@ MonoBehaviour:
       name: ChunkTest
       fullName: Tests.Data.ChunkTest
       resultStatus: 1
-      duration: 18.16236
+      duration: 0.1173846
       messages: 
       output: 
       stacktrace: 
@@ -2494,11 +2494,28 @@ MonoBehaviour:
       parentId: 1063
       parentUniqueId: AsmDataTest.dll/Tests/[AsmDataTest][Tests.Data][suite]
     - id: 1002
-      uniqueId: AsmDataTest.dll/Tests/Data/ChunkTest/[AsmDataTest][Tests.Data.ChunkTest.ChunkValue]
-      name: ChunkValue
-      fullName: Tests.Data.ChunkTest.ChunkValue
+      uniqueId: AsmDataTest.dll/Tests/Data/ChunkTest/[AsmDataTest][Tests.Data.ChunkTest.Chunk]
+      name: Chunk
+      fullName: Tests.Data.ChunkTest.Chunk
       resultStatus: 1
-      duration: 18.142448
+      duration: 0.0782431
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1001
+      parentUniqueId: AsmDataTest.dll/Tests/Data/[AsmDataTest][Tests.Data.ChunkTest][suite]
+    - id: 1003
+      uniqueId: AsmDataTest.dll/Tests/Data/ChunkTest/[AsmDataTest][Tests.Data.ChunkTest.GetSetIndexer]
+      name: GetSetIndexer
+      fullName: Tests.Data.ChunkTest.GetSetIndexer
+      resultStatus: 1
+      duration: 0.0241544
       messages: 
       output: 
       stacktrace: 
@@ -2515,7 +2532,7 @@ MonoBehaviour:
       name: InterpolationTest
       fullName: Tests.Data.InterpolationTest
       resultStatus: 1
-      duration: 0.021096
+      duration: 0.0374133
       messages: 
       output: 
       stacktrace: 
@@ -2531,7 +2548,7 @@ MonoBehaviour:
       name: Circle
       fullName: Tests.Data.InterpolationTest.Circle
       resultStatus: 1
-      duration: 0.0041287
+      duration: 0.0016805
       messages: 
       output: 
       stacktrace: 
@@ -2548,7 +2565,7 @@ MonoBehaviour:
       name: CircleIn
       fullName: Tests.Data.InterpolationTest.CircleIn
       resultStatus: 1
-      duration: 0.0002381
+      duration: 0.0002385
       messages: 
       output: 
       stacktrace: 
@@ -2565,7 +2582,7 @@ MonoBehaviour:
       name: CircleOut
       fullName: Tests.Data.InterpolationTest.CircleOut
       resultStatus: 1
-      duration: 0.0001964
+      duration: 0.000229
       messages: 
       output: 
       stacktrace: 
@@ -2582,7 +2599,7 @@ MonoBehaviour:
       name: Exp10
       fullName: Tests.Data.InterpolationTest.Exp10
       resultStatus: 1
-      duration: 0.0002549
+      duration: 0.0011284
       messages: 
       output: 
       stacktrace: 
@@ -2599,7 +2616,7 @@ MonoBehaviour:
       name: Exp10In
       fullName: Tests.Data.InterpolationTest.Exp10In
       resultStatus: 1
-      duration: 0.0001689
+      duration: 0.0006957
       messages: 
       output: 
       stacktrace: 
@@ -2616,7 +2633,7 @@ MonoBehaviour:
       name: Exp10Out
       fullName: Tests.Data.InterpolationTest.Exp10Out
       resultStatus: 1
-      duration: 0.0001731
+      duration: 0.0004077
       messages: 
       output: 
       stacktrace: 
@@ -2633,7 +2650,7 @@ MonoBehaviour:
       name: Exp5
       fullName: Tests.Data.InterpolationTest.Exp5
       resultStatus: 1
-      duration: 0.0001787
+      duration: 0.0003169
       messages: 
       output: 
       stacktrace: 
@@ -2650,7 +2667,7 @@ MonoBehaviour:
       name: Exp5In
       fullName: Tests.Data.InterpolationTest.Exp5In
       resultStatus: 1
-      duration: 0.000241
+      duration: 0.000335
       messages: 
       output: 
       stacktrace: 
@@ -2667,7 +2684,7 @@ MonoBehaviour:
       name: Exp5Out
       fullName: Tests.Data.InterpolationTest.Exp5Out
       resultStatus: 1
-      duration: 0.0001788
+      duration: 0.0004976
       messages: 
       output: 
       stacktrace: 
@@ -2684,7 +2701,7 @@ MonoBehaviour:
       name: Linear
       fullName: Tests.Data.InterpolationTest.Linear
       resultStatus: 1
-      duration: 0.0001441
+      duration: 0.0002501
       messages: 
       output: 
       stacktrace: 
@@ -2701,7 +2718,7 @@ MonoBehaviour:
       name: Pow2
       fullName: Tests.Data.InterpolationTest.Pow2
       resultStatus: 1
-      duration: 0.0001803
+      duration: 0.0002509
       messages: 
       output: 
       stacktrace: 
@@ -2718,7 +2735,7 @@ MonoBehaviour:
       name: Pow2In
       fullName: Tests.Data.InterpolationTest.Pow2In
       resultStatus: 1
-      duration: 0.0001983
+      duration: 0.0002222
       messages: 
       output: 
       stacktrace: 
@@ -2735,7 +2752,7 @@ MonoBehaviour:
       name: Pow2InInverse
       fullName: Tests.Data.InterpolationTest.Pow2InInverse
       resultStatus: 1
-      duration: 0.0001769
+      duration: 0.0002333
       messages: 
       output: 
       stacktrace: 
@@ -2752,7 +2769,7 @@ MonoBehaviour:
       name: Pow2Out
       fullName: Tests.Data.InterpolationTest.Pow2Out
       resultStatus: 1
-      duration: 0.0001618
+      duration: 0.0002205
       messages: 
       output: 
       stacktrace: 
@@ -2769,7 +2786,7 @@ MonoBehaviour:
       name: Pow2OutInverse
       fullName: Tests.Data.InterpolationTest.Pow2OutInverse
       resultStatus: 1
-      duration: 0.0001887
+      duration: 0.0002388
       messages: 
       output: 
       stacktrace: 
@@ -2786,7 +2803,7 @@ MonoBehaviour:
       name: Pow3
       fullName: Tests.Data.InterpolationTest.Pow3
       resultStatus: 1
-      duration: 0.0002354
+      duration: 0.0003426
       messages: 
       output: 
       stacktrace: 
@@ -2803,7 +2820,7 @@ MonoBehaviour:
       name: Pow3In
       fullName: Tests.Data.InterpolationTest.Pow3In
       resultStatus: 1
-      duration: 0.0001865
+      duration: 0.0002264
       messages: 
       output: 
       stacktrace: 
@@ -2820,7 +2837,7 @@ MonoBehaviour:
       name: Pow3InInverse
       fullName: Tests.Data.InterpolationTest.Pow3InInverse
       resultStatus: 1
-      duration: 0.0002563
+      duration: 0.0011504
       messages: 
       output: 
       stacktrace: 
@@ -2837,7 +2854,7 @@ MonoBehaviour:
       name: Pow3Out
       fullName: Tests.Data.InterpolationTest.Pow3Out
       resultStatus: 1
-      duration: 0.0001845
+      duration: 0.0004124
       messages: 
       output: 
       stacktrace: 
@@ -2854,7 +2871,7 @@ MonoBehaviour:
       name: Pow3OutInverse
       fullName: Tests.Data.InterpolationTest.Pow3OutInverse
       resultStatus: 1
-      duration: 0.0001724
+      duration: 0.0003075
       messages: 
       output: 
       stacktrace: 
@@ -2871,7 +2888,7 @@ MonoBehaviour:
       name: Pow4
       fullName: Tests.Data.InterpolationTest.Pow4
       resultStatus: 1
-      duration: 0.0001724
+      duration: 0.0003295
       messages: 
       output: 
       stacktrace: 
@@ -2888,7 +2905,7 @@ MonoBehaviour:
       name: Pow4In
       fullName: Tests.Data.InterpolationTest.Pow4In
       resultStatus: 1
-      duration: 0.0001644
+      duration: 0.0003131
       messages: 
       output: 
       stacktrace: 
@@ -2905,7 +2922,7 @@ MonoBehaviour:
       name: Pow4Out
       fullName: Tests.Data.InterpolationTest.Pow4Out
       resultStatus: 1
-      duration: 0.0001988
+      duration: 0.0003381
       messages: 
       output: 
       stacktrace: 
@@ -2922,7 +2939,7 @@ MonoBehaviour:
       name: Pow5
       fullName: Tests.Data.InterpolationTest.Pow5
       resultStatus: 1
-      duration: 0.0001952
+      duration: 0.0002608
       messages: 
       output: 
       stacktrace: 
@@ -2939,7 +2956,7 @@ MonoBehaviour:
       name: Pow5In
       fullName: Tests.Data.InterpolationTest.Pow5In
       resultStatus: 1
-      duration: 0.000209
+      duration: 0.0002236
       messages: 
       output: 
       stacktrace: 
@@ -2956,7 +2973,7 @@ MonoBehaviour:
       name: Pow5Out
       fullName: Tests.Data.InterpolationTest.Pow5Out
       resultStatus: 1
-      duration: 0.0001621
+      duration: 0.0002409
       messages: 
       output: 
       stacktrace: 
@@ -2973,7 +2990,7 @@ MonoBehaviour:
       name: Sine
       fullName: Tests.Data.InterpolationTest.Sine
       resultStatus: 1
-      duration: 0.0002404
+      duration: 0.0002917
       messages: 
       output: 
       stacktrace: 
@@ -2990,7 +3007,7 @@ MonoBehaviour:
       name: SineIn
       fullName: Tests.Data.InterpolationTest.SineIn
       resultStatus: 1
-      duration: 0.0002313
+      duration: 0.000228
       messages: 
       output: 
       stacktrace: 
@@ -3007,7 +3024,7 @@ MonoBehaviour:
       name: SineOut
       fullName: Tests.Data.InterpolationTest.SineOut
       resultStatus: 1
-      duration: 0.0002433
+      duration: 0.000272
       messages: 
       output: 
       stacktrace: 
@@ -3024,7 +3041,7 @@ MonoBehaviour:
       name: Smooth
       fullName: Tests.Data.InterpolationTest.Smooth
       resultStatus: 1
-      duration: 0.0002013
+      duration: 0.0002232
       messages: 
       output: 
       stacktrace: 
@@ -3041,7 +3058,7 @@ MonoBehaviour:
       name: Smooth2
       fullName: Tests.Data.InterpolationTest.Smooth2
       resultStatus: 1
-      duration: 0.0002764
+      duration: 0.0002224
       messages: 
       output: 
       stacktrace: 
@@ -3058,7 +3075,7 @@ MonoBehaviour:
       name: Smoother
       fullName: Tests.Data.InterpolationTest.Smoother
       resultStatus: 1
-      duration: 0.0002882
+      duration: 0.0002165
       messages: 
       output: 
       stacktrace: 
@@ -3075,7 +3092,7 @@ MonoBehaviour:
       name: NoiseTest
       fullName: Tests.Data.NoiseTest
       resultStatus: 1
-      duration: 0.0168011
+      duration: 0.0263638
       messages: 
       output: 
       stacktrace: 
@@ -3091,7 +3108,7 @@ MonoBehaviour:
       name: Random_RandomnessSpread
       fullName: Tests.Data.NoiseTest.Random_RandomnessSpread
       resultStatus: 1
-      duration: 0.0035655
+      duration: 0.0065065
       messages: 
       output: 
       stacktrace: 
@@ -3108,7 +3125,7 @@ MonoBehaviour:
       name: Random_SameSeedSameValue
       fullName: Tests.Data.NoiseTest.Random_SameSeedSameValue
       resultStatus: 1
-      duration: 0.0003265
+      duration: 0.0002942
       messages: 
       output: 
       stacktrace: 
@@ -3125,7 +3142,7 @@ MonoBehaviour:
       name: RandomInt_RandomnessSpread
       fullName: Tests.Data.NoiseTest.RandomInt_RandomnessSpread
       resultStatus: 1
-      duration: 0.0009531
+      duration: 0.0010213
       messages: 
       output: 
       stacktrace: 
@@ -3142,7 +3159,7 @@ MonoBehaviour:
       name: RandomInt_SameSeedSameValue
       fullName: Tests.Data.NoiseTest.RandomInt_SameSeedSameValue
       resultStatus: 1
-      duration: 0.0003539
+      duration: 0.0003547
       messages: 
       output: 
       stacktrace: 
@@ -3159,7 +3176,7 @@ MonoBehaviour:
       name: RandomRange_RandomnessSpread
       fullName: Tests.Data.NoiseTest.RandomRange_RandomnessSpread
       resultStatus: 1
-      duration: 0.0004017
+      duration: 0.0004974
       messages: 
       output: 
       stacktrace: 
@@ -3176,7 +3193,7 @@ MonoBehaviour:
       name: RandomRange_SameSeedSameValue
       fullName: Tests.Data.NoiseTest.RandomRange_SameSeedSameValue
       resultStatus: 1
-      duration: 0.0001656
+      duration: 0.0002086
       messages: 
       output: 
       stacktrace: 
@@ -3193,7 +3210,7 @@ MonoBehaviour:
       name: RandomRangeInt_RandomnessSpread
       fullName: Tests.Data.NoiseTest.RandomRangeInt_RandomnessSpread
       resultStatus: 1
-      duration: 0.0004914
+      duration: 0.0014754
       messages: 
       output: 
       stacktrace: 
@@ -3210,7 +3227,7 @@ MonoBehaviour:
       name: RandomRangeInt_SameSeedSameValue
       fullName: Tests.Data.NoiseTest.RandomRangeInt_SameSeedSameValue
       resultStatus: 1
-      duration: 0.0001503
+      duration: 0.0003648
       messages: 
       output: 
       stacktrace: 
@@ -3227,7 +3244,7 @@ MonoBehaviour:
       name: Wave2D_SameSeedSameValue
       fullName: Tests.Data.NoiseTest.Wave2D_SameSeedSameValue
       resultStatus: 1
-      duration: 0.0003317
+      duration: 0.0004504
       messages: 
       output: 
       stacktrace: 
@@ -3244,7 +3261,7 @@ MonoBehaviour:
       name: Wave2D_ValueRange
       fullName: Tests.Data.NoiseTest.Wave2D_ValueRange
       resultStatus: 1
-      duration: 0.0002995
+      duration: 0.0003506
       messages: 
       output: 
       stacktrace: 
@@ -3261,7 +3278,7 @@ MonoBehaviour:
       name: Wave3D_SameSeedSameValue
       fullName: Tests.Data.NoiseTest.Wave3D_SameSeedSameValue
       resultStatus: 1
-      duration: 0.0004561
+      duration: 0.000408
       messages: 
       output: 
       stacktrace: 
@@ -3278,7 +3295,7 @@ MonoBehaviour:
       name: Wave3D_ValueRange
       fullName: Tests.Data.NoiseTest.Wave3D_ValueRange
       resultStatus: 1
-      duration: 0.0003466
+      duration: 0.0004259
       messages: 
       output: 
       stacktrace: 
@@ -3290,164 +3307,12 @@ MonoBehaviour:
       - Uncategorized
       parentId: 1036
       parentUniqueId: AsmDataTest.dll/Tests/Data/[AsmDataTest][Tests.Data.NoiseTest][suite]
-    - id: 1049
-      uniqueId: AsmDataTest.dll/Tests/Data/[AsmDataTest][Tests.Data.PaletteTest][suite]
-      name: PaletteTest
-      fullName: Tests.Data.PaletteTest
-      resultStatus: 1
-      duration: 0.0120419
-      messages: 
-      output: 
-      stacktrace: 
-      notRunnable: 0
-      ignoredOrSkipped: 0
-      description: 
-      isSuite: 1
-      categories: []
-      parentId: 1063
-      parentUniqueId: AsmDataTest.dll/Tests/[AsmDataTest][Tests.Data][suite]
-    - id: 1054
-      uniqueId: AsmDataTest.dll/Tests/Data/PaletteTest/[AsmDataTest][Tests.Data.PaletteTest.Add_NewType]
-      name: Add_NewType
-      fullName: Tests.Data.PaletteTest.Add_NewType
-      resultStatus: 1
-      duration: 0.0023654
-      messages: 
-      output: 
-      stacktrace: 
-      notRunnable: 0
-      ignoredOrSkipped: 0
-      description: 
-      isSuite: 0
-      categories:
-      - Uncategorized
-      parentId: 1049
-      parentUniqueId: AsmDataTest.dll/Tests/Data/[AsmDataTest][Tests.Data.PaletteTest][suite]
-    - id: 1056
-      uniqueId: AsmDataTest.dll/Tests/Data/PaletteTest/[AsmDataTest][Tests.Data.PaletteTest.Add_NewTypeToCommon]
-      name: Add_NewTypeToCommon
-      fullName: Tests.Data.PaletteTest.Add_NewTypeToCommon
-      resultStatus: 1
-      duration: 0.0022104
-      messages: 
-      output: 
-      stacktrace: 
-      notRunnable: 0
-      ignoredOrSkipped: 0
-      description: 
-      isSuite: 0
-      categories:
-      - Uncategorized
-      parentId: 1049
-      parentUniqueId: AsmDataTest.dll/Tests/Data/[AsmDataTest][Tests.Data.PaletteTest][suite]
-    - id: 1057
-      uniqueId: AsmDataTest.dll/Tests/Data/PaletteTest/[AsmDataTest][Tests.Data.PaletteTest.Add_Overflow]
-      name: Add_Overflow
-      fullName: Tests.Data.PaletteTest.Add_Overflow
-      resultStatus: 1
-      duration: 0.0002523
-      messages: 
-      output: 
-      stacktrace: 
-      notRunnable: 0
-      ignoredOrSkipped: 0
-      description: 
-      isSuite: 0
-      categories:
-      - Uncategorized
-      parentId: 1049
-      parentUniqueId: AsmDataTest.dll/Tests/Data/[AsmDataTest][Tests.Data.PaletteTest][suite]
-    - id: 1055
-      uniqueId: AsmDataTest.dll/Tests/Data/PaletteTest/[AsmDataTest][Tests.Data.PaletteTest.Add_RedisteredType]
-      name: Add_RedisteredType
-      fullName: Tests.Data.PaletteTest.Add_RedisteredType
-      resultStatus: 1
-      duration: 0.000183
-      messages: 
-      output: 
-      stacktrace: 
-      notRunnable: 0
-      ignoredOrSkipped: 0
-      description: 
-      isSuite: 0
-      categories:
-      - Uncategorized
-      parentId: 1049
-      parentUniqueId: AsmDataTest.dll/Tests/Data/[AsmDataTest][Tests.Data.PaletteTest][suite]
-    - id: 1052
-      uniqueId: AsmDataTest.dll/Tests/Data/PaletteTest/[AsmDataTest][Tests.Data.PaletteTest.Contains]
-      name: Contains
-      fullName: Tests.Data.PaletteTest.Contains
-      resultStatus: 1
-      duration: 0.0007647
-      messages: 
-      output: 
-      stacktrace: 
-      notRunnable: 0
-      ignoredOrSkipped: 0
-      description: 
-      isSuite: 0
-      categories:
-      - Uncategorized
-      parentId: 1049
-      parentUniqueId: AsmDataTest.dll/Tests/Data/[AsmDataTest][Tests.Data.PaletteTest][suite]
-    - id: 1053
-      uniqueId: AsmDataTest.dll/Tests/Data/PaletteTest/[AsmDataTest][Tests.Data.PaletteTest.Contains_BitCollision]
-      name: Contains_BitCollision
-      fullName: Tests.Data.PaletteTest.Contains_BitCollision
-      resultStatus: 1
-      duration: 0.0002985
-      messages: 
-      output: 
-      stacktrace: 
-      notRunnable: 0
-      ignoredOrSkipped: 0
-      description: 
-      isSuite: 0
-      categories:
-      - Uncategorized
-      parentId: 1049
-      parentUniqueId: AsmDataTest.dll/Tests/Data/[AsmDataTest][Tests.Data.PaletteTest][suite]
-    - id: 1051
-      uniqueId: AsmDataTest.dll/Tests/Data/PaletteTest/[AsmDataTest][Tests.Data.PaletteTest.EmptyPalette]
-      name: EmptyPalette
-      fullName: Tests.Data.PaletteTest.EmptyPalette
-      resultStatus: 1
-      duration: 0.00015
-      messages: 
-      output: 
-      stacktrace: 
-      notRunnable: 0
-      ignoredOrSkipped: 0
-      description: 
-      isSuite: 0
-      categories:
-      - Uncategorized
-      parentId: 1049
-      parentUniqueId: AsmDataTest.dll/Tests/Data/[AsmDataTest][Tests.Data.PaletteTest][suite]
-    - id: 1050
-      uniqueId: AsmDataTest.dll/Tests/Data/PaletteTest/[AsmDataTest][Tests.Data.PaletteTest.HappyDay]
-      name: HappyDay
-      fullName: Tests.Data.PaletteTest.HappyDay
-      resultStatus: 1
-      duration: 0.0001807
-      messages: 
-      output: 
-      stacktrace: 
-      notRunnable: 0
-      ignoredOrSkipped: 0
-      description: 
-      isSuite: 0
-      categories:
-      - Uncategorized
-      parentId: 1049
-      parentUniqueId: AsmDataTest.dll/Tests/Data/[AsmDataTest][Tests.Data.PaletteTest][suite]
     - id: 1058
       uniqueId: AsmDataTest.dll/Tests/Data/[AsmDataTest][Tests.Data.VoxelTest][suite]
       name: VoxelTest
       fullName: Tests.Data.VoxelTest
       resultStatus: 1
-      duration: 0.0121826
+      duration: 0.4783807
       messages: 
       output: 
       stacktrace: 
@@ -3458,12 +3323,29 @@ MonoBehaviour:
       categories: []
       parentId: 1063
       parentUniqueId: AsmDataTest.dll/Tests/[AsmDataTest][Tests.Data][suite]
+    - id: 1053
+      uniqueId: AsmDataTest.dll/Tests/Data/VoxelTest/[AsmDataTest][Tests.Data.VoxelTest.Pack]
+      name: Pack
+      fullName: Tests.Data.VoxelTest.Pack
+      resultStatus: 1
+      duration: 0.4613268
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1050
+      parentUniqueId: AsmDataTest.dll/Tests/Data/[AsmDataTest][Tests.Data.VoxelTest][suite]
     - id: 1059
       uniqueId: AsmDataTest.dll/Tests/Data/VoxelTest/[AsmDataTest][Tests.Data.VoxelTest.ToByte]
       name: ToByte
       fullName: Tests.Data.VoxelTest.ToByte
       resultStatus: 1
-      duration: 0.0064067
+      duration: 0.0081831
       messages: 
       output: 
       stacktrace: 
@@ -3480,7 +3362,7 @@ MonoBehaviour:
       name: ToFloat
       fullName: Tests.Data.VoxelTest.ToFloat
       resultStatus: 1
-      duration: 0.0003945
+      duration: 0.0004298
       messages: 
       output: 
       stacktrace: 
@@ -3492,13 +3374,13 @@ MonoBehaviour:
       - Uncategorized
       parentId: 1058
       parentUniqueId: AsmDataTest.dll/Tests/Data/[AsmDataTest][Tests.Data.VoxelTest][suite]
-    m_ResultText: ChunkValue (18,142s)
+    m_ResultText: Adventure (0,727s)
     m_ResultStacktrace: 
     m_TestListState:
       scrollPos: {x: 0, y: 0}
-      m_SelectedIDs: b490b80e
-      m_LastClickedID: 246976692
-      m_ExpandedIDs: 2400818aba64308d3cfb0f9c471b2f9d6d2673c3e18fa7c3921304d9c63710eb53f4a10c85118e4dffffff7f
+      m_SelectedIDs: 921304d9
+      m_LastClickedID: -654044270
+      m_ExpandedIDs: 2400818aba64308d3cfb0f9c471b2f9d6d2673c3e18fa7c3921304d953f4a10c85118e4dffffff7f
       m_RenameOverlay:
         m_UserAcceptedRename: 0
         m_Name: 

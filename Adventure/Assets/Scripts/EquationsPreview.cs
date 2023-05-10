@@ -1,7 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using Adventure.Data;
+using Adventure.Logic.Data;
 using Adventure.Logic;
 using UnityEngine;
 
@@ -100,11 +100,11 @@ public class EquationsPreview : MonoBehaviour {
     void Update() {
         if (prevBuild != build) {
             prevBuild = build;
-            IEnumerator enumerator = World.WorldMap.GenerateMap();
+            IEnumerator enumerator = World.worldMap.GenerateMap();
             while (enumerator.MoveNext()) {
                 
             }
-            Debug.Log(World.WorldMap.Map.geology.Length);
+            Debug.Log(World.worldMap.Map.geology.Length);
 
             
             noise = new Noise(seed);
@@ -282,9 +282,9 @@ public class EquationsPreview : MonoBehaviour {
 
     private Color reEasy(float x, float y) {
         
-        float geo = World.WorldMap.Map.geology[(int) x + (int) y * width];
-        float wet = World.WorldMap.Map.moisture[(int) x + (int) y * width];
-        float tem = 1 - World.WorldMap.Map.temperature[(int) x + (int) y * width];
+        float geo = World.worldMap.Map.geology[(int) x + (int) y * width];
+        float wet = World.worldMap.Map.moisture[(int) x + (int) y * width];
+        float tem = 1 - World.worldMap.Map.temperature[(int) x + (int) y * width];
         Color cBiome = getBiome(geo, wet, tem);
         cBiome.a = geo;
         return new Color(cBiome.r * geo, cBiome.g * geo, cBiome.b * geo, 1);

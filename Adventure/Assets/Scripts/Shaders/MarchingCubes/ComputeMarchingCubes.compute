@@ -1,5 +1,7 @@
 #pragma kernel Marche
 #pragma kernel Swim
+#pragma kernel BakeSolid
+#pragma kernel BakeLiquid
 
 struct GeneratedVertex {
     float3 position;
@@ -27,6 +29,9 @@ RWStructuredBuffer<uint> IndexSolid;
 
 RWStructuredBuffer<GeneratedVertex> VertexLiquid;
 RWStructuredBuffer<uint> IndexLiquid;
+
+RWStructuredBuffer<GeneratedVertex> MeshVertexBuffer;
+RWStructuredBuffer<uint> MeshIndexBuffer;
 
 //
 // Input Voxels
@@ -314,4 +319,20 @@ void Swim(uint3 id : SV_DispatchThreadID) {
         WriteVertexLiquid(index + 2, vertices[t_index2], normals[t_index2], uv0, float3(0, 0, 1));
         WriteIndexLiquid(index);
     }
+}
+
+[numthreads(64, 1, 1)]
+void BakeSolid(uint3 id : SV_DispatchThreadID) {
+    const uint index = id.x;
+    const uint index12 = index * 12;
+    MeshVertexBuffer[index12] = VertexSolid[index];
+    MeshIndexBuffer[index] = IndexSolid[index];
+}
+
+[numthreads(64, 1, 1)]
+void BakeLiquid(uint3 id : SV_DispatchThreadID) {
+    const uint index = id.x;
+    const uint index12 = index * 1;
+    MeshVertexBuffer[index12] = VertexLiquid[index];
+    MeshIndexBuffer[index] = IndexLiquid[index];
 }

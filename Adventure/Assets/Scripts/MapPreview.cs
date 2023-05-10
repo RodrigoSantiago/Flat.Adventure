@@ -1,7 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using Adventure.Data;
+using Adventure.Logic.Data;
 using Adventure.Logic;
 using UnityEngine;
 

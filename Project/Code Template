@@ -1,3 +1,18 @@
+Server - SoftController
+  // Construção : Soft Preview/ Reverse Control
+  //   Apos contruir : Envia Comando de Construcao, Servidor retorna True ou False. Em caso de False o cliente "Desconstroi"
+  // Speciais : Soft Collision/ BBox Control
+  //   Apos arremeçar um ataque, a colisão é feita pelo atacante, Servidor apenas verifica a colisão em BBox
+  // Movimento do Jogador : Soft Preview
+  //   O jogador pode se mover livremente, O servidor impede movimentos proibidos no caso de distancias muito longas, teleportando para o começo
+  // Animações do Jogador : Soft Preview
+  //   
+  // Coletar Itens : Avalia apenas proximidade de objetos
+  // Dinheiro, XP, Mana, Energia, HP, Cooldown, Quests, São diretos no servidor
+  // Movimentos de Mão VR : Free
+Controller - HardController
+
+
 class ServerConnector {
     RequestChunkGroup(x, y, z) { return "chunk [x,y,z] <=> [x+7,y+7,z+7]" }
     
@@ -21,9 +36,16 @@ Logic {
             Creatures
         }
         Buildings {
-            House
-            Castle
-            Defenses
+            Infirmary : Healing
+            Government : Defense center, treasure, Main Quests
+            Defenses : Walls, ForceFields, Traps
+            Tavern : Food, sleep
+            Jail : Player Punisment
+            Marketplace : Buy/Sell
+            Church : Magic Learning
+            Guild : Usual Quests
+            Residence : Citzines
+            Commons : Park, Garden, Square
         }
         Maze {
             RogueLike
