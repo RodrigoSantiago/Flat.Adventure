@@ -29,6 +29,9 @@ namespace Adventure.Game {
 
         public void ConnectToWorld() {
             localController = new LocalController("Test", chunkManager, unitManager);
+            localController.world = world;
+            chunkManager.controller = localController;
+            
             world.AddController(localController);
         }
     }

@@ -1,11 +1,12 @@
 ﻿using System.Runtime.InteropServices;
+using UnityEngine;
 
 namespace Adventure.Logic.Data {
     
     [StructLayout(LayoutKind.Sequential)]
     public struct Voxel {
 
-        private static float[] byteToFloat = {
+        /*private static float[] byteToFloat = {
             0.0f,
             0.1f,
             0.2f,
@@ -22,13 +23,39 @@ namespace Adventure.Logic.Data {
             0.90f,
             0.95f,
             1.0f
+        };*/
+        
+        private static float[] byteToFloat = {
+            0.000f,
+            0.066f,
+            0.132f,
+            0.198f,
+            0.264f,
+            0.330f,
+            0.396f,
+            0.462f,
+            0.528f,
+            0.594f,
+            0.660f,
+            0.726f,
+            0.792f,
+            0.858f,
+            0.924f,
+            1.000f
         };
-
+        
         public static float ToFloat(byte b) {
-            return byteToFloat[b];
+            return (b / 1 * 1) / 255f; //byteToFloat[b];
         }
 
         public static byte ToByte(float f) {
+            byte b= (byte)Mathf.RoundToInt(Mathf.Clamp01(f) * 255);
+            return (byte)(b / 1 * 1);
+            for (int i = 1; i < byteToFloat.Length; i++) {
+                if (f < (byteToFloat[i - 1] + byteToFloat[i]) / 1) return (byte)(i - 1);
+            }
+
+            return 15;
             if (f < 0.35) return (byte) ((f + 0.05f) * 10);
             if (f < 0.525) return (byte) (5 - (((uint) (f * 100) - 50) >> 31));
             if (f < 0.975) return (byte) (((int) (f * 1000) - 525) / 50 + 6);
@@ -72,7 +99,7 @@ namespace Adventure.Logic.Data {
         }
 
         public override string ToString() {
-            return "{Mat:" + Material + ", Vol: " + Volume + "}";
+            return "{" + Material + ", " + Volume + "}";
         }
 
         public override bool Equals(object obj) {

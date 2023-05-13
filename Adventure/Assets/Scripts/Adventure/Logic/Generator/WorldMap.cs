@@ -190,17 +190,60 @@ namespace Adventure.Logic.Generator {
             moisture = w;
             temperature = 1 - c;
         }
+        
+        public float DistanceToLine(Vector3 point, Vector3 pointOnLine, Vector3 lineDirection) {
+            // Calculate the direction from the point on the line to the point
+            Vector3 pointToLine = point - pointOnLine;
+
+            // Project the point-to-line vector onto the line direction vector
+            float projection = Vector3.Dot(pointToLine, lineDirection.normalized);
+
+            // Calculate the vector from the point to the closest point on the line
+            Vector3 closestPointOnLine = pointOnLine + lineDirection.normalized * projection;
+            Vector3 pointToClosestPoint = closestPointOnLine - point;
+
+            // Return the magnitude of the point-to-closest-point vector
+            return pointToClosestPoint.magnitude;
+        }
+
+        public float getHeight(float x, float z) {
+            return (float)noise.Wave2D(x / 50f, z / 50f) * 12 + 4;
+        }
 
         public Chunk GenerateChunk(Vector3Int local) {
             Voxel[] voxels = new Voxel[16 * 16 * 16];
             for (int x = 0; x < 16; x++)
             for (int y = 0; y < 16; y++)
             for (int z = 0; z < 16; z++) {
-                if (y > 8) {
-                    voxels[x * 256 + y * 16 + z] = new Voxel(1, 1f);
-                } else {
-                    voxels[x * 256 + y * 16 + z] = new Voxel(0, 0f);
-                }
+                var h = getHeight(local.x + x, local.z + z);//(float)noise.Wave3D((local.x+x) / 25f, (local.y+y - 16) / 25f, (local.z+z) / 25f) * 25;
+                var si = MathF.Sign(h - y) > 0 ? 1 : -1;
+                
+                float m2 = Mathf.Abs(h - y);
+                /*for (int xx = -1; xx <= 1; xx++)
+                for (int zz = -1; zz <= 1; zz++) {
+                    if (xx == 0 && zz == 0) continue;
+                    
+                    var h2 = getHeight(local.x + x + xx, local.z + z + zz);
+                    if (h2 > h) {
+                        float r = DistanceToLine(new Vector3(local.x + x, local.y + y, local.z + z),
+                            new Vector3(local.x + x, h, local.z + z),
+                            new Vector3(local.x + x + xx, h2, local.z + z + zz)
+                        );
+                        if (r < m2) {
+                            m2 = r;
+                        }
+                    }
+                }*/
+                
+                //var h = noise.Wave2D((local.x + x) / 25f, (local.z + z) / 25f) * 8 + 4;
+                //var h = (float)noise.Wave3D((local.x + x) / 25f, (local.y + y) / 25f, (local.z + z) / 25f);
+                ////voxels[x + y * 16 + z * 256] = new Voxel(2, Mathf.Clamp01((float)(h - y)));
+                //float v = Math.Abs(x - 8) / 2f + 1.4f;
+                //voxels[x + y * 16 + z * 256] = new Voxel(2, Mathf.Clamp01(v - (y - 0.5f)));
+                //voxels[x + y * 16 + z * 256] = new Voxel(2, (h * 25) * 0.5f + 0.5f);
+                
+                voxels[x + y * 16 + z * 256] = new Voxel(2, m2 / 2 * si + 0.5f);
+                //voxels[x + y * 16 + z * 256] = new Voxel(2, h / 2 + 0.5f);
             }
 
             return new Chunk(local, voxels, true);

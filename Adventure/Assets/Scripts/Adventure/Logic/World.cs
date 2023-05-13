@@ -22,10 +22,7 @@ namespace Adventure.Logic {
         
         public WorldMap worldMap { get; private set; }
         
-        public float deltaTime { get; private set; }
-        
         protected Noise noise;
-        protected readonly Dictionary<Vector3Int, Chunk> chunks = new();
         protected readonly Dictionary<string, WorldPlayerController> controllers = new();
 
         public readonly WorldChunkController chunkController;
@@ -58,8 +55,13 @@ namespace Adventure.Logic {
         }
 
         public void Update(float delta) {
-            deltaTime = delta;
-            
+            WorldTime.deltaTime = delta;
+
+            chunkController.LoadChunkSchedule();
+            PlayerUpdate();
+        }
+
+        public void PlayerUpdate() {
             var keys = controllers.Keys;
             foreach (var key in keys) {
                 if (controllers.TryGetValue(key, out var controller)) {
@@ -68,32 +70,16 @@ namespace Adventure.Logic {
             }
         }
 
-        public void LoadChunkSchedule() {
-            
+        public void RequestChunk(Vector3Int local, WorldPlayerController controller = null) {
+            chunkController.RequestChunk(local, controller);
         }
 
-        public IEnumerator<Chunk> RequestChunk(WorldPlayer player, params Vector3Int[] local) {
-            yield break;
+        public bool IsChunkReady(Vector3Int local) {
+            return chunkController.IsChunkReady(local);
         }
 
-        public Chunk LoadChunk(Vector3Int local) {
-            Chunk chunk;
-            if (chunks.TryGetValue(local, out chunk)) {
-                return chunk;
-            } else {
-                chunk = worldMap.GenerateChunk(local);
-                chunks.Add(local, chunk);
-            }
-
-            return chunk;
-        }
-
-        public void UnloadChunk(Chunk chunk) {
-            if (!chunk.original) {
-                // save to file
-            }
-            
-            chunks.Remove(chunk.local);
+        public bool IsChunkForReady(Vector3Int local) {
+            return chunkController.IsChunkForReady(local);
         }
         
     }

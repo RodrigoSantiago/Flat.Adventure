@@ -41,3 +41,5 @@ Nao usar atlas, mas arrays
 2 = ((40 * 40) - 8 * 8)    * 16 = 24576
 3 = ((52 * 52) - 20 * 20)  * 8  = 18432
 4 = ((58 * 58) - 26 * 26)  * 4  = 10752
+
+No shader, gere um noise leve de alteração de cor dos shaders, assim da uma variada aleatoria mesmo em texturas repetitivas

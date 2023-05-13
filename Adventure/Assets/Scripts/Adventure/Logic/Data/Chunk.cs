@@ -32,16 +32,19 @@ namespace Adventure.Logic.Data {
             this.original = original;
 
             Materials = new byte[SIZE3];
-            Volumes = new byte[SIZE2H];
+            //Volumes = new byte[SIZE2H];
+            Volumes = new byte[SIZE3];//
             for (int i = 0; i < voxels.Length; i+= 2) {
                 var voxel = voxels[i];
                 Materials[i] = voxel.material;
-                Volumes[i / 2] |= (byte)(voxel.volume & 0b1111);
+                Volumes[i ] |= voxel.volume;//
+                //Volumes[i / 2] |= (byte)(voxel.volume & 0b1111);
             }
             for (int i = 1; i < voxels.Length; i+= 2) {
                 var voxel = voxels[i];
                 Materials[i] = voxel.material;
-                Volumes[i / 2] |= (byte)(voxel.volume << 4);
+                Volumes[i] |= voxel.volume;//
+                //Volumes[i / 2] |= (byte)(voxel.volume << 4);
             }
         }
 
@@ -51,7 +54,8 @@ namespace Adventure.Logic.Data {
 
         public Voxel Get(int index) {
             byte material = Materials[index];
-            byte volume = (byte)(index % 2 == 0 ? Volumes[index / 2] & 0b1111 : Volumes[index / 2] >> 4);
+            //byte volume = (byte)(index % 2 == 0 ? Volumes[index / 2] & 0b1111 : Volumes[index / 2] >> 4);
+            byte volume = Volumes[index];//
             return new Voxel(material, volume);
         }
 
@@ -62,13 +66,14 @@ namespace Adventure.Logic.Data {
         public void Set(int index, Voxel voxel) {
             original = false;
             Materials[index] = voxel.material;
-            if (index % 2 == 0) {
+            Volumes[index] = voxel.volume;
+            /*if (index % 2 == 0) {
                 Volumes[index / 2] &= 0b11110000;
                 Volumes[index / 2] |= (byte)(voxel.volume & 0b1111);
             } else {
                 Volumes[index / 2] &= 0b00001111;
                 Volumes[index / 2] |= (byte)(voxel.volume << 4);
-            }
+            }*/
         }
     }
 }

@@ -9,8 +9,6 @@ public class DebugTool_ShowNormal : Editor
     private const string     EDITOR_PREF_BOOL = "_show_normals";
     private       Mesh       mesh;
     private       MeshFilter mf;
-    private       Vector3[]  verts;
-    private       Vector3[]  normals;
     private       float      normalsLength = 1f;
     private       bool       showNormals = false;
 
@@ -30,8 +28,8 @@ public class DebugTool_ShowNormal : Editor
 
         Handles.matrix = mf.transform.localToWorldMatrix;
         Handles.color = Color.yellow;
-        verts = mesh.vertices;
-        normals = mesh.normals;
+        var verts = mesh.vertices;
+        var normals = mesh.normals;
         int len = mesh.vertexCount;
         
         for (int i = 0; i < len; i++) {

@@ -5,7 +5,8 @@ using UnityEngine;
 
 namespace Adventure.Game.Controller {
     public class LocalController : WorldPlayerController {
-
+        
+        public World world { get; set; }
         public readonly ChunkManager chunkManager;
         public readonly UnitManager unitManager;
 
@@ -15,8 +16,8 @@ namespace Adventure.Game.Controller {
             this.unitManager = unitManager;
         }
 
-        public void RequestChunk(Vector3Int local) {
-            
+        public override void RequestChunk(Vector3Int local) {
+            world.RequestChunk(local, this);
         }
 
         public override void OnChunkReceived(Chunk chunk) {

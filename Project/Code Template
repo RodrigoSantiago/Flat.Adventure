@@ -9,6 +9,7 @@ Server - SoftController
   //   
   // Coletar Itens : Avalia apenas proximidade de objetos
   // Dinheiro, XP, Mana, Energia, HP, Cooldown, Quests, São diretos no servidor
+  // Mobs : 
   // Movimentos de Mão VR : Free
 Controller - HardController
 
