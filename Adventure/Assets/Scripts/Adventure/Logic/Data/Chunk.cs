@@ -26,6 +26,11 @@ namespace Adventure.Logic.Data {
             get { return Get(pos.x, pos.y, pos.z); }
             set { Set(pos.x, pos.y, pos.z, value); }
         }
+
+        public Voxel this[int index] {
+            get { return Get(index); }
+            set { Set(index, value); }
+        }
         
         public Chunk(Vector3Int local, Voxel[] voxels, bool original) {
             this.local = local;
@@ -66,7 +71,7 @@ namespace Adventure.Logic.Data {
         public void Set(int index, Voxel voxel) {
             original = false;
             Materials[index] = voxel.material;
-            Volumes[index] = voxel.volume;
+            Volumes[index] = voxel.volume;//
             /*if (index % 2 == 0) {
                 Volumes[index / 2] &= 0b11110000;
                 Volumes[index / 2] |= (byte)(voxel.volume & 0b1111);

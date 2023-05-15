@@ -2,7 +2,9 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
+using Adventure.Logic;
 using Adventure.Logic.Data;
+using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Rendering;
 
@@ -13,22 +15,21 @@ namespace Adventure.Game.Manager.ShapeGeneration {
 		public struct GeneratedVertex {
 			public Vector3 position;
 			public Vector3 normal;
-			public Vector3 uv0;
-			public Vector3 uv1;
+			public Vector4 uv0;
 
 			public override string ToString() {
-				return position + " " + normal + " " + uv0 + " " + uv1;
+				return position + " " + normal + " " + uv0;
 			}
 		}
-
+		
 		[StructLayout(LayoutKind.Sequential)]
-		public struct IVoxel {
-			public float val;
-			public float mat;
+		public struct GeneratedVertexLow {
+			public half4 position;
+			public half4 normal;
+			public half4 uv0;
 
-			public IVoxel(float val, float mat) {
-				this.val = val;
-				this.mat = mat;
+			public override string ToString() {
+				return position + " " + normal + " " + uv0;
 			}
 		}
 
@@ -44,7 +45,7 @@ namespace Adventure.Game.Manager.ShapeGeneration {
 		// Per Mesh
 		public Mesh meshA;
 		public Mesh meshB;
-		private IVoxel[] voxels;
+		private Vector2[] voxels;
 		private Chunk currentChunk;
 		private Chunk[] adjacentChunks;
 
@@ -53,11 +54,9 @@ namespace Adventure.Game.Manager.ShapeGeneration {
 
 		// Destination
 		private GraphicsBuffer vertexSolid;
-		private GraphicsBuffer indexSolid;
 		private GraphicsBuffer counterSolid;
 
 		private GraphicsBuffer vertexLiquid;
-		private GraphicsBuffer indexLiquid;
 		private GraphicsBuffer counterLiquid;
 
 		private ComputeShader shader;
@@ -75,7 +74,7 @@ namespace Adventure.Game.Manager.ShapeGeneration {
 		public ChunkMeshGenerator(ComputeShader shader, ChunkRemeshListener chunkRemeshListener) {
 			this.shader = shader;
 			this.OnChunkRemesh = chunkRemeshListener;
-			this.voxels = new IVoxel[OFFSIZE * OFFSIZE * OFFSIZE];
+			this.voxels = new Vector2[OFFSIZE * OFFSIZE * OFFSIZE];
 			this.adjacentChunks = new Chunk[27];
 		}
 
@@ -88,31 +87,25 @@ namespace Adventure.Game.Manager.ShapeGeneration {
 			triangleTable = new GraphicsBuffer(GraphicsBuffer.Target.Structured, TriangleConnectionTable.Length, sizeof(int));
 			voxelBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Structured, OFFSIZE * OFFSIZE * OFFSIZE, sizeof(float) * 2);
 
-			vertexSolid = new GraphicsBuffer(GraphicsBuffer.Target.Structured, CHUNK_GROUP_SIZE_01 * 6, sizeof(float) * (3 + 3 + 3 + 3));
-			indexSolid = new GraphicsBuffer(GraphicsBuffer.Target.Structured, CHUNK_GROUP_SIZE_01 * 6, sizeof(int));
+			vertexSolid = new GraphicsBuffer(GraphicsBuffer.Target.Structured, CHUNK_GROUP_SIZE_01 * 6, sizeof(float) * (3 + 3 + 4));
 			counterSolid = new GraphicsBuffer(GraphicsBuffer.Target.Structured, 1, sizeof(int));
 
-			vertexLiquid = new GraphicsBuffer(GraphicsBuffer.Target.Structured, CHUNK_GROUP_SIZE_01 * 6, sizeof(float) * (3 + 3 + 3 + 3));
-			indexLiquid = new GraphicsBuffer(GraphicsBuffer.Target.Structured, CHUNK_GROUP_SIZE_01 * 6, sizeof(int));
+			vertexLiquid = new GraphicsBuffer(GraphicsBuffer.Target.Structured, CHUNK_GROUP_SIZE_01 * 6, sizeof(float) * (3 + 3 + 4));
 			counterLiquid = new GraphicsBuffer(GraphicsBuffer.Target.Structured, 1, sizeof(int));
 
 			shader.SetBuffer(solid, "TriangleTable", triangleTable);
 			shader.SetBuffer(solid, "VoxelBuffer", voxelBuffer);
 			shader.SetBuffer(solid, "VertexSolid", vertexSolid);
-			shader.SetBuffer(solid, "IndexSolid", indexSolid);
 			shader.SetBuffer(solid, "CounterSolid", counterSolid);
 
 			shader.SetBuffer(bakeSolid, "VertexSolid", vertexSolid);
-			shader.SetBuffer(bakeSolid, "IndexSolid", indexSolid);
 
 			shader.SetBuffer(liquid, "TriangleTable", triangleTable);
 			shader.SetBuffer(liquid, "VoxelBuffer", voxelBuffer);
 			shader.SetBuffer(liquid, "VertexLiquid", vertexLiquid);
-			shader.SetBuffer(liquid, "IndexLiquid", indexLiquid);
 			shader.SetBuffer(liquid, "CounterLiquid", counterLiquid);
 
 			shader.SetBuffer(bakeLiquid, "VertexLiquid", vertexLiquid);
-			shader.SetBuffer(bakeLiquid, "IndexLiquid", indexLiquid);
 
 			triangleTable.SetData(TriangleConnectionTable);
 		}
@@ -121,29 +114,17 @@ namespace Adventure.Game.Manager.ShapeGeneration {
 			triangleTable.Release();
 			voxelBuffer.Release();
 			vertexSolid.Release();
-			indexSolid.Release();
 			counterSolid.Release();
 			vertexLiquid.Release();
-			indexLiquid.Release();
 			counterLiquid.Release();
 			OnChunkRemesh = null;
 		}
 
-		public void RemeshChunk(Chunk chunk, Dictionary<Vector3Int, ChunkHolder> chunks) {
+		public void RemeshChunk(Chunk chunk, WorldSettings settings, Dictionary<Vector3Int, ChunkHolder> chunks) {
 			this.currentChunk = chunk;
 			this.isRemeshing = true;
 
-			CreateDerivedChunk(voxels, chunk, chunks);
-
-			/*for (int xx = 0; xx < 16; xx++)
-			for (int yy = 0; yy < 16; yy++)
-			for (int zz = 0; zz < 16; zz++) {
-				IVoxel ivox = new IVoxel();
-				Voxel vox = this.currentChunk[xx, yy, zz];
-				ivox.mat = vox.Material;
-				ivox.val = vox.Volume;
-				voxels[(xx + 1) + (yy + 1) * 18 + (zz + 1) * 18 * 18] = ivox;
-			}*/
+			CreateDerivedChunk(voxels, chunk, settings, chunks);
 
 			voxelBuffer.SetData(voxels);
 			counterSolid.SetData(new uint[] { 0 });
@@ -155,13 +136,12 @@ namespace Adventure.Game.Manager.ShapeGeneration {
 			AsyncGPUReadback.Request(counterSolid, OnSolidReady);
 		}
 
-		private bool first;
-		private void CreateDerivedChunk(IVoxel[] voxels, Chunk currentChunk, Dictionary<Vector3Int, ChunkHolder> chunks) {
+		private void CreateDerivedChunk(Vector2[] voxels, Chunk currentChunk, WorldSettings settings, Dictionary<Vector3Int, ChunkHolder> chunks) {
 			int index = 0;
 			for (int z = -1; z <= 1; z++) 
 			for (int y = -1; y <= 1; y++) 
 			for (int x = -1; x <= 1; x++) {
-				Vector3Int position = currentChunk.local + new Vector3Int(x * 16, y * 16, z * 16);
+				Vector3Int position = settings.Pos(currentChunk.local + new Vector3Int(x * 16, y * 16, z * 16));
 
 				if (chunks.TryGetValue(position, out ChunkHolder adjacentChunk)) {
 					adjacentChunks[index] = adjacentChunk.chunk;
@@ -175,29 +155,25 @@ namespace Adventure.Game.Manager.ShapeGeneration {
 			int off = (OFFSIZE - 16) / 2;
 			Vector3Int sPos = currentChunk.local - new Vector3Int(off, off, off);
 			index = 0;
-			for (int z = 0; z < OFFSIZE; z++) 
-			for (int y = 0; y < OFFSIZE; y++) 
-			for (int x = 0; x < OFFSIZE; x++) {
-				Vector3Int inChunkPos = new Vector3Int((sPos.x + x) % 16, (sPos.y + y) % 16, (sPos.z + z) % 16);
-				int ix = (x + 16 - off) / 16;
-				int iy = (y + 16 - off) / 16;
+			for (int z = 0; z < OFFSIZE; z++) {
 				int iz = (z + 16 - off) / 16;
+				int pz = ((sPos.z + z + settings.length) % 16) * 256; // Z in coord
 				
-				Chunk chunk = adjacentChunks[ix + iy * 3 + iz * 9];
-				var voxel = chunk == null ? new Voxel() : chunk[inChunkPos];
-				int o = 0;
-				if (x < o || x > OFFSIZE - 1 - o || y < o || y > OFFSIZE - 1 - o || z < o || z > OFFSIZE - 1 - o) {
-					voxel = new Voxel();
+				for (int y = 0; y < OFFSIZE; y++) {
+					int iy = (y + 16 - off) / 16;
+					int py = ((sPos.y + y) % 16) * 16; // Y in coord
+					
+					for (int x = 0; x < OFFSIZE; x++) {
+						int ix = (x + 16 - off) / 16;
+						int px = (sPos.x + x + settings.width) % 16; // X in coord
+						
+						Chunk chunk = adjacentChunks[ix + iy * 3 + iz * 9];
+						var voxel = chunk == null ? new Voxel() : chunk[px + py + pz];
+						voxels[index] = new Vector2(voxel.Volume, voxel.Material);
+						index++;
+					}
 				}
-				voxels[index] = new IVoxel(voxel.Volume, voxel.Material);
-				index++;
 			}
-			if (!first) {
-				Debug.Log(sPos);
-				Debug.Log(sPos + new Vector3Int(OFFSIZE,OFFSIZE,OFFSIZE));
-				Debug.Log(">>"+voxels[0].val);
-			}
-			first = true;
 		}
 
 		private void OnSolidReady(AsyncGPUReadbackRequest request) {
@@ -215,15 +191,14 @@ namespace Adventure.Game.Manager.ShapeGeneration {
 
 		private Mesh ComposeMesh(int vertexCount) {
 			Mesh mesh = new Mesh();
-			mesh.indexFormat = IndexFormat.UInt32;
+			mesh.indexFormat = IndexFormat.UInt16;
 			mesh.indexBufferTarget = GraphicsBuffer.Target.Structured;
 			mesh.SetVertexBufferParams(vertexCount,
-				new VertexAttributeDescriptor(VertexAttribute.Position, VertexAttributeFormat.Float32, 3),
-				new VertexAttributeDescriptor(VertexAttribute.Normal, VertexAttributeFormat.Float32, 3),
-				new VertexAttributeDescriptor(VertexAttribute.TexCoord0, VertexAttributeFormat.Float32, 3),
-				new VertexAttributeDescriptor(VertexAttribute.TexCoord1, VertexAttributeFormat.Float32, 3)
+				new VertexAttributeDescriptor(VertexAttribute.Position, VertexAttributeFormat.Float16, 4),
+				new VertexAttributeDescriptor(VertexAttribute.Normal, VertexAttributeFormat.Float16, 4),
+				new VertexAttributeDescriptor(VertexAttribute.TexCoord0, VertexAttributeFormat.Float16, 4)
 			);
-			mesh.SetIndexBufferParams(vertexCount, IndexFormat.UInt32);
+			mesh.SetIndexBufferParams(vertexCount, IndexFormat.UInt16);
 			mesh.SetSubMesh(0, new SubMeshDescriptor(0, vertexCount), MeshUpdateFlags.DontRecalculateBounds);
 			mesh.vertexBufferTarget = GraphicsBuffer.Target.Structured;
 
@@ -241,52 +216,44 @@ namespace Adventure.Game.Manager.ShapeGeneration {
 
 		private Mesh ComposeMeshCpu(int vertexCount) {
 			Mesh mesh = new Mesh();
-			var arr = new GeneratedVertex[vertexCount];
+			var arr = new GeneratedVertexLow[vertexCount];
 			vertexSolid.GetData(arr);
 			var ind = new int[vertexCount];
-			indexSolid.GetData(ind);
+			for (int i = 0; i < vertexCount; i++) {
+				ind[i] = i;
+			}
 			Vector3[] pos = new Vector3[vertexCount];
 			Vector3[] nor = new Vector3[vertexCount];
-			Vector3[] tex0 = new Vector3[vertexCount];
-			Vector3[] tex1 = new Vector3[vertexCount];
-			string s = "";
+			Vector4[] tex0 = new Vector4[vertexCount];
 			for (int i = 0; i < vertexCount; i++) {
-				pos[i] = arr[i].position;
-				nor[i] = arr[i].normal;
-				tex0[i] = arr[i].uv0;
-				tex1[i] = arr[i].uv1;
-				s += nor[i]+", "+ (i % 8 == 0? "\n":"");
+				pos[i] = new Vector3(arr[i].position.x, arr[i].position.y, arr[i].position.z);
+				nor[i] = new Vector3(arr[i].normal.x, arr[i].normal.y, arr[i].normal.z);
+				tex0[i] = new Vector4(arr[i].uv0.x, arr[i].uv0.y, arr[i].uv0.z, arr[i].uv0.w);
 			}
-			Debug.Log(s);
 			mesh.vertices = pos;
 			mesh.normals = nor;
 			mesh.triangles = ind;
 			mesh.SetUVs(0, tex0);
-			mesh.SetUVs(1, tex1);
 			mesh.bounds = new Bounds(new Vector3(8, 8, 8), new Vector3(16, 16, 16));
 			mesh.Optimize();
 			return mesh;
 		}
 
 		public static void MeshToCpu(Mesh mesh) {
-			var arr = new GeneratedVertex[mesh.vertexCount];
-			Debug.Log(mesh.vertexCount);
+			var arr = new GeneratedVertexLow[mesh.vertexCount];
 			mesh.GetVertexBuffer(0).GetData(arr);
 			Vector3[] pos = new Vector3[mesh.vertexCount];
 			Vector3[] nor = new Vector3[mesh.vertexCount];
-			Vector3[] tex0 = new Vector3[mesh.vertexCount];
-			Vector3[] tex1 = new Vector3[mesh.vertexCount];
+			Vector4[] tex0 = new Vector4[mesh.vertexCount];
 			for (int i = 0; i < mesh.vertexCount; i++) {
-				pos[i] = arr[i].position;
-				nor[i] = arr[i].normal;
-				tex0[i] = arr[i].uv0;
-				tex1[i] = arr[i].uv1;
+				pos[i] = new Vector3(arr[i].position.x, arr[i].position.y, arr[i].position.z);
+				nor[i] = new Vector3(arr[i].normal.x, arr[i].normal.y, arr[i].normal.z);
+				tex0[i] = new Vector4(arr[i].uv0.x, arr[i].uv0.y, arr[i].uv0.z, arr[i].uv0.w);
 			}
 
 			mesh.vertices = pos;
 			mesh.normals = nor;
 			mesh.SetUVs(0, tex0);
-			mesh.SetUVs(1, tex1);
 		}
 
 		private static readonly int[] TriangleConnectionTable = {

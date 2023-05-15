@@ -201,16 +201,22 @@ void interpolate_normals_float(float3 normal1, float3 normal2, float3 normal3, f
     normal = total_weight < 0.0001 ? normal1 : normalize(result);
 }
 
+void unpack_palette_float(in float4 uv0, out float3 uv1) {
+    uv1 = uv0.w <= 1.1 ? float3(1, 0, 0) : uv0.w <= 2.1 ? float3(0, 1, 0) : float3(0, 0, 1);
+}
+
 void biplanar_cubes_float(
-    Texture2DArray tex, Texture2DArray map, SamplerState state, float3 p, float3 n, float3 palette, float3 material, float screen, float lods,
+    Texture2DArray tex, Texture2DArray map, SamplerState state, float3 p, float3 n, float3 palette, float3 material,
     out float4 rgba, out float3 normal, out float metallic, out float smoothness, out float4 emission, out float aocclusion) {
     
+    float3 dpdx = ddx(p);
+    float3 dpdy = ddy(p);
     const uint3 value[] = {
         uint3(0, 2, 1),
         uint3(1, 2, 0),
         uint3(2, 0, 1)
     };
-    const float3 mat = abs(palette);
+    const float3 mat = round(abs(palette)) - 1;
     const float3 pn = abs(n);
     const float3 sn = float3(sign(n.x), -sign(n.y), -sign(n.z));
 
@@ -232,19 +238,35 @@ void biplanar_cubes_float(
     float2 uv0 =  float2(p[ma.y] * sn[ma.x], p[ma.z]);
     float2 uv1 =  float2(p[me.y] * sn[me.x], p[me.z]);
     
+    float2 dx0 =  float2(dpdx[ma.y] * sn[ma.x], dpdx[ma.z]);
+    float2 dy0 =  float2(dpdy[ma.y] * sn[ma.x], dpdy[ma.z]);
+    float2 dx1 =  float2(dpdx[me.y] * sn[me.x], dpdx[me.z]);
+    float2 dy1 =  float2(dpdy[me.y] * sn[me.x], dpdy[me.z]);
+    
     float4 col = float4(0, 0, 0, 0);
-    const uint lod = lerp(1, 10, screen * 0.01 * lods);
     for (int i = 0; i < 3; ++i) {
-        float4 ca = tex.SampleLevel(state, float3(uv0.x, uv0.y, mat[i]), lod);
-        float4 cb = tex.SampleLevel(state, float3(uv1.x, uv1.y, mat[i]), lod);
+        float4 ca = tex.SampleGrad(state,
+            float3(uv0.x, uv0.y, mat[i]),
+            float3(dx0.x, dx0.y, mat[i]),
+            float3(dy0.x, dy0.y, mat[i]));
+        float4 cb = tex.SampleGrad(state,
+            float3(uv1.x, uv1.y, mat[i]),
+            float3(dx1.x, dx1.y, mat[i]),
+            float3(dy1.x, dy1.y, mat[i]));
         col += lerp(ca, cb, t) * material[i];
     }
     
     float3 nor = float3(0, 0, 0);
     float2 ext = float2(0, 0);
     for (int i = 0; i < 3; ++i) {
-        float4 ca = map.SampleLevel(state, float3(uv0.x, uv0.y, mat[i]), lod);
-        float4 cb = map.SampleLevel(state, float3(uv1.x, uv1.y, mat[i]), lod);
+        float4 ca = map.SampleGrad(state,
+            float3(uv0.x, uv0.y, mat[i]),
+            float3(dx0.x, dx0.y, mat[i]),
+            float3(dy0.x, dy0.y, mat[i]));
+        float4 cb = map.SampleGrad(state,
+            float3(uv1.x, uv1.y, mat[i]),
+            float3(dx1.x, dx1.y, mat[i]),
+            float3(dy1.x, dy1.y, mat[i]));
         ca.xy = ca.xy * 2 - 1;
         cb.xy = cb.xy * 2 - 1;
         nor += lerp(float3(ca.xy, sqrt(abs(1.0 - ca.x * ca.x - ca.y * ca.y))),

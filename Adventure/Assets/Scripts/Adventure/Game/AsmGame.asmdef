@@ -2,7 +2,8 @@
     "name": "AsmGame",
     "rootNamespace": "",
     "references": [
-        "GUID:8b35eb1f89251554396aaa667c5c51d5"
+        "GUID:8b35eb1f89251554396aaa667c5c51d5",
+        "GUID:d8b63aba1907145bea998dd612889d6b"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

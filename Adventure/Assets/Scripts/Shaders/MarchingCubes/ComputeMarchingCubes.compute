@@ -6,8 +6,12 @@
 struct GeneratedVertex {
     float3 position;
     float3 normal;
-    float3 uv0;
-    float3 uv1;
+    float4 uv0;
+};
+struct GeneratedVertexLow {
+    uint2 position;
+    uint2 normal;
+    uint2 uv0;
 };
 
 struct Voxel {
@@ -27,12 +31,10 @@ RWStructuredBuffer<uint> CounterSolid;
 RWStructuredBuffer<uint> CounterLiquid;
 
 RWStructuredBuffer<GeneratedVertex> VertexSolid;
-RWStructuredBuffer<uint> IndexSolid;
 
 RWStructuredBuffer<GeneratedVertex> VertexLiquid;
-RWStructuredBuffer<uint> IndexLiquid;
 
-RWStructuredBuffer<GeneratedVertex> MeshVertexBuffer;
+RWStructuredBuffer<GeneratedVertexLow> MeshVertexBuffer;
 RWStructuredBuffer<uint> MeshIndexBuffer;
 
 //
@@ -156,36 +158,20 @@ float3 GetSurfaceNormalLiquid(float3 pos) {
 //
 
 // Vertex buffer accessor
-void WriteVertex(const uint offset, const float3 p, const float3 n, const float3 uv0, const float3 uv1) {
+void WriteVertex(const uint offset, const float3 p, const float3 n, const float3 uv0, const float uv1) {
     GeneratedVertex vertex;
     vertex.position = p;
     vertex.normal = n;
-    vertex.uv0 = uv0;
-    vertex.uv1 = uv1;
+    vertex.uv0 = float4(uv0.x, uv0.y, uv0.z, uv1);
     VertexSolid[offset] = vertex;
 }
 
-// Index buffer accessor
-void WriteIndex(const uint index) {
-    IndexSolid[index] = index;
-    IndexSolid[index + 1] = index + 1;
-    IndexSolid[index + 2] = index + 2;
-}
-
-void WriteVertexLiquid(const uint offset, const float3 p, const float3 n, const float3 uv0, const float3 uv1) {
+void WriteVertexLiquid(const uint offset, const float3 p, const float3 n, const float3 uv0, const float uv1) {
     GeneratedVertex vertex;
     vertex.position = p;
     vertex.normal = n;
-    vertex.uv0 = uv0;
-    vertex.uv1 = uv1;
+    vertex.uv0 = float4(uv0.x, uv0.y, uv0.z, uv1);
     VertexLiquid[offset] = vertex;
-}
-
-// Index buffer accessor
-void WriteIndexLiquid(const uint index) {
-    IndexLiquid[index] = index;
-    IndexLiquid[index + 1] = index + 1;
-    IndexLiquid[index + 2] = index + 2;
 }
 
 //
@@ -253,10 +239,9 @@ void Marche(uint3 id : SV_DispatchThreadID) {
         InterlockedAdd(CounterSolid[0], 3, index);
 
         const float3 uv0 = float3(material[t_index0], material[t_index1], material[t_index2]);
-        WriteVertex(index    , vertices[t_index0], normals[t_index0], uv0, float3(1, 0, 0));
-        WriteVertex(index + 1, vertices[t_index1], normals[t_index1], uv0, float3(0, 1, 0));
-        WriteVertex(index + 2, vertices[t_index2], normals[t_index2], uv0, float3(0, 0, 1));
-        WriteIndex(index);
+        WriteVertex(index    , vertices[t_index0], normals[t_index0], uv0, 1);
+        WriteVertex(index + 1, vertices[t_index1], normals[t_index1], uv0, 2);
+        WriteVertex(index + 2, vertices[t_index2], normals[t_index2], uv0, 3);
     }
 }
 
@@ -314,25 +299,38 @@ void Swim(uint3 id : SV_DispatchThreadID) {
         InterlockedAdd(CounterLiquid[0], 3, index);
 
         const float3 uv0 = float3(material[t_index0], material[t_index1], material[t_index2]);
-        WriteVertexLiquid(index    , vertices[t_index0], normals[t_index0], uv0, float3(1, 0, 0));
-        WriteVertexLiquid(index + 1, vertices[t_index1], normals[t_index1], uv0, float3(0, 1, 0));
-        WriteVertexLiquid(index + 2, vertices[t_index2], normals[t_index2], uv0, float3(0, 0, 1));
-        WriteIndexLiquid(index);
+        WriteVertexLiquid(index    , vertices[t_index0], normals[t_index0], uv0, 1);
+        WriteVertexLiquid(index + 1, vertices[t_index1], normals[t_index1], uv0, 2);
+        WriteVertexLiquid(index + 2, vertices[t_index2], normals[t_index2], uv0, 3);
     }
 }
 
 [numthreads(64, 1, 1)]
 void BakeSolid(uint3 id : SV_DispatchThreadID) {
     const uint index = id.x;
-    const uint index12 = index * 12;
-    MeshVertexBuffer[index12] = VertexSolid[index];
-    MeshIndexBuffer[index] = IndexSolid[index];
+    GeneratedVertex ver = VertexSolid[index];
+    GeneratedVertexLow low;
+    low.position.x = f32tof16(ver.position.x) | (f32tof16(ver.position.y) << 16);
+    low.position.y = f32tof16(ver.position.z);
+    low.normal.x = f32tof16(ver.normal.x) | (f32tof16(ver.normal.y) << 16);
+    low.normal.y = f32tof16(ver.normal.z);
+    low.uv0.x = f32tof16(ver.uv0.x) | (f32tof16(ver.uv0.y) << 16);
+    low.uv0.y = f32tof16(ver.uv0.z) | (f32tof16(ver.uv0.w) << 16);
+    MeshVertexBuffer[index * 6] = low;
+    MeshIndexBuffer[index / 2] = (index & 0xFFFE) | ((index | 1) << 16);
 }
 
 [numthreads(64, 1, 1)]
 void BakeLiquid(uint3 id : SV_DispatchThreadID) {
     const uint index = id.x;
-    const uint index12 = index * 1;
-    MeshVertexBuffer[index12] = VertexLiquid[index];
-    MeshIndexBuffer[index] = IndexLiquid[index];
+    GeneratedVertex ver = VertexLiquid[index];
+    GeneratedVertexLow low;
+    low.position.x = f32tof16(ver.position.x) | (f32tof16(ver.position.y) << 16);
+    low.position.y = f32tof16(ver.position.z);
+    low.normal.x = f32tof16(ver.normal.x) | (f32tof16(ver.normal.y) << 16);
+    low.normal.y = f32tof16(ver.normal.z);
+    low.uv0.x = f32tof16(ver.uv0.x) | (f32tof16(ver.uv0.y) << 16);
+    low.uv0.y = f32tof16(ver.uv0.z) | (f32tof16(ver.uv0.w) << 16);
+    MeshVertexBuffer[index * 6] = low;
+    MeshIndexBuffer[index / 2] = (index & 0xFFFE) | ((index | 1) << 16);
 }

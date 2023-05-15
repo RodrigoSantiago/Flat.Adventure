@@ -18,6 +18,7 @@ namespace Adventure.Game.Manager {
         private ChunkMeshGenerator meshGenerator;
 
         public WorldPlayerController controller;
+        public WorldSettings settings;
         
         public int minViewSize = 2;
         public int maxViewSize = 2;
@@ -35,10 +36,8 @@ namespace Adventure.Game.Manager {
         private bool ready;
         private Vector3Int prevLocal;
         private Vector3Int prevReadyLocal;
-
         
         private void Start() {
-            
         }
 
         public bool IsReady() {
@@ -61,11 +60,11 @@ namespace Adventure.Game.Manager {
         private bool IsReadyToPlay() {
             Vector3Int loc = local;
             for (int x = -minViewSize; x < minViewSize; x++) {
-                int y = 0;
                 for (int z = -minViewSize; z < minViewSize; z++) {
-                    var key = loc + new Vector3Int(x * 16, y, z * 16);
-                    if (!chunks.ContainsKey(key)) {
-                        return false;
+                    for (int y = 0; y < 3; y++) {
+                        var key = settings.Pos(new Vector3Int(loc.x + (x * 16), y * 16, loc.z + (z * 16)));
+                        if (!settings.IsInside(key)) continue;
+                        if (!chunks.ContainsKey(key)) return false;
                     }
                 }
             }
@@ -76,12 +75,14 @@ namespace Adventure.Game.Manager {
         private void RequestToPlay() {
             Vector3Int loc = local;
             for (int x = -minViewSize; x < minViewSize; x++) {
-                int y = 0;
                 for (int z = -minViewSize; z < minViewSize; z++) {
-                    var key = loc + new Vector3Int(x * 16, y, z * 16);
-                    if (!chunks.ContainsKey(key) && !chunkRequest.Contains(key)) {
-                        chunkRequest.Add(key);
-                        controller.RequestChunk(key);
+                    for (int y = 0; y < 3; y++) {
+                        var key = settings.Pos(new Vector3Int(loc.x + (x * 16), y * 16, loc.z + (z * 16)));
+                        if (!settings.IsInside(key)) continue;
+                        if (!chunks.ContainsKey(key) && !chunkRequest.Contains(key)) {
+                            chunkRequest.Add(key);
+                            controller.RequestChunk(key);
+                        }
                     }
                 }
             }
@@ -111,7 +112,7 @@ namespace Adventure.Game.Manager {
                 var obj = Instantiate(meshPreview.gameObject);
                 obj.transform.position = chunk.local;
                 obj.GetComponent<MeshFilter>().mesh = mesh;
-                ChunkMeshGenerator.MeshToCpu(mesh);
+                //ChunkMeshGenerator.MeshToCpu(mesh);
             }
         }
 
@@ -131,7 +132,8 @@ namespace Adventure.Game.Manager {
                     
                     for (int y = 0; y < 16; y++) {
                         for (int x = 0; x < 16; x++) {
-                            s += value.chunk[x, y, 1].Volume.ToString("0.000")+" ";
+                            //s += value.chunk[x, y, 1].Volume.ToString("0.000")+" ";
+                            s += value.chunk[x, y, 1].Material+" ";
                         }
 
                         s += "\n";
@@ -151,10 +153,10 @@ namespace Adventure.Game.Manager {
                 holder.hasNeighboors = true;
                     
                 for (int x = -1; x <= 1; x++) 
-                for (int y = 0; y <= 0; y++) 
+                for (int y = -1; y <= 1; y++) 
                 for (int z = -1; z <= 1; z++) {
-                    var key = loc + new Vector3Int(x * 16, y * 16, z * 16);
-                    if (key.x < 0 || key.y < 0 || key.z < 0) continue;
+                    var key = settings.Pos(loc + new Vector3Int(x * 16, y * 16, z * 16));
+                    if (!settings.IsInside(key)) continue;
 
                     if (!chunks.ContainsKey(key)) {
                         holder.hasNeighboors = false;
@@ -162,11 +164,8 @@ namespace Adventure.Game.Manager {
                     }
                 }
                 end:;
-            }
-
-            foreach (var holder in chunks.Values) {
-                if (holder.hasNeighboors && holder.mesh == null) {
-                    meshGenerator.RemeshChunk(holder.chunk, chunks);
+                if (holder.hasNeighboors) {
+                    meshGenerator.RemeshChunk(holder.chunk, settings, chunks);
                     break;
                 }
             }
@@ -174,11 +173,22 @@ namespace Adventure.Game.Manager {
 
         private void RenderChunks() {
             RenderParams renderParams = new RenderParams(groundMaterial);
-
+            
             foreach (var entry in chunks) {
                 var m = entry.Value.mesh;
                 if (m != null) {
-                    var matrix = Matrix4x4.Translate(entry.Key);
+                    var pos = entry.Key;
+                    if (Math.Abs(pos.x - settings.width - local.x) < Math.Abs(pos.x - local.x)) {
+                        pos.x -= settings.width;
+                    }  else if (Math.Abs(pos.x + settings.width - local.x) < Math.Abs(pos.x - local.x)) {
+                        pos.x += settings.width;
+                    }
+                    if (Math.Abs(pos.z - settings.length - local.z) < Math.Abs(pos.z - local.z)) {
+                        pos.z -= settings.length;
+                    }  else if (Math.Abs(pos.z + settings.length - local.z) < Math.Abs(pos.z - local.z)) {
+                        pos.z += settings.length;
+                    }
+                    var matrix = Matrix4x4.Translate(pos);
                     Graphics.RenderMesh(in renderParams, m, 0, matrix);
                 }
             }

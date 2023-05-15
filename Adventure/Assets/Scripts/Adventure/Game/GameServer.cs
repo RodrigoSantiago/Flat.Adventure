@@ -24,13 +24,14 @@ namespace Adventure.Game {
         }
 
         public void CreateWorld() {
-            world = new World(1234, 16, 16, 16);
+            world = new World(1234, 1024, 64, 1024);
         }
 
         public void ConnectToWorld() {
             localController = new LocalController("Test", chunkManager, unitManager);
             localController.world = world;
             chunkManager.controller = localController;
+            chunkManager.settings = world.settings;
             
             world.AddController(localController);
         }

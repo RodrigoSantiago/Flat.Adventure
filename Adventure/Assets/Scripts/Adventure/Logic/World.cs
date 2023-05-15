@@ -13,12 +13,8 @@ namespace Adventure.Logic {
     public class World {
 
         public long seed { get; }
-        
-        public int width { get; }
-        
-        public int height { get; }
-        
-        public int depth { get; }
+
+        public readonly WorldSettings settings;
         
         public WorldMap worldMap { get; private set; }
         
@@ -27,11 +23,10 @@ namespace Adventure.Logic {
 
         public readonly WorldChunkController chunkController;
 
-        public World(long seed, int width, int height, int depth) {
+        public World(long seed, int width, int height, int length) {
             this.seed = seed;
-            this.width = width;
-            this.height = height;
-            this.depth = depth;
+            this.settings = new WorldSettings(width, height, length);
+            
             noise = new Noise(seed);
             worldMap = new WorldMap(this, noise);
 

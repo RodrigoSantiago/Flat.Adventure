@@ -65,10 +65,9 @@ namespace Adventure.Logic {
             for (int x = -minViewSize; x < minViewSize; x++) {
                 int y = 0;
                 for (int z = -minViewSize; z < minViewSize; z++) {
-                    var key = loc + new Vector3Int(x * 16, y, z * 16);
-                    if (!world.IsChunkReady(key)) {
-                        return false;
-                    }
+                    var key = world.settings.Pos(loc + new Vector3Int(x * 16, y * 16, z * 16));
+                    if (!world.settings.IsInside(key)) continue;
+                    if (!world.IsChunkReady(key)) return false;
                 }
             }
 
@@ -80,10 +79,9 @@ namespace Adventure.Logic {
             for (int x = -minViewSize; x < minViewSize; x++) {
                 int y = 0;
                 for (int z = -minViewSize; z < minViewSize; z++) {
-                    var key = loc + new Vector3Int(x * 16, y, z * 16);
-                    if (!world.IsChunkForReady(key)) {
-                        world.RequestChunk(key);
-                    }
+                    var key =  world.settings.Pos(loc + new Vector3Int(x * 16, y * 16, z * 16));
+                    if (!world.settings.IsInside(key)) continue;
+                    if (!world.IsChunkForReady(key)) world.RequestChunk(key);
                 }
             }
         }
