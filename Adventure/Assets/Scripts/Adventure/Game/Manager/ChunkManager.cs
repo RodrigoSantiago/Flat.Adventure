@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using Adventure.Game.Manager.ShapeGeneration;
 using Adventure.Logic;
 using Adventure.Logic.Data;
+using Unity.Collections;
+using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine;
 
 namespace Adventure.Game.Manager {
@@ -11,7 +13,9 @@ namespace Adventure.Game.Manager {
 
         public Material groundMaterial;
         public ComputeShader marchingCubesCompute;
-        public MeshFilter meshPreview;
+        public GameObject objPreview;
+        public GameObject objPreview2;
+        public Material[] matPreview;
 
         private List<Vector3Int> chunkRequest = new();
         private Dictionary<Vector3Int, ChunkHolder> chunks = new();
@@ -20,8 +24,9 @@ namespace Adventure.Game.Manager {
         public WorldPlayerController controller;
         public WorldSettings settings;
         
-        public int minViewSize = 2;
-        public int maxViewSize = 2;
+        public int minViewSize = 8;
+        public int maxViewSize = 8;
+        public int viewHeight = 16;
         public Vector3 position = new Vector3(64, 0, 64);
         public Vector3Int local {
             get {
@@ -38,6 +43,7 @@ namespace Adventure.Game.Manager {
         private Vector3Int prevReadyLocal;
         
         private void Start() {
+            UnsafeUtility.SetLeakDetectionMode(NativeLeakDetectionMode.Enabled);
         }
 
         public bool IsReady() {
@@ -59,9 +65,9 @@ namespace Adventure.Game.Manager {
         
         private bool IsReadyToPlay() {
             Vector3Int loc = local;
-            for (int x = -minViewSize; x < minViewSize; x++) {
-                for (int z = -minViewSize; z < minViewSize; z++) {
-                    for (int y = 0; y < 3; y++) {
+            for (int x = -minViewSize-1; x <= minViewSize; x++) {
+                for (int z = -minViewSize-1; z <= minViewSize; z++) {
+                    for (int y = 0; y < viewHeight; y++) {
                         var key = settings.Pos(new Vector3Int(loc.x + (x * 16), y * 16, loc.z + (z * 16)));
                         if (!settings.IsInside(key)) continue;
                         if (!chunks.ContainsKey(key)) return false;
@@ -71,27 +77,41 @@ namespace Adventure.Game.Manager {
 
             return true;
         }
-        
+
         private void RequestToPlay() {
             Vector3Int loc = local;
-            for (int x = -minViewSize; x < minViewSize; x++) {
-                for (int z = -minViewSize; z < minViewSize; z++) {
-                    for (int y = 0; y < 3; y++) {
+            List<Vector3Int> requests = new List<Vector3Int>();
+            for (int x = -minViewSize-1; x <= minViewSize; x++) {
+                for (int z = -minViewSize-1; z <= minViewSize; z++) {
+                    for (int y = 0; y < viewHeight; y++) {
                         var key = settings.Pos(new Vector3Int(loc.x + (x * 16), y * 16, loc.z + (z * 16)));
                         if (!settings.IsInside(key)) continue;
                         if (!chunks.ContainsKey(key) && !chunkRequest.Contains(key)) {
                             chunkRequest.Add(key);
-                            controller.RequestChunk(key);
+                            requests.Add(key);
                         }
                     }
                 }
             }
+
+            requests.Sort((a, b) => {
+                a = settings.CloserPos(a, local);
+                b = settings.CloserPos(b, local);
+
+                int dista = (a.x - local.x) * (a.x - local.x) + (a.y - local.y) * (a.y - local.y) + (a.z - local.z) * (a.z - local.z);
+                int distb = (b.x - local.x) * (b.x - local.x) + (b.y - local.y) * (b.y - local.y) + (b.z - local.z) * (b.z - local.z);
+                return dista.CompareTo(distb);
+            });
+            foreach (var request in requests) {
+                controller.RequestChunk(request);
+            }
         }
-        
+
 
         public void OnEnable() {
             if (meshGenerator == null) {
-                meshGenerator = new ChunkMeshGenerator(marchingCubesCompute, OnChunkRemesh);
+                //meshGenerator = new ChunkMeshGeneratorCPU(OnChunkRemesh);
+                meshGenerator = new ChunkMeshGeneratorGPU(marchingCubesCompute, OnChunkRemesh);
                 meshGenerator.Init();
             }
         }
@@ -105,19 +125,30 @@ namespace Adventure.Game.Manager {
             chunks[chunk.local] = new ChunkHolder(chunk);
         }
 
-        private bool first;
         public void OnChunkRemesh(Chunk chunk, Mesh mesh) {
             chunks[chunk.local].mesh = mesh;
-            if (mesh != null) {
+            /*if (mesh != null) {
                 var obj = Instantiate(meshPreview.gameObject);
                 obj.transform.position = chunk.local;
                 obj.GetComponent<MeshFilter>().mesh = mesh;
                 //ChunkMeshGenerator.MeshToCpu(mesh);
+            }*/
+        }
+
+        private void preview() {
+            var holder = chunks[Vector3Int.zero];
+            for (int x = 0; x < 16; x++) 
+            for (int y = 0; y < 16; y++) 
+            for (int z = 0; z < 16; z++) {
+                var voxel = holder.chunk[x, y, z];
+                var obj = Instantiate(voxel.volume > 0.5 ? objPreview : objPreview2);
+                obj.transform.position = new Vector3(x, y, z);
+                obj.transform.localScale = Vector3.Lerp(new Vector3(0.05f, 0.05f, 0.05f), new Vector3(0.25f, 0.25f, 0.25f), voxel.volume);
+                obj.GetComponent<Renderer>().material = matPreview[voxel.material];
             }
         }
 
         private void Update() {
-            
             RefreshChunks();
             
             RenderChunks();
@@ -127,20 +158,7 @@ namespace Adventure.Game.Manager {
             }
 
             if (Input.GetKeyDown(KeyCode.Space)) {
-                foreach (var value in chunks.Values) {
-                    string s = "";
-                    
-                    for (int y = 0; y < 16; y++) {
-                        for (int x = 0; x < 16; x++) {
-                            //s += value.chunk[x, y, 1].Volume.ToString("0.000")+" ";
-                            s += value.chunk[x, y, 1].Material+" ";
-                        }
-
-                        s += "\n";
-                    }
-                    Debug.Log(s);
-                    break;
-                }
+                position.x += 8;
             }
         }
 
@@ -164,8 +182,7 @@ namespace Adventure.Game.Manager {
                     }
                 }
                 end:;
-                if (holder.hasNeighboors) {
-                    meshGenerator.RemeshChunk(holder.chunk, settings, chunks);
+                if (holder.hasNeighboors && meshGenerator.RemeshChunk(holder.chunk, settings, chunks)) {
                     break;
                 }
             }
@@ -176,21 +193,11 @@ namespace Adventure.Game.Manager {
             
             foreach (var entry in chunks) {
                 var m = entry.Value.mesh;
-                if (m != null) {
-                    var pos = entry.Key;
-                    if (Math.Abs(pos.x - settings.width - local.x) < Math.Abs(pos.x - local.x)) {
-                        pos.x -= settings.width;
-                    }  else if (Math.Abs(pos.x + settings.width - local.x) < Math.Abs(pos.x - local.x)) {
-                        pos.x += settings.width;
-                    }
-                    if (Math.Abs(pos.z - settings.length - local.z) < Math.Abs(pos.z - local.z)) {
-                        pos.z -= settings.length;
-                    }  else if (Math.Abs(pos.z + settings.length - local.z) < Math.Abs(pos.z - local.z)) {
-                        pos.z += settings.length;
-                    }
-                    var matrix = Matrix4x4.Translate(pos);
-                    Graphics.RenderMesh(in renderParams, m, 0, matrix);
-                }
+                if (m == null) continue;
+                
+                var pos = settings.CloserPos(entry.Key, local);
+                var matrix = Matrix4x4.Translate(pos);
+                Graphics.RenderMesh(in renderParams, m, 0, matrix);
             }
         }
     }

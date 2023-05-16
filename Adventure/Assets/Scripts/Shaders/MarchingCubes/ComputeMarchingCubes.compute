@@ -14,11 +14,6 @@ struct GeneratedVertexLow {
     uint2 uv0;
 };
 
-struct Voxel {
-    float val;
-    float mat;
-};
-
 #define SIZE 20
 #define SIZE2 400
 #define SIZE3 8000
@@ -26,7 +21,7 @@ struct Voxel {
 
 StructuredBuffer<int> TriangleTable;
         
-StructuredBuffer<Voxel> VoxelBuffer;
+StructuredBuffer<float2> VoxelBuffer;
 RWStructuredBuffer<uint> CounterSolid;
 RWStructuredBuffer<uint> CounterLiquid;
 
@@ -40,39 +35,39 @@ RWStructuredBuffer<uint> MeshIndexBuffer;
 //
 // Input Voxels
 //
-Voxel GetVox(const uint x, const uint y, const uint z) {
+float2 GetVox(const uint x, const uint y, const uint z) {
     return VoxelBuffer[x + 2 + (y + 2) * SIZE + (z + 2) * SIZE2];
 }
 
 float2 SampleSolid(const uint3 pos) {
-    const Voxel vox = GetVox(pos.x, pos.y, pos.z);
-    return float2(max(sign(vox.mat + 1), 0) * vox.val, vox.mat);
+    const float2 vox = GetVox(pos.x, pos.y, pos.z);
+    return float2(max(sign(vox.y + 1), 0) * vox.x, vox.y);
 }
 
 float3 SampleLiquid(const uint3 pos) {
-    const Voxel vox = GetVox(pos.x, pos.y, pos.z);
-    return float3(max(-sign(vox.mat + 1), 0) * vox.val, vox.mat, ceil(vox.val));
+    const float2 vox = GetVox(pos.x, pos.y, pos.z);
+    return float3(max(-sign(vox.y + 1), 0) * vox.x, vox.y, ceil(vox.x));
 }
 
 float SampleVoxel(const uint3 pos) {
-    const Voxel vox = GetVox(pos.x, pos.y, pos.z);
-    return max(sign(vox.mat + 1), 0) * vox.val;
+    const float2 vox = GetVox(pos.x, pos.y, pos.z);
+    return max(sign(vox.y + 1), 0) * vox.x;
 }
 
 float SampleVoxelL(const uint x, const uint y, const uint z) {
-    const Voxel vox = GetVox(x, y, z);
-    return max(-sign(vox.mat + 1), 0) * vox.val;
+    const float2 vox = GetVox(x, y, z);
+    return max(-sign(vox.y + 1), 0) * vox.x;
 }
 
 float SampleVoxelLiquid(const uint3 pos) {
-    const Voxel vox0 = GetVox(pos.x, pos.y, pos.z);
+    const float2 vox0 = GetVox(pos.x, pos.y, pos.z);
     const float vox1 = SampleVoxelL(pos.x+1, pos.y, pos.z);
     const float vox2 = SampleVoxelL(pos.x-1, pos.y, pos.z);
     const float vox3 = SampleVoxelL(pos.x, pos.y+1, pos.z);
     const float vox4 = SampleVoxelL(pos.x, pos.y-1, pos.z);
     const float vox5 = SampleVoxelL(pos.x, pos.y, pos.z+1);
     const float vox6 = SampleVoxelL(pos.x, pos.y, pos.z-1);
-    return vox0.mat < 0 || vox0.val <= 0 ? vox0.val : max(max(max(max(max(vox1, vox2), vox3), vox4), vox5), vox6);
+    return vox0.y < 0 || vox0.x <= 0 ? vox0.x : max(max(max(max(max(vox1, vox2), vox3), vox4), vox5), vox6);
 }
 
 float3 GetSurfaceNormal(const float3 pos) {
@@ -196,7 +191,7 @@ uint2 EdgeVertexPair(const uint index) {
     return uint2(v1, v2);
 }
 
-[numthreads(8, 8, 8)]
+[numthreads(4, 4, 4)]
 void Marche(uint3 id : SV_DispatchThreadID) {
     
     uint selector = 0;
@@ -222,7 +217,9 @@ void Marche(uint3 id : SV_DispatchThreadID) {
         
         vertices[i] = lerp(vertex1, vertex2, param);
         normals[i] = GetSurfaceNormal(vertices[i]);
-        material[i] = abs(sample1.x > sample2.x ? sample1.y : sample2.y);
+        material[i] = abs(
+            sample1.x == 0 ? sample2.y :
+            sample2.x == 0 ? sample1.y :param < 0.5 ? sample1.y : sample2.y);
 
         const uint condition = abs(normals[i].x) > 0.99 && abs(normals[i].y) < 0.01 && abs(normals[i].z) < 0.01;
         normals[i].xyz = lerp(normals[i].xyz, float3(sign(normals[i].x) * 0.99, 0.01, 0.01), condition);
@@ -245,7 +242,7 @@ void Marche(uint3 id : SV_DispatchThreadID) {
     }
 }
 
-[numthreads(8, 8, 8)]
+[numthreads(4, 4, 4)]
 void Swim(uint3 id : SV_DispatchThreadID) {
     uint left[8]  = {4, 0, 1, 2, 7, 4, 5, 3};
     uint right[8] = {3, 2, 3, 0, 5, 1, 7, 6};
@@ -282,7 +279,9 @@ void Swim(uint3 id : SV_DispatchThreadID) {
         
         vertices[i] = lerp(vertex1, vertex2, param);
         normals[i] = GetSurfaceNormalLiquid(vertices[i]);
-        material[i] = abs(sample1.x > sample2.x ? sample1.y : sample2.y);
+        material[i] = abs(
+            sample1.x == 0 ? sample2.y :
+            sample2.x == 0 ? sample1.y :param < 0.5 ? sample1.y : sample2.y);
 
         const uint condition = abs(normals[i].x) > 0.99 && abs(normals[i].y) < 0.01 && abs(normals[i].z) < 0.01;
         normals[i].xyz = lerp(normals[i].xyz, float3(sign(normals[i].x) * 0.99, 0.01, 0.01), condition);

@@ -52,9 +52,6 @@
             "m_Id": "c1ec1989293d47aab1fed11edc9df44d"
         },
         {
-            "m_Id": "4c6ac9afbe394673916994b8990f58a9"
-        },
-        {
             "m_Id": "ec5af209b8ed45e8bf68b27442a901b5"
         },
         {
@@ -694,9 +691,9 @@
         "m_Expanded": true,
         "m_Position": {
             "serializedVersion": "2",
-            "x": -91.0,
-            "y": -73.0,
-            "width": 241.0,
+            "x": -37.000003814697269,
+            "y": -50.00000762939453,
+            "width": 240.99998474121095,
             "height": 94.00001525878906
         }
     },
@@ -830,43 +827,6 @@
 }
 
 {
-    "m_SGVersion": 0,
-    "m_Type": "UnityEditor.ShaderGraph.UVNode",
-    "m_ObjectId": "4c6ac9afbe394673916994b8990f58a9",
-    "m_Group": {
-        "m_Id": ""
-    },
-    "m_Name": "UV",
-    "m_DrawState": {
-        "m_Expanded": true,
-        "m_Position": {
-            "serializedVersion": "2",
-            "x": -290.0000305175781,
-            "y": -94.99999237060547,
-            "width": 145.00001525878907,
-            "height": 129.00001525878907
-        }
-    },
-    "m_Slots": [
-        {
-            "m_Id": "6b9b051ebbf8475c81fd757e98beea8f"
-        }
-    ],
-    "synonyms": [
-        "texcoords",
-        "coords",
-        "coordinates"
-    ],
-    "m_Precision": 0,
-    "m_PreviewExpanded": false,
-    "m_PreviewMode": 0,
-    "m_CustomColors": {
-        "m_SerializableColors": []
-    },
-    "m_OutputChannel": 1
-}
-
-{
     "m_SGVersion": 1,
     "m_Type": "UnityEditor.Rendering.Universal.ShaderGraph.UniversalTarget",
     "m_ObjectId": "5147e044d12048a89c48746c19aa77c3",
@@ -948,31 +908,6 @@
     "m_StageCapability": 2,
     "m_Value": 1.0,
     "m_DefaultValue": 1.0,
-    "m_Labels": []
-}
-
-{
-    "m_SGVersion": 0,
-    "m_Type": "UnityEditor.ShaderGraph.Vector4MaterialSlot",
-    "m_ObjectId": "6b9b051ebbf8475c81fd757e98beea8f",
-    "m_Id": 0,
-    "m_DisplayName": "Out",
-    "m_SlotType": 1,
-    "m_Hidden": false,
-    "m_ShaderOutputName": "Out",
-    "m_StageCapability": 3,
-    "m_Value": {
-        "x": 0.0,
-        "y": 0.0,
-        "z": 0.0,
-        "w": 0.0
-    },
-    "m_DefaultValue": {
-        "x": 0.0,
-        "y": 0.0,
-        "z": 0.0,
-        "w": 0.0
-    },
     "m_Labels": []
 }
 
@@ -1553,10 +1488,10 @@
         "m_Expanded": true,
         "m_Position": {
             "serializedVersion": "2",
-            "x": -290.0000305175781,
-            "y": -224.0,
-            "width": 145.00001525878907,
-            "height": 129.0
+            "x": -205.99998474121095,
+            "y": -132.00001525878907,
+            "width": 145.0,
+            "height": 129.00001525878907
         }
     },
     "m_Slots": [

@@ -17,7 +17,7 @@ namespace Adventure.Logic {
         public void LoadChunkSchedule() {
             long time = WorldTime.currentTimeMillis;
             while (Consume()) {
-                if (WorldTime.currentTimeMillis - time > 10) {
+                if (WorldTime.currentTimeMillis - time > 12) {
                     break;
                 }
             }

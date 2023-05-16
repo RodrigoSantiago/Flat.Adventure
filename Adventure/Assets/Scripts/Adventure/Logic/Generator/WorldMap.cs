@@ -207,20 +207,31 @@ namespace Adventure.Logic.Generator {
         }
 
         public float getHeight(float x, float z) {
-            return (float)(noise.Wave2D(x / 20f, z / 20f) + noise.Wave2D(x / 100f, z / 100f) * 4) / 5f * 32 + 4;
+            return (float)(noise.Wave2D(x / 40f, z / 40f) + noise.Wave2D(x / 200f, z / 200f) * 4) / 5f * 128 + 64;
         }
 
         public Chunk GenerateChunk(Vector3Int local) {
             Voxel[] voxels = new Voxel[16 * 16 * 16];
-            for (int x = 0; x < 16; x++)
-            for (int y = 0; y < 16; y++)
-            for (int z = 0; z < 16; z++) {
+            
+            bool single = true;
+            Voxel baseVoxel = new Voxel();
+            for (int z = 0; z < 16; z++)
+            for (int x = 0; x < 16; x++) { 
                 var h = getHeight(local.x + x, local.z + z);
-                float m2 = (h - (local.y + y));
-                voxels[x + y * 16 + z * 256] = new Voxel(y > 8 ? 1 : 2, m2 / 2 + 0.5f);
+                
+                for (int y = 0; y < 16; y++) {
+                    float m2 = (h - (local.y + y));
+                    var voxel = new Voxel(2, m2 / 2 + 0.5f);
+                    voxels[x + y * 16 + z * 256] = voxel;
+                    if (x == 0 && y == 0 && z == 0) {
+                        baseVoxel = voxel;
+                    } else if (baseVoxel != voxel) {
+                        single = false;
+                    }
+                }
             }
 
-            return new Chunk(local, voxels, true);
+            return single ? new Chunk(local, baseVoxel, true) : new Chunk(local, voxels, true);
 
 
             tempReadTypeTag++;
@@ -260,8 +271,8 @@ namespace Adventure.Logic.Generator {
             Biome biome = FindBiome(x, y, g, m, t);
             for (int i = 0; i < 16; i++) {
                 Voxel vox = biome.Generate(new Vector3Int(position.x, position.y, position.z + i), g, m, t);
-                blocks[offset] = vox.material;
-                volume[offset++] = vox.volume;
+                blocks[offset] = vox.mat;
+                volume[offset++] = vox.vol;
             }
         }
 

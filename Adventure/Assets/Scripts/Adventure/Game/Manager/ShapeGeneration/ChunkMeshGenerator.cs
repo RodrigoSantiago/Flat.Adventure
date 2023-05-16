@@ -9,7 +9,7 @@ using UnityEngine;
 using UnityEngine.Rendering;
 
 namespace Adventure.Game.Manager.ShapeGeneration {
-	public class ChunkMeshGenerator {
+	public abstract class ChunkMeshGenerator {
 
 		[StructLayout(LayoutKind.Sequential)]
 		public struct GeneratedVertex {
@@ -32,111 +32,42 @@ namespace Adventure.Game.Manager.ShapeGeneration {
 				return position + " " + normal + " " + uv0;
 			}
 		}
-
+		
 		public delegate void ChunkRemeshListener(Chunk chunk, Mesh mesh);
 
 		// Constants
-		private const int CHUNK_GROUP_SIZE_01 = 16 * 16 * 16 * 8; // * 8 * 8;
-		private const int CHUNK_GROUP_SIZE_02 = 16 * 16 * 16 * 8 * 8;
-		private const int CHUNK_GROUP_SIZE_04 = 16 * 16 * 16 * 8;
-		private const int CHUNK_GROUP_SIZE_08 = 16 * 16 * 16;
-		private const int OFFSIZE = 20;
+		protected const int CHUNK_MAX_VERTEX = 16 * 16 * 16 * 6 * 3;
+		protected const int OFFSIZE = 20;
 
 		// Per Mesh
-		public Mesh meshA;
-		public Mesh meshB;
-		private Vector2[] voxels;
-		private Chunk currentChunk;
-		private Chunk[] adjacentChunks;
+		protected Vector2[] voxels;
+		protected Chunk currentChunk;
+		protected Chunk[] adjacentChunks;
 
-		// Source
-		private GraphicsBuffer voxelBuffer;
+		protected ChunkRemeshListener OnChunkRemesh;
+		protected int indexCount = 0;
+		protected int indexCountLiquid = 0;
+		
+		public bool isRemeshing { get; protected set; }
 
-		// Destination
-		private GraphicsBuffer vertexSolid;
-		private GraphicsBuffer counterSolid;
-
-		private GraphicsBuffer vertexLiquid;
-		private GraphicsBuffer counterLiquid;
-
-		private ComputeShader shader;
-		private ChunkRemeshListener OnChunkRemesh;
-
-		private int solid, liquid, bakeSolid, bakeLiquid;
-		private GraphicsBuffer triangleTable;
-
-		private GeneratedVertex[] vertices;
-		private GeneratedVertex[] verticesLiquid;
-		private int indexCount = -1;
-		private int indexCountLiquid = -1;
-		public bool isRemeshing { get; private set; }
-
-		public ChunkMeshGenerator(ComputeShader shader, ChunkRemeshListener chunkRemeshListener) {
-			this.shader = shader;
+		protected ChunkMeshGenerator(ChunkRemeshListener chunkRemeshListener) {
 			this.OnChunkRemesh = chunkRemeshListener;
 			this.voxels = new Vector2[OFFSIZE * OFFSIZE * OFFSIZE];
 			this.adjacentChunks = new Chunk[27];
 		}
 
-		public void Init() {
-			solid = shader.FindKernel("Marche");
-			liquid = shader.FindKernel("Swim");
-			bakeSolid = shader.FindKernel("BakeSolid");
-			bakeLiquid = shader.FindKernel("BakeLiquid");
-
-			triangleTable = new GraphicsBuffer(GraphicsBuffer.Target.Structured, TriangleConnectionTable.Length, sizeof(int));
-			voxelBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Structured, OFFSIZE * OFFSIZE * OFFSIZE, sizeof(float) * 2);
-
-			vertexSolid = new GraphicsBuffer(GraphicsBuffer.Target.Structured, CHUNK_GROUP_SIZE_01 * 6, sizeof(float) * (3 + 3 + 4));
-			counterSolid = new GraphicsBuffer(GraphicsBuffer.Target.Structured, 1, sizeof(int));
-
-			vertexLiquid = new GraphicsBuffer(GraphicsBuffer.Target.Structured, CHUNK_GROUP_SIZE_01 * 6, sizeof(float) * (3 + 3 + 4));
-			counterLiquid = new GraphicsBuffer(GraphicsBuffer.Target.Structured, 1, sizeof(int));
-
-			shader.SetBuffer(solid, "TriangleTable", triangleTable);
-			shader.SetBuffer(solid, "VoxelBuffer", voxelBuffer);
-			shader.SetBuffer(solid, "VertexSolid", vertexSolid);
-			shader.SetBuffer(solid, "CounterSolid", counterSolid);
-
-			shader.SetBuffer(bakeSolid, "VertexSolid", vertexSolid);
-
-			shader.SetBuffer(liquid, "TriangleTable", triangleTable);
-			shader.SetBuffer(liquid, "VoxelBuffer", voxelBuffer);
-			shader.SetBuffer(liquid, "VertexLiquid", vertexLiquid);
-			shader.SetBuffer(liquid, "CounterLiquid", counterLiquid);
-
-			shader.SetBuffer(bakeLiquid, "VertexLiquid", vertexLiquid);
-
-			triangleTable.SetData(TriangleConnectionTable);
+		public virtual void Init() {
+			
 		}
 
-		public void Release() {
-			triangleTable.Release();
-			voxelBuffer.Release();
-			vertexSolid.Release();
-			counterSolid.Release();
-			vertexLiquid.Release();
-			counterLiquid.Release();
+		public virtual void Release() {
 			OnChunkRemesh = null;
 		}
 
-		public void RemeshChunk(Chunk chunk, WorldSettings settings, Dictionary<Vector3Int, ChunkHolder> chunks) {
-			this.currentChunk = chunk;
-			this.isRemeshing = true;
-
-			CreateDerivedChunk(voxels, chunk, settings, chunks);
-
-			voxelBuffer.SetData(voxels);
-			counterSolid.SetData(new uint[] { 0 });
-			//counterLiquid.SetData(new uint[]{0});
-
-			shader.Dispatch(solid, 2, 2, 2);
-			//shader.Dispatch(liquid, x/8, y/8, z/8);
-
-			AsyncGPUReadback.Request(counterSolid, OnSolidReady);
-		}
-
-		private void CreateDerivedChunk(Vector2[] voxels, Chunk currentChunk, WorldSettings settings, Dictionary<Vector3Int, ChunkHolder> chunks) {
+		public abstract bool RemeshChunk(Chunk chunk, WorldSettings settings, Dictionary<Vector3Int, ChunkHolder> chunks);
+		
+		protected bool CreateDerivedChunk(Vector2[] voxels, Chunk currentChunk, WorldSettings settings, Dictionary<Vector3Int, ChunkHolder> chunks) {
+			bool empty = true;
 			int index = 0;
 			for (int z = -1; z <= 1; z++) 
 			for (int y = -1; y <= 1; y++) 
@@ -145,6 +76,7 @@ namespace Adventure.Game.Manager.ShapeGeneration {
 
 				if (chunks.TryGetValue(position, out ChunkHolder adjacentChunk)) {
 					adjacentChunks[index] = adjacentChunk.chunk;
+					empty &= adjacentChunk.chunk.IsSingle();
 				} else {
 					adjacentChunks[index] = null;
 				}
@@ -152,6 +84,10 @@ namespace Adventure.Game.Manager.ShapeGeneration {
 				index++;
 			}
 
+			if (empty) return false;
+
+			empty = true;
+			Voxel baseVoxel = currentChunk[0];
 			int off = (OFFSIZE - 16) / 2;
 			Vector3Int sPos = currentChunk.local - new Vector3Int(off, off, off);
 			index = 0;
@@ -169,94 +105,19 @@ namespace Adventure.Game.Manager.ShapeGeneration {
 						
 						Chunk chunk = adjacentChunks[ix + iy * 3 + iz * 9];
 						var voxel = chunk == null ? new Voxel() : chunk[px + py + pz];
-						voxels[index] = new Vector2(voxel.Volume, voxel.Material);
+						voxels[index] = new Vector2(voxel.volume, voxel.material);
 						index++;
+						if (voxel != baseVoxel) {
+							empty = false;
+						}
 					}
 				}
 			}
+
+			return !empty;
 		}
-
-		private void OnSolidReady(AsyncGPUReadbackRequest request) {
-			var data = request.GetData<uint>();
-			indexCount = (int)data[0];
-			if (indexCount > 0) {
-				meshA = ComposeMesh(indexCount);
-			}
-
-			OnChunkRemesh?.Invoke(currentChunk, meshA);
-			isRemeshing = false;
-			meshA = null;
-			indexCount = 0;
-		}
-
-		private Mesh ComposeMesh(int vertexCount) {
-			Mesh mesh = new Mesh();
-			mesh.indexFormat = IndexFormat.UInt16;
-			mesh.indexBufferTarget = GraphicsBuffer.Target.Structured;
-			mesh.SetVertexBufferParams(vertexCount,
-				new VertexAttributeDescriptor(VertexAttribute.Position, VertexAttributeFormat.Float16, 4),
-				new VertexAttributeDescriptor(VertexAttribute.Normal, VertexAttributeFormat.Float16, 4),
-				new VertexAttributeDescriptor(VertexAttribute.TexCoord0, VertexAttributeFormat.Float16, 4)
-			);
-			mesh.SetIndexBufferParams(vertexCount, IndexFormat.UInt16);
-			mesh.SetSubMesh(0, new SubMeshDescriptor(0, vertexCount), MeshUpdateFlags.DontRecalculateBounds);
-			mesh.vertexBufferTarget = GraphicsBuffer.Target.Structured;
-
-			mesh.bounds = new Bounds(new Vector3(8, 8, 8), new Vector3(16, 16, 16));
-
-			var meshVertex = mesh.GetVertexBuffer(0);
-			var meshIndex = mesh.GetIndexBuffer();
-
-			shader.SetBuffer(bakeSolid, "MeshVertexBuffer", meshVertex);
-			shader.SetBuffer(bakeSolid, "MeshIndexBuffer", meshIndex);
-			shader.Dispatch(bakeSolid, Mathf.CeilToInt((vertexCount) / 64f), 1, 1);
-
-			return mesh;
-		}
-
-		private Mesh ComposeMeshCpu(int vertexCount) {
-			Mesh mesh = new Mesh();
-			var arr = new GeneratedVertexLow[vertexCount];
-			vertexSolid.GetData(arr);
-			var ind = new int[vertexCount];
-			for (int i = 0; i < vertexCount; i++) {
-				ind[i] = i;
-			}
-			Vector3[] pos = new Vector3[vertexCount];
-			Vector3[] nor = new Vector3[vertexCount];
-			Vector4[] tex0 = new Vector4[vertexCount];
-			for (int i = 0; i < vertexCount; i++) {
-				pos[i] = new Vector3(arr[i].position.x, arr[i].position.y, arr[i].position.z);
-				nor[i] = new Vector3(arr[i].normal.x, arr[i].normal.y, arr[i].normal.z);
-				tex0[i] = new Vector4(arr[i].uv0.x, arr[i].uv0.y, arr[i].uv0.z, arr[i].uv0.w);
-			}
-			mesh.vertices = pos;
-			mesh.normals = nor;
-			mesh.triangles = ind;
-			mesh.SetUVs(0, tex0);
-			mesh.bounds = new Bounds(new Vector3(8, 8, 8), new Vector3(16, 16, 16));
-			mesh.Optimize();
-			return mesh;
-		}
-
-		public static void MeshToCpu(Mesh mesh) {
-			var arr = new GeneratedVertexLow[mesh.vertexCount];
-			mesh.GetVertexBuffer(0).GetData(arr);
-			Vector3[] pos = new Vector3[mesh.vertexCount];
-			Vector3[] nor = new Vector3[mesh.vertexCount];
-			Vector4[] tex0 = new Vector4[mesh.vertexCount];
-			for (int i = 0; i < mesh.vertexCount; i++) {
-				pos[i] = new Vector3(arr[i].position.x, arr[i].position.y, arr[i].position.z);
-				nor[i] = new Vector3(arr[i].normal.x, arr[i].normal.y, arr[i].normal.z);
-				tex0[i] = new Vector4(arr[i].uv0.x, arr[i].uv0.y, arr[i].uv0.z, arr[i].uv0.w);
-			}
-
-			mesh.vertices = pos;
-			mesh.normals = nor;
-			mesh.SetUVs(0, tex0);
-		}
-
-		private static readonly int[] TriangleConnectionTable = {
+		
+		protected static readonly int[] TriangleConnectionTable = {
 			-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
 			0, 8, 3, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
 			0, 1, 9, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,

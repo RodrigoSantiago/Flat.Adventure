@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections;
+using System.Collections.Generic;
 using Adventure.Game.Controller;
 using Adventure.Game.Manager;
 using Adventure.Logic;
@@ -12,6 +14,12 @@ namespace Adventure.Game {
 
         private LocalController localController;
         private World world;
+        
+        private static GameServer instance;
+
+        private void Awake() {
+            instance = this;
+        }
 
         private void Start() {
             CreateWorld();
@@ -24,7 +32,7 @@ namespace Adventure.Game {
         }
 
         public void CreateWorld() {
-            world = new World(1234, 1024, 64, 1024);
+            world = new World(1234, 1024, 256, 1024);
         }
 
         public void ConnectToWorld() {
@@ -34,6 +42,10 @@ namespace Adventure.Game {
             chunkManager.settings = world.settings;
             
             world.AddController(localController);
+        }
+
+        public static Coroutine StartAsync(IEnumerator enumerator) {
+            return instance.StartCoroutine(enumerator);
         }
     }
 }

@@ -33,44 +33,38 @@ namespace Adventure.Logic.Data {
             return (byte)Mathf.RoundToInt(Mathf.Clamp01(f) * 15);//(byte)Mathf.RoundToInt(Mathf.Clamp01(f) * 15);
         }
         
-        public byte material;
-        public byte volume;
+        public byte mat;
+        public byte vol;
 
-        public int Material {
-            get {
-                return material;
-            }
+        public int material {
+            get { return mat; }
         }
 
-        public float Volume {
-            get {
-                return ToFloat(volume);
-            }
+        public float volume {
+            get { return ToFloat(vol); }
         }
 
-        public ushort Pack {
-            get {
-                return (ushort)((volume << 8) | material);
-            }
+        public ushort pack {
+            get { return (ushort)((vol << 8) | mat); }
         }
 
-        public Voxel(byte material, byte volume) {
-            this.material = material;
-            this.volume = volume;
+        public Voxel(byte mat, byte vol) {
+            this.mat = mat;
+            this.vol = vol;
         }
 
         public Voxel(int material, float volume) {
-            this.material = (byte)material;
-            this.volume = ToByte(volume);
+            this.mat = (byte)material;
+            this.vol = ToByte(volume);
         }
 
         public Voxel(int packData) {
-            this.material = (byte)(packData & 0xFF);
-            this.volume = (byte)((packData & 0xFF00) >> 8);
+            this.mat = (byte)(packData & 0xFF);
+            this.vol = (byte)((packData & 0xFF00) >> 8);
         }
 
         public override string ToString() {
-            return "{" + Material + ", " + Volume + "}";
+            return "{" + material + ", " + volume + "}";
         }
 
         public override bool Equals(object obj) {
@@ -78,15 +72,15 @@ namespace Adventure.Logic.Data {
         }
         
         public bool Equals(Voxel p) {
-            return p.material == material && p.volume == volume;
+            return p.mat == mat && p.vol == vol;
         }
 
         public override int GetHashCode() {
-            return this.Pack;
+            return this.pack;
         }
 
         public static bool operator ==(Voxel lhs, Voxel rhs) {
-            return lhs.material == rhs.material && lhs.volume == rhs.volume;
+            return lhs.mat == rhs.mat && lhs.vol == rhs.vol;
         }
 
         public static bool operator !=(Voxel lhs, Voxel rhs) {

@@ -21,6 +21,20 @@ namespace Adventure.Logic {
             return pos;
         }
 
+        public Vector3Int CloserPos(Vector3Int pos, Vector3Int reference) {
+            if (Math.Abs(pos.x - width - reference.x) < Math.Abs(pos.x - reference.x)) {
+                pos.x -= width;
+            }  else if (Math.Abs(pos.x + width - reference.x) < Math.Abs(pos.x - reference.x)) {
+                pos.x += width;
+            }
+            if (Math.Abs(pos.z - length - reference.z) < Math.Abs(pos.z - reference.z)) {
+                pos.z -= length;
+            }  else if (Math.Abs(pos.z + length - reference.z) < Math.Abs(pos.z - reference.z)) {
+                pos.z += length;
+            }
+            return pos;
+        }
+
         public bool IsInside(Vector3Int pos) {
             return pos.x >= 0 && pos.x < width && pos.y >= 0 && pos.y < height && pos.z >= 0 && pos.z < length;
         }
