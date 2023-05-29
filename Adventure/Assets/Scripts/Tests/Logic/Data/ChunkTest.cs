@@ -12,13 +12,13 @@ namespace Tests.Logic.Data {
         public void SetUp() {
             voxels = new Voxel[16 * 16 * 16];
             for (int i = 0; i < 16 * 16 * 16; i++) {
-                voxels[i] = new Voxel(i % 64, i % 64 == 0 ? 0 : i % 13 == 1 ? 0.6f : 1f);
+                voxels[i] = new Voxel(i % 64 == 0 ? 0 : i % 13 == 1 ? 0.6f : 1f, i % 64);
             }
         }
 
         [Test]
         public void Chunk() {
-            Chunk chunk = new Chunk(new Vector3Int(0, 0, 0), voxels, true);
+            Chunk chunk = new Chunk(new Vector3Int(0, 0, 0), 0, true, voxels);
 
             for (int i = 0; i < 16 * 16 * 16; i++) {
                 int x = i % 16;
@@ -30,8 +30,8 @@ namespace Tests.Logic.Data {
 
         [Test]
         public void GetSetIndexer() {
-            Chunk chunk = new Chunk(new Vector3Int(0, 0, 0), voxels, true);
-            Voxel newVoxel = new Voxel(4, 0.6f);
+            Chunk chunk = new Chunk(new Vector3Int(0, 0, 0), 0, true, voxels);
+            Voxel newVoxel = new Voxel(0.6f, 4);
             
             chunk[10, 10, 10] = newVoxel;
             Assert.IsFalse(chunk.original, "After edited a Chunk could not be Original");

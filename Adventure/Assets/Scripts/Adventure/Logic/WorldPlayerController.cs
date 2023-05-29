@@ -8,7 +8,7 @@ namespace Adventure.Logic {
         
         public WorldPlayer player { get; internal set; }
 
-        public abstract void RequestChunk(Vector3Int local);
+        public abstract void RequestChunk(Vector3Int local, int lod);
         
         public abstract void OnChunkReceived(Chunk chunk);
     }

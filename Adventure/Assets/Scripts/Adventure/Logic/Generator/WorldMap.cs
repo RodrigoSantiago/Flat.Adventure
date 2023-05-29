@@ -221,7 +221,7 @@ namespace Adventure.Logic.Generator {
                 
                 for (int y = 0; y < 16; y++) {
                     float m2 = (h - (local.y + y));
-                    var voxel = new Voxel(2, m2 / 2 + 0.5f);
+                    var voxel = new Voxel(m2 / 2 + 0.5f, 2);
                     voxels[x + y * 16 + z * 256] = voxel;
                     if (x == 0 && y == 0 && z == 0) {
                         baseVoxel = voxel;
@@ -231,7 +231,7 @@ namespace Adventure.Logic.Generator {
                 }
             }
 
-            return single ? new Chunk(local, baseVoxel, true) : new Chunk(local, voxels, true);
+            return single ? new Chunk(local, 0, true, baseVoxel) : new Chunk(local, 0, true, voxels);
 
 
             tempReadTypeTag++;

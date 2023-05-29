@@ -33,34 +33,34 @@ namespace Adventure.Logic.Data {
             return (byte)Mathf.RoundToInt(Mathf.Clamp01(f) * 15);//(byte)Mathf.RoundToInt(Mathf.Clamp01(f) * 15);
         }
         
-        public byte mat;
         public byte vol;
-
-        public int material {
-            get { return mat; }
-        }
+        public byte mat;
 
         public float volume {
             get { return ToFloat(vol); }
         }
 
+        public int material {
+            get { return mat; }
+        }
+
         public ushort pack {
-            get { return (ushort)((vol << 8) | mat); }
+            get { return (ushort)((mat << 8) | vol); }
         }
 
-        public Voxel(byte mat, byte vol) {
-            this.mat = mat;
+        public Voxel(byte vol, byte mat) {
             this.vol = vol;
+            this.mat = mat;
         }
 
-        public Voxel(int material, float volume) {
-            this.mat = (byte)material;
+        public Voxel(float volume, int material) {
             this.vol = ToByte(volume);
+            this.mat = (byte)material;
         }
 
         public Voxel(int packData) {
-            this.mat = (byte)(packData & 0xFF);
-            this.vol = (byte)((packData & 0xFF00) >> 8);
+            this.vol = (byte)(packData & 0xFF);
+            this.mat = (byte)((packData & 0xFF00) >> 8);
         }
 
         public override string ToString() {

@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
+using Adventure.Game.Manager.ChunkManagment;
 using Adventure.Logic;
 using Adventure.Logic.Data;
 using Unity.Mathematics;
@@ -23,24 +24,28 @@ namespace Adventure.Game.Manager.ShapeGeneration {
 
 		private ComputeShader shader;
 		private ChunkRemeshListener OnChunkRemesh;
+		private ChunkRemeshListener OnChunkRemeshLod;
 
-		private int solid, liquid, bakeSolid, bakeLiquid;
-		private GraphicsBuffer triangleTable;
+		private int solid, liquid, solidLod, bakeSolid, bakeLiquid;
+		private GraphicsBuffer triangleTable, triangleTransitionTable;
 
-		public ChunkMeshGeneratorGPU(ComputeShader shader, ChunkRemeshListener chunkRemeshListener) : base(chunkRemeshListener) {
+		public ChunkMeshGeneratorGPU(ComputeShader shader, ChunkRemeshListener chunkRemeshListener, ChunkRemeshListener chunkRemeshLodListener) : base(chunkRemeshListener) {
 			this.shader = shader;
 			this.OnChunkRemesh = chunkRemeshListener;
+			this.OnChunkRemeshLod = chunkRemeshLodListener;
 			this.voxels = new Vector2[OFFSIZE * OFFSIZE * OFFSIZE];
 			this.adjacentChunks = new Chunk[27];
 		}
 
 		public override void Init() {
 			solid = shader.FindKernel("Marche");
+			solidLod = shader.FindKernel("MarcheLod");
 			liquid = shader.FindKernel("Swim");
 			bakeSolid = shader.FindKernel("BakeSolid");
 			bakeLiquid = shader.FindKernel("BakeLiquid");
 
 			triangleTable = new GraphicsBuffer(GraphicsBuffer.Target.Structured, TriangleConnectionTable.Length, sizeof(int));
+			triangleTransitionTable = new GraphicsBuffer(GraphicsBuffer.Target.Structured, TriangleTransitionConnectionTable.Length, sizeof(int));
 			voxelBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Structured, OFFSIZE * OFFSIZE * OFFSIZE, sizeof(float) * 2);
 
 			vertexSolid = new GraphicsBuffer(GraphicsBuffer.Target.Structured, CHUNK_MAX_VERTEX, sizeof(float) * (3 + 3 + 4));
@@ -54,6 +59,11 @@ namespace Adventure.Game.Manager.ShapeGeneration {
 			shader.SetBuffer(solid, "VertexSolid", vertexSolid);
 			shader.SetBuffer(solid, "CounterSolid", counterSolid);
 
+			shader.SetBuffer(solidLod, "TriangleTable", triangleTransitionTable);
+			shader.SetBuffer(solidLod, "VoxelBuffer", voxelBuffer);
+			shader.SetBuffer(solidLod, "VertexSolid", vertexSolid);
+			shader.SetBuffer(solidLod, "CounterSolid", counterSolid);
+			
 			shader.SetBuffer(bakeSolid, "VertexSolid", vertexSolid);
 
 			shader.SetBuffer(liquid, "TriangleTable", triangleTable);
@@ -64,6 +74,7 @@ namespace Adventure.Game.Manager.ShapeGeneration {
 			shader.SetBuffer(bakeLiquid, "VertexLiquid", vertexLiquid);
 
 			triangleTable.SetData(TriangleConnectionTable);
+			triangleTransitionTable.SetData(TriangleTransitionConnectionTable);
 		}
 
 		public override void Release() {
@@ -95,18 +106,82 @@ namespace Adventure.Game.Manager.ShapeGeneration {
 			}
 		}
 
+		public override bool RemeshChunkLod(Chunk chunk, WorldSettings settings, Dictionary<Vector3Int, ChunkHolder> chunks, Vector3Int minLimit, Vector3Int maxLimit) {
+			if (CreateDerivedChunk(voxels, chunk, settings, chunks)) {
+				this.currentChunk = chunk;
+				this.isRemeshing = true;
+				
+				voxelBuffer.SetData(voxels);
+				counterSolid.SetData(new uint[] { 0 });
+				//counterLiquid.SetData(new uint[]{0});
+				shader.SetFloat("lodDis", 0.01f);
+				shader.SetVector("minlimit", new Vector4(minLimit.x, minLimit.y, minLimit.z, 0));
+				shader.SetVector("maxLimit", new Vector4(maxLimit.x, maxLimit.y, maxLimit.z, 0));
+
+				if (maxLimit.x == 1) {
+					shader.SetVector("lodSideX", new Vector4(0, 1, 0));
+					shader.SetVector("lodSideY", new Vector4(0, 0, 1));
+					shader.SetVector("lodSideZ", new Vector4(1, 0, 0));
+					shader.Dispatch(solidLod, 1, 1, 1);
+				}
+				if (minLimit.x == 1) {
+					shader.SetVector("lodSideX", new Vector4(0, 0, 1));
+					shader.SetVector("lodSideY", new Vector4(0, 1, 0));
+					shader.SetVector("lodSideZ", new Vector4(-1, 0, 0));
+					shader.Dispatch(solidLod, 1, 1, 1);
+				}
+				if (minLimit.y == 1) {
+					shader.SetVector("lodSideX", new Vector4(1, 0, 0));
+					shader.SetVector("lodSideY", new Vector4(0, 0, 1));
+					shader.SetVector("lodSideZ", new Vector4(0, -1, 0));
+					shader.Dispatch(solidLod, 1, 1, 1);
+				}
+				if (maxLimit.y == 1) {
+					shader.SetVector("lodSideX", new Vector4(0, 0, 1));
+					shader.SetVector("lodSideY", new Vector4(1, 0, 0));
+					shader.SetVector("lodSideZ", new Vector4(0, 1, 0));
+					shader.Dispatch(solidLod, 1, 1, 1);
+				}
+				if (minLimit.z == 1) {
+					shader.SetVector("lodSideX", new Vector4(0, 1, 0));
+					shader.SetVector("lodSideY", new Vector4(1, 0, 0));
+					shader.SetVector("lodSideZ", new Vector4(0, 0, -1));
+					shader.Dispatch(solidLod, 1, 1, 1);
+				}
+				if (maxLimit.z == 1) {
+					shader.SetVector("lodSideX", new Vector4(1, 0, 0));
+					shader.SetVector("lodSideY", new Vector4(0, 1, 0));
+					shader.SetVector("lodSideZ", new Vector4(0, 0, 1));
+					shader.Dispatch(solidLod, 1, 1, 1);
+				}
+
+				AsyncGPUReadback.Request(counterSolid, OnSolidLodReady);
+				return true;
+			} else {
+				return false;
+			}
+		}
+		
 		private void OnSolidReady(AsyncGPUReadbackRequest request) {
 			var data = request.GetData<uint>();
 			indexCount = (int)data[0];
-
-			if (indexCount > 0) {
-				OnChunkRemesh?.Invoke(currentChunk, ComposeMesh(indexCount));
-			} else {
-				OnChunkRemesh?.Invoke(currentChunk, null);
-			}
-
+			
+			Mesh mesh = indexCount > 0 ? ComposeMesh(indexCount) : null;
 			isRemeshing = false;
 			indexCount = 0;
+
+			OnChunkRemesh?.Invoke(currentChunk, mesh);
+		}
+		
+		private void OnSolidLodReady(AsyncGPUReadbackRequest request) {
+			var data = request.GetData<uint>();
+			indexCount = (int)data[0];
+			
+			Mesh mesh = indexCount > 0 ? ComposeMesh(indexCount) : null;
+			isRemeshing = false;
+			indexCount = 0;
+
+			OnChunkRemeshLod?.Invoke(currentChunk, mesh);
 		}
 
 		private Mesh ComposeMesh(int vertexCount) {
@@ -131,31 +206,6 @@ namespace Adventure.Game.Manager.ShapeGeneration {
 			shader.SetBuffer(bakeSolid, "MeshIndexBuffer", meshIndex);
 			shader.Dispatch(bakeSolid, Mathf.CeilToInt((vertexCount) / 64f), 1, 1);
 
-			return mesh;
-		}
-
-		private Mesh ComposeMeshCpu(int vertexCount) {
-			Mesh mesh = new Mesh();
-			var arr = new GeneratedVertexLow[vertexCount];
-			vertexSolid.GetData(arr);
-			var ind = new int[vertexCount];
-			for (int i = 0; i < vertexCount; i++) {
-				ind[i] = i;
-			}
-			Vector3[] pos = new Vector3[vertexCount];
-			Vector3[] nor = new Vector3[vertexCount];
-			Vector4[] tex0 = new Vector4[vertexCount];
-			for (int i = 0; i < vertexCount; i++) {
-				pos[i] = new Vector3(arr[i].position.x, arr[i].position.y, arr[i].position.z);
-				nor[i] = new Vector3(arr[i].normal.x, arr[i].normal.y, arr[i].normal.z);
-				tex0[i] = new Vector4(arr[i].uv0.x, arr[i].uv0.y, arr[i].uv0.z, arr[i].uv0.w);
-			}
-			mesh.vertices = pos;
-			mesh.normals = nor;
-			mesh.triangles = ind;
-			mesh.SetUVs(0, tex0);
-			mesh.bounds = new Bounds(new Vector3(8, 8, 8), new Vector3(16, 16, 16));
-			mesh.Optimize();
 			return mesh;
 		}
 

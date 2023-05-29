@@ -15,12 +15,6 @@ namespace Adventure.Game {
         private LocalController localController;
         private World world;
         
-        private static GameServer instance;
-
-        private void Awake() {
-            instance = this;
-        }
-
         private void Start() {
             CreateWorld();
             
@@ -42,10 +36,6 @@ namespace Adventure.Game {
             chunkManager.settings = world.settings;
             
             world.AddController(localController);
-        }
-
-        public static Coroutine StartAsync(IEnumerator enumerator) {
-            return instance.StartCoroutine(enumerator);
         }
     }
 }

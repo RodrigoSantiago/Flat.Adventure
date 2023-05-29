@@ -16,12 +16,12 @@ namespace Adventure.Game.Controller {
             this.unitManager = unitManager;
         }
 
-        public override void RequestChunk(Vector3Int local) {
-            world.RequestChunk(local, this);
+        public override void RequestChunk(Vector3Int local, int lod) {
+            world.RequestChunk(local, this, lod);
         }
 
         public override void OnChunkReceived(Chunk chunk) {
-            chunkManager.UpdateChunk(chunk);
+            chunkManager.OnChunkReceived(chunk);
         }
     }
 }

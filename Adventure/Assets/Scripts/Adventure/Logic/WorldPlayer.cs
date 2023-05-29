@@ -81,7 +81,7 @@ namespace Adventure.Logic {
                 for (int z = -minViewSize; z < minViewSize; z++) {
                     var key =  world.settings.Pos(loc + new Vector3Int(x * 16, y * 16, z * 16));
                     if (!world.settings.IsInside(key)) continue;
-                    if (!world.IsChunkForReady(key)) world.RequestChunk(key);
+                    world.RequestChunk(key);
                 }
             }
         }

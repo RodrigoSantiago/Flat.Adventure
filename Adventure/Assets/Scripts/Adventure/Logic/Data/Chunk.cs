@@ -10,7 +10,8 @@ namespace Adventure.Logic.Data {
         private const int SIZE2 = 256;
         private const int SIZE2H = 2048;
         private const int SIZE3 = 4096;
-        
+
+        public readonly int lod; 
         public byte[] materials { get; private set; }
         public byte[] volumes { get; private set; }
         
@@ -35,8 +36,9 @@ namespace Adventure.Logic.Data {
             set { Set(index, value); }
         }
         
-        public Chunk(Vector3Int local, Voxel[] voxels, bool original) {
+        public Chunk(Vector3Int local, int lod, bool original, params Voxel[] voxels) {
             this.local = local;
+            this.lod = lod;
             this.original = original;
 
             materials = new byte[SIZE3];
@@ -53,8 +55,9 @@ namespace Adventure.Logic.Data {
             }
         }
 
-        public Chunk(Vector3Int local, Voxel voxel, bool original) {
+        public Chunk(Vector3Int local, int lod, bool original, Voxel voxel) {
             this.local = local;
+            this.lod = lod;
             this.original = original;
             this.baseMaterial = voxel.mat;
             this.baseVolume = voxel.vol;
@@ -67,7 +70,7 @@ namespace Adventure.Logic.Data {
         public Voxel Get(int index) {
             byte material = materials == null ? baseMaterial : materials[index];
             byte volume = volumes == null ? baseVolume : (byte)(index % 2 == 0 ? volumes[index / 2] & 0b1111 : volumes[index / 2] >> 4);
-            return new Voxel(material, volume);
+            return new Voxel(volume, material);
         }
 
         public void Set(int x, int y, int z, Voxel voxel) {

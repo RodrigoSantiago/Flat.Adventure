@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using Adventure.Game.Manager.ChunkManagment;
 using Adventure.Logic;
 using Adventure.Logic.Data;
 using Unity.Mathematics;
@@ -17,11 +18,15 @@ namespace Adventure.Game.Manager.ShapeGeneration {
             if (CreateDerivedChunk(voxels, chunk, settings, chunks)) {
                 this.currentChunk = chunk;
                 this.isRemeshing = true;
-                GameServer.StartAsync(Dispatch());
+                GameManager.RunAsync(Dispatch());
                 return true;
             } else {
                 return false;
             }
+        }
+
+        public override bool RemeshChunkLod(Chunk chunk, WorldSettings settings, Dictionary<Vector3Int, ChunkHolder> chunks, Vector3Int minlimit, Vector3Int maxLimit) {
+            return false;
         }
 
         public IEnumerator Dispatch() {

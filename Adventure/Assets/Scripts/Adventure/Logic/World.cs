@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Adventure.Logic.ChunkManagment;
 using Adventure.Logic.Data;
 using Adventure.Logic.Generator;
 using UnityEngine;
@@ -17,20 +18,28 @@ namespace Adventure.Logic {
         public readonly WorldSettings settings;
         
         public WorldMap worldMap { get; private set; }
+        public bool alive { get; private set; }
         
-        protected Noise noise;
+        protected readonly Noise noise;
         protected readonly Dictionary<string, WorldPlayerController> controllers = new();
 
-        public readonly WorldChunkController chunkController;
+        private readonly WorldChunkController chunkController;
+        private readonly WorldGenerator worldGenerator;
 
         public World(long seed, int width, int height, int length) {
+            this.alive = true;
+            
             this.seed = seed;
             this.settings = new WorldSettings(width, height, length);
             
             noise = new Noise(seed);
             worldMap = new WorldMap(this, noise);
+            worldGenerator = new WorldGenerator(this, worldMap);
+            chunkController = new WorldChunkController(this, worldGenerator);
+        }
 
-            this.chunkController = new WorldChunkController(this);
+        public void Close() {
+            alive = false;
         }
 
         public IEnumerator GenerateWorldMap() {
@@ -65,16 +74,12 @@ namespace Adventure.Logic {
             }
         }
 
-        public void RequestChunk(Vector3Int local, WorldPlayerController controller = null) {
-            chunkController.RequestChunk(local, controller);
+        public void RequestChunk(Vector3Int local, WorldPlayerController controller = null, int lod = 0) {
+            chunkController.RequestChunk(local, controller, lod);
         }
 
         public bool IsChunkReady(Vector3Int local) {
             return chunkController.IsChunkReady(local);
-        }
-
-        public bool IsChunkForReady(Vector3Int local) {
-            return chunkController.IsChunkForReady(local);
         }
         
     }

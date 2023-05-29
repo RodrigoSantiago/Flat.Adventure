@@ -120,7 +120,7 @@ MonoBehaviour:
   m_MinSize: {x: 400, y: 200}
   m_MaxSize: {x: 32384, y: 16192}
   vertical: 0
-  controlID: 131
+  controlID: 16
 --- !u!114 &6
 MonoBehaviour:
   m_ObjectHideFlags: 52
@@ -138,7 +138,7 @@ MonoBehaviour:
     serializedVersion: 2
     x: 0
     y: 0
-    width: 289
+    width: 266
     height: 947
   m_MinSize: {x: 231, y: 271}
   m_MaxSize: {x: 10001, y: 10021}
@@ -164,14 +164,14 @@ MonoBehaviour:
   - {fileID: 11}
   m_Position:
     serializedVersion: 2
-    x: 289
+    x: 266
     y: 0
-    width: 1264
+    width: 1219
     height: 947
   m_MinSize: {x: 200, y: 200}
   m_MaxSize: {x: 16192, y: 16192}
   vertical: 1
-  controlID: 132
+  controlID: 17
 --- !u!114 &8
 MonoBehaviour:
   m_ObjectHideFlags: 52
@@ -191,12 +191,12 @@ MonoBehaviour:
     serializedVersion: 2
     x: 0
     y: 0
-    width: 1264
-    height: 522
+    width: 1219
+    height: 661
   m_MinSize: {x: 200, y: 100}
   m_MaxSize: {x: 16192, y: 8096}
   vertical: 0
-  controlID: 133
+  controlID: 18
 --- !u!114 &9
 MonoBehaviour:
   m_ObjectHideFlags: 52
@@ -214,8 +214,8 @@ MonoBehaviour:
     serializedVersion: 2
     x: 0
     y: 0
-    width: 280
-    height: 522
+    width: 278
+    height: 661
   m_MinSize: {x: 202, y: 221}
   m_MaxSize: {x: 4002, y: 4021}
   m_ActualView: {fileID: 15}
@@ -238,10 +238,10 @@ MonoBehaviour:
   m_Children: []
   m_Position:
     serializedVersion: 2
-    x: 280
+    x: 278
     y: 0
-    width: 984
-    height: 522
+    width: 941
+    height: 661
   m_MinSize: {x: 202, y: 221}
   m_MaxSize: {x: 4002, y: 4021}
   m_ActualView: {fileID: 13}
@@ -268,9 +268,9 @@ MonoBehaviour:
   m_Position:
     serializedVersion: 2
     x: 0
-    y: 522
-    width: 1264
-    height: 425
+    y: 661
+    width: 1219
+    height: 286
   m_MinSize: {x: 100, y: 100}
   m_MaxSize: {x: 4000, y: 4000}
   m_ActualView: {fileID: 19}
@@ -293,12 +293,12 @@ MonoBehaviour:
   m_Children: []
   m_Position:
     serializedVersion: 2
-    x: 1553
+    x: 1485
     y: 0
-    width: 367
+    width: 435
     height: 947
-  m_MinSize: {x: 275, y: 50}
-  m_MaxSize: {x: 4000, y: 4000}
+  m_MinSize: {x: 276, y: 71}
+  m_MaxSize: {x: 4001, y: 4021}
   m_ActualView: {fileID: 20}
   m_Panes:
   - {fileID: 20}
@@ -325,10 +325,10 @@ MonoBehaviour:
     m_Tooltip: 
   m_Pos:
     serializedVersion: 2
-    x: 569
+    x: 544
     y: 73
-    width: 982
-    height: 501
+    width: 939
+    height: 640
   m_ViewDataDictionary: {fileID: 0}
   m_OverlayCanvas:
     m_LastAppliedPresetName: Default
@@ -553,9 +553,9 @@ MonoBehaviour:
   m_PlayAudio: 0
   m_AudioPlay: 0
   m_Position:
-    m_Target: {x: 222.4364, y: 104.27475, z: 202.32898}
+    m_Target: {x: 194.13026, y: -83.91481, z: 286.925}
     speed: 2
-    m_Value: {x: 222.4364, y: 104.27475, z: 202.32898}
+    m_Value: {x: 194.13026, y: -83.91481, z: 286.925}
   m_RenderMode: 0
   m_CameraMode:
     drawMode: 0
@@ -602,20 +602,20 @@ MonoBehaviour:
     m_GridAxis: 1
     m_gridOpacity: 0.5
   m_Rotation:
-    m_Target: {x: -0.49662718, y: -0.17459692, z: 0.12021353, w: -0.84307194}
+    m_Target: {x: -0.19825646, y: 0.7433537, z: -0.1935407, w: -0.6112499}
     speed: 2
-    m_Value: {x: -0.49622563, y: -0.1731293, z: 0.11932867, w: -0.84234613}
+    m_Value: {x: -0.1955637, y: 0.74466145, z: -0.19160895, w: -0.6087036}
   m_Size:
-    m_Target: 197.52986
+    m_Target: 127.11268
     speed: 2
-    m_Value: 197.52986
+    m_Value: 127.11268
   m_Ortho:
     m_Target: 0
     speed: 2
     m_Value: 0
   m_CameraSettings:
-    m_Speed: 1.3003497
-    m_SpeedNormalized: 0.64999986
+    m_Speed: 1.3603196
+    m_SpeedNormalized: 0.6799998
     m_SpeedMin: 0.001
     m_SpeedMax: 2
     m_EasingEnabled: 1
@@ -626,7 +626,7 @@ MonoBehaviour:
     m_FarClip: 10000
     m_DynamicClip: 1
     m_OcclusionCulling: 0
-  m_LastSceneViewRotation: {x: 0.2119712, y: 0.68140304, z: -0.21629474, w: 0.6671453}
+  m_LastSceneViewRotation: {x: -0.045983486, y: -0.9324607, z: 0.17364772, w: -0.317199}
   m_LastSceneViewOrtho: 0
   m_ReplacementShader: {fileID: 0}
   m_ReplacementString: 
@@ -655,7 +655,7 @@ MonoBehaviour:
     serializedVersion: 2
     x: 0
     y: 73
-    width: 288
+    width: 265
     height: 926
   m_ViewDataDictionary: {fileID: 0}
   m_OverlayCanvas:
@@ -675,7 +675,7 @@ MonoBehaviour:
     m_SkipHidden: 0
     m_SearchArea: 1
     m_Folders:
-    - Assets/Scripts/Adventure/Game/Manager/ShapeGeneration
+    - Assets/Scripts/Adventure/Game/Manager
     m_Globs: []
     m_OriginalText: 
   m_ViewMode: 0
@@ -689,7 +689,7 @@ MonoBehaviour:
     scrollPos: {x: 0, y: 0}
     m_SelectedIDs: bcc00000
     m_LastClickedID: 49340
-    m_ExpandedIDs: 00000000626b0000646b0000666b0000686b00006a6b00006c6b00006e6b0000706b0000726b0000746b0000766b0000786b00007a6b00007c6b00007e6b0000806b0000
+    m_ExpandedIDs: 000000008a6b00008c6b00008e6b0000906b0000926b0000946b0000966b0000986b00009a6b00009c6b00009e6b0000a06b0000a26b0000a46b0000a66b0000a86b0000aa6b0000ac6b0000ae6b0000
     m_RenameOverlay:
       m_UserAcceptedRename: 0
       m_Name: 
@@ -717,7 +717,7 @@ MonoBehaviour:
     scrollPos: {x: 0, y: 0}
     m_SelectedIDs: 
     m_LastClickedID: 0
-    m_ExpandedIDs: ffffffff00000000626b0000646b0000666b0000686b00006a6b00006c6b00006e6b0000706b0000726b0000746b0000766b0000786b00007a6b00007c6b00007e6b0000806b0000666d0000726d0000
+    m_ExpandedIDs: ffffffff000000008a6b00008c6b00008e6b0000906b0000926b0000946b0000966b0000986b00009a6b00009c6b00009e6b0000a06b0000a26b0000a46b0000a66b0000a86b0000aa6b0000ac6b0000ae6b0000
     m_RenameOverlay:
       m_UserAcceptedRename: 0
       m_Name: 
@@ -793,10 +793,10 @@ MonoBehaviour:
     m_Tooltip: 
   m_Pos:
     serializedVersion: 2
-    x: 289
+    x: 266
     y: 73
-    width: 278
-    height: 501
+    width: 276
+    height: 640
   m_ViewDataDictionary: {fileID: 0}
   m_OverlayCanvas:
     m_LastAppliedPresetName: Default
@@ -805,8 +805,8 @@ MonoBehaviour:
   m_SceneHierarchy:
     m_TreeViewState:
       scrollPos: {x: 0, y: 0}
-      m_SelectedIDs: da140000
-      m_LastClickedID: 0
+      m_SelectedIDs: 5a6a0000
+      m_LastClickedID: 27226
       m_ExpandedIDs: fcfaffff
       m_RenameOverlay:
         m_UserAcceptedRename: 0
@@ -851,10 +851,10 @@ MonoBehaviour:
     m_Tooltip: 
   m_Pos:
     serializedVersion: 2
-    x: 569
+    x: 544
     y: 73
-    width: 982
-    height: 501
+    width: 939
+    height: 640
   m_ViewDataDictionary: {fileID: 0}
   m_OverlayCanvas:
     m_LastAppliedPresetName: Default
@@ -866,7 +866,7 @@ MonoBehaviour:
   m_ShowGizmos: 0
   m_TargetDisplay: 0
   m_ClearColor: {r: 0, g: 0, b: 0, a: 0}
-  m_TargetSize: {x: 982, y: 480}
+  m_TargetSize: {x: 939, y: 619}
   m_TextureFilterMode: 0
   m_TextureHideFlags: 61
   m_RenderIMGUI: 1
@@ -874,17 +874,17 @@ MonoBehaviour:
   m_UseMipMap: 0
   m_VSyncEnabled: 0
   m_Gizmos: 0
-  m_Stats: 1
+  m_Stats: 0
   m_SelectedSizes: 00000000000000000000000000000000000000000000000000000000000000000000000000000000
   m_ZoomArea:
     m_HRangeLocked: 0
     m_VRangeLocked: 0
     hZoomLockedByDefault: 0
     vZoomLockedByDefault: 0
-    m_HBaseRangeMin: -491
-    m_HBaseRangeMax: 491
-    m_VBaseRangeMin: -240
-    m_VBaseRangeMax: 240
+    m_HBaseRangeMin: -469.5
+    m_HBaseRangeMax: 469.5
+    m_VBaseRangeMin: -309.5
+    m_VBaseRangeMax: 309.5
     m_HAllowExceedBaseRangeMin: 1
     m_HAllowExceedBaseRangeMax: 1
     m_VAllowExceedBaseRangeMin: 1
@@ -902,23 +902,23 @@ MonoBehaviour:
       serializedVersion: 2
       x: 0
       y: 21
-      width: 982
-      height: 480
+      width: 939
+      height: 619
     m_Scale: {x: 1, y: 1}
-    m_Translation: {x: 491, y: 240}
+    m_Translation: {x: 469.5, y: 309.5}
     m_MarginLeft: 0
     m_MarginRight: 0
     m_MarginTop: 0
     m_MarginBottom: 0
     m_LastShownAreaInsideMargins:
       serializedVersion: 2
-      x: -491
-      y: -240
-      width: 982
-      height: 480
+      x: -469.5
+      y: -309.5
+      width: 939
+      height: 619
     m_MinimalGUI: 1
   m_defaultScale: 1
-  m_LastWindowPixelSize: {x: 982, y: 501}
+  m_LastWindowPixelSize: {x: 939, y: 640}
   m_ClearInEditMode: 1
   m_NoCameraWarning: 1
   m_LowResolutionForAspectRatios: 01000000000000000000
@@ -944,10 +944,10 @@ MonoBehaviour:
     m_Tooltip: 
   m_Pos:
     serializedVersion: 2
-    x: 569
+    x: 552
     y: 73
-    width: 982
-    height: 501
+    width: 959
+    height: 584
   m_ViewDataDictionary: {fileID: 0}
   m_OverlayCanvas:
     m_LastAppliedPresetName: Default
@@ -972,7 +972,6 @@ MonoBehaviour:
     },\n        {\n            \"m_Id\": \"b9f29e7f387c4b0eabcdd692673fb5f5\"\n       
     },\n        {\n            \"m_Id\": \"b1062241e5e84499afcb635e17b4543c\"\n       
     },\n        {\n            \"m_Id\": \"c1ec1989293d47aab1fed11edc9df44d\"\n       
-    },\n        {\n            \"m_Id\": \"4c6ac9afbe394673916994b8990f58a9\"\n       
     },\n        {\n            \"m_Id\": \"ec5af209b8ed45e8bf68b27442a901b5\"\n       
     },\n        {\n            \"m_Id\": \"32b524f79ac747c680ceb2b1f3c119db\"\n       
     },\n        {\n            \"m_Id\": \"e3de233ab8e345c7ab179068ad560789\"\n       
@@ -1179,32 +1178,33 @@ MonoBehaviour:
     \"m_ObjectId\": \"42cf911d2e744c028d3ee76e5c0b285b\",\n    \"m_Group\": {\n       
     \"m_Id\": \"\"\n    },\n    \"m_Name\": \"unpack_palette (Custom Function)\",\n   
     \"m_DrawState\": {\n        \"m_Expanded\": true,\n        \"m_Position\": {\n           
-    \"serializedVersion\": \"2\",\n            \"x\": -91.0,\n            \"y\":
-    -73.0,\n            \"width\": 241.0,\n            \"height\": 94.00001525878906\n       
-    }\n    },\n    \"m_Slots\": [\n        {\n            \"m_Id\": \"c011269d2822404eaa78a7f409a37383\"\n       
-    },\n        {\n            \"m_Id\": \"1335c0fa3ce94ac192f78012096f7a9d\"\n       
-    }\n    ],\n    \"synonyms\": [\n        \"code\",\n        \"HLSL\"\n    ],\n   
-    \"m_Precision\": 0,\n    \"m_PreviewExpanded\": false,\n    \"m_PreviewMode\":
-    0,\n    \"m_CustomColors\": {\n        \"m_SerializableColors\": []\n    },\n   
-    \"m_SourceType\": 0,\n    \"m_FunctionName\": \"unpack_palette\",\n    \"m_FunctionSource\":
-    \"ffee4fe29470089468f5e808243d8ce2\",\n    \"m_FunctionBody\": \"Enter function
-    body here...\"\n}\n\n{\n    \"m_SGVersion\": 0,\n    \"m_Type\": \"UnityEditor.ShaderGraph.Vector3MaterialSlot\",\n   
-    \"m_ObjectId\": \"439370cae4184ea299b968792fe95fcf\",\n    \"m_Id\": 5,\n   
-    \"m_DisplayName\": \"palette\",\n    \"m_SlotType\": 0,\n    \"m_Hidden\": false,\n   
-    \"m_ShaderOutputName\": \"palette\",\n    \"m_StageCapability\": 3,\n    \"m_Value\":
+    \"serializedVersion\": \"2\",\n            \"x\": -37.000003814697269,\n           
+    \"y\": -50.00000762939453,\n            \"width\": 240.99998474121095,\n           
+    \"height\": 94.00001525878906\n        }\n    },\n    \"m_Slots\": [\n       
+    {\n            \"m_Id\": \"c011269d2822404eaa78a7f409a37383\"\n        },\n       
+    {\n            \"m_Id\": \"1335c0fa3ce94ac192f78012096f7a9d\"\n        }\n   
+    ],\n    \"synonyms\": [\n        \"code\",\n        \"HLSL\"\n    ],\n    \"m_Precision\":
+    0,\n    \"m_PreviewExpanded\": false,\n    \"m_PreviewMode\": 0,\n    \"m_CustomColors\":
+    {\n        \"m_SerializableColors\": []\n    },\n    \"m_SourceType\": 0,\n   
+    \"m_FunctionName\": \"unpack_palette\",\n    \"m_FunctionSource\": \"ffee4fe29470089468f5e808243d8ce2\",\n   
+    \"m_FunctionBody\": \"Enter function body here...\"\n}\n\n{\n    \"m_SGVersion\":
+    0,\n    \"m_Type\": \"UnityEditor.ShaderGraph.Vector3MaterialSlot\",\n    \"m_ObjectId\":
+    \"439370cae4184ea299b968792fe95fcf\",\n    \"m_Id\": 5,\n    \"m_DisplayName\":
+    \"palette\",\n    \"m_SlotType\": 0,\n    \"m_Hidden\": false,\n    \"m_ShaderOutputName\":
+    \"palette\",\n    \"m_StageCapability\": 3,\n    \"m_Value\": {\n        \"x\":
+    0.0,\n        \"y\": 0.0,\n        \"z\": 0.0\n    },\n    \"m_DefaultValue\":
     {\n        \"x\": 0.0,\n        \"y\": 0.0,\n        \"z\": 0.0\n    },\n   
-    \"m_DefaultValue\": {\n        \"x\": 0.0,\n        \"y\": 0.0,\n        \"z\":
-    0.0\n    },\n    \"m_Labels\": []\n}\n\n{\n    \"m_SGVersion\": 0,\n    \"m_Type\":
-    \"UnityEditor.ShaderGraph.NormalMaterialSlot\",\n    \"m_ObjectId\": \"44678f0b1ac54282ad1d8f403776706b\",\n   
-    \"m_Id\": 0,\n    \"m_DisplayName\": \"Normal (Tangent Space)\",\n    \"m_SlotType\":
-    0,\n    \"m_Hidden\": false,\n    \"m_ShaderOutputName\": \"NormalTS\",\n   
-    \"m_StageCapability\": 2,\n    \"m_Value\": {\n        \"x\": 0.0,\n        \"y\":
-    0.0,\n        \"z\": 0.0\n    },\n    \"m_DefaultValue\": {\n        \"x\": 0.0,\n       
-    \"y\": 0.0,\n        \"z\": 0.0\n    },\n    \"m_Labels\": [],\n    \"m_Space\":
-    3\n}\n\n{\n    \"m_SGVersion\": 0,\n    \"m_Type\": \"UnityEditor.ShaderGraph.NormalVectorNode\",\n   
-    \"m_ObjectId\": \"458f42f79fa2404a9ef121608bbd928d\",\n    \"m_Group\": {\n       
-    \"m_Id\": \"\"\n    },\n    \"m_Name\": \"Normal Vector\",\n    \"m_DrawState\":
-    {\n        \"m_Expanded\": true,\n        \"m_Position\": {\n            \"serializedVersion\":
+    \"m_Labels\": []\n}\n\n{\n    \"m_SGVersion\": 0,\n    \"m_Type\": \"UnityEditor.ShaderGraph.NormalMaterialSlot\",\n   
+    \"m_ObjectId\": \"44678f0b1ac54282ad1d8f403776706b\",\n    \"m_Id\": 0,\n   
+    \"m_DisplayName\": \"Normal (Tangent Space)\",\n    \"m_SlotType\": 0,\n    \"m_Hidden\":
+    false,\n    \"m_ShaderOutputName\": \"NormalTS\",\n    \"m_StageCapability\":
+    2,\n    \"m_Value\": {\n        \"x\": 0.0,\n        \"y\": 0.0,\n        \"z\":
+    0.0\n    },\n    \"m_DefaultValue\": {\n        \"x\": 0.0,\n        \"y\": 0.0,\n       
+    \"z\": 0.0\n    },\n    \"m_Labels\": [],\n    \"m_Space\": 3\n}\n\n{\n    \"m_SGVersion\":
+    0,\n    \"m_Type\": \"UnityEditor.ShaderGraph.NormalVectorNode\",\n    \"m_ObjectId\":
+    \"458f42f79fa2404a9ef121608bbd928d\",\n    \"m_Group\": {\n        \"m_Id\":
+    \"\"\n    },\n    \"m_Name\": \"Normal Vector\",\n    \"m_DrawState\": {\n       
+    \"m_Expanded\": true,\n        \"m_Position\": {\n            \"serializedVersion\":
     \"2\",\n            \"x\": -367.0,\n            \"y\": 489.0,\n            \"width\":
     206.0,\n            \"height\": 131.0\n        }\n    },\n    \"m_Slots\": [\n       
     {\n            \"m_Id\": \"deb66a3ceb274828a14f22eefabf721c\"\n        }\n   
@@ -1217,21 +1217,10 @@ MonoBehaviour:
     \"m_ShaderOutputName\": \"p\",\n    \"m_StageCapability\": 3,\n    \"m_Value\":
     {\n        \"x\": 0.0,\n        \"y\": 0.0,\n        \"z\": 0.0\n    },\n   
     \"m_DefaultValue\": {\n        \"x\": 0.0,\n        \"y\": 0.0,\n        \"z\":
-    0.0\n    },\n    \"m_Labels\": []\n}\n\n{\n    \"m_SGVersion\": 0,\n    \"m_Type\":
-    \"UnityEditor.ShaderGraph.UVNode\",\n    \"m_ObjectId\": \"4c6ac9afbe394673916994b8990f58a9\",\n   
-    \"m_Group\": {\n        \"m_Id\": \"\"\n    },\n    \"m_Name\": \"UV\",\n   
-    \"m_DrawState\": {\n        \"m_Expanded\": true,\n        \"m_Position\": {\n           
-    \"serializedVersion\": \"2\",\n            \"x\": -290.0000305175781,\n           
-    \"y\": -94.99999237060547,\n            \"width\": 145.00001525878907,\n           
-    \"height\": 129.00001525878907\n        }\n    },\n    \"m_Slots\": [\n       
-    {\n            \"m_Id\": \"6b9b051ebbf8475c81fd757e98beea8f\"\n        }\n   
-    ],\n    \"synonyms\": [\n        \"texcoords\",\n        \"coords\",\n       
-    \"coordinates\"\n    ],\n    \"m_Precision\": 0,\n    \"m_PreviewExpanded\":
-    false,\n    \"m_PreviewMode\": 0,\n    \"m_CustomColors\": {\n        \"m_SerializableColors\":
-    []\n    },\n    \"m_OutputChannel\": 1\n}\n\n{\n    \"m_SGVersion\": 1,\n   
-    \"m_Type\": \"UnityEditor.Rendering.Universal.ShaderGraph.UniversalTarget\",\n   
-    \"m_ObjectId\": \"5147e044d12048a89c48746c19aa77c3\",\n    \"m_ActiveSubTarget\":
-    {\n        \"m_Id\": \"a66abe89aede4ab3a2ba0da6600b9716\"\n    },\n    \"m_AllowMaterialOverride\":
+    0.0\n    },\n    \"m_Labels\": []\n}\n\n{\n    \"m_SGVersion\": 1,\n    \"m_Type\":
+    \"UnityEditor.Rendering.Universal.ShaderGraph.UniversalTarget\",\n    \"m_ObjectId\":
+    \"5147e044d12048a89c48746c19aa77c3\",\n    \"m_ActiveSubTarget\": {\n       
+    \"m_Id\": \"a66abe89aede4ab3a2ba0da6600b9716\"\n    },\n    \"m_AllowMaterialOverride\":
     false,\n    \"m_SurfaceType\": 0,\n    \"m_ZTestMode\": 4,\n    \"m_ZWriteControl\":
     0,\n    \"m_AlphaMode\": 0,\n    \"m_RenderFace\": 2,\n    \"m_AlphaClip\": false,\n   
     \"m_CastShadows\": true,\n    \"m_ReceiveShadows\": true,\n    \"m_CustomEditorGUI\":
@@ -1255,14 +1244,7 @@ MonoBehaviour:
     \"m_DisplayName\": \"Ambient Occlusion\",\n    \"m_SlotType\": 0,\n    \"m_Hidden\":
     false,\n    \"m_ShaderOutputName\": \"Occlusion\",\n    \"m_StageCapability\":
     2,\n    \"m_Value\": 1.0,\n    \"m_DefaultValue\": 1.0,\n    \"m_Labels\": []\n}\n\n{\n   
-    \"m_SGVersion\": 0,\n    \"m_Type\": \"UnityEditor.ShaderGraph.Vector4MaterialSlot\",\n   
-    \"m_ObjectId\": \"6b9b051ebbf8475c81fd757e98beea8f\",\n    \"m_Id\": 0,\n   
-    \"m_DisplayName\": \"Out\",\n    \"m_SlotType\": 1,\n    \"m_Hidden\": false,\n   
-    \"m_ShaderOutputName\": \"Out\",\n    \"m_StageCapability\": 3,\n    \"m_Value\":
-    {\n        \"x\": 0.0,\n        \"y\": 0.0,\n        \"z\": 0.0,\n        \"w\":
-    0.0\n    },\n    \"m_DefaultValue\": {\n        \"x\": 0.0,\n        \"y\": 0.0,\n       
-    \"z\": 0.0,\n        \"w\": 0.0\n    },\n    \"m_Labels\": []\n}\n\n{\n    \"m_SGVersion\":
-    0,\n    \"m_Type\": \"UnityEditor.ShaderGraph.Texture2DArrayInputMaterialSlot\",\n   
+    \"m_SGVersion\": 0,\n    \"m_Type\": \"UnityEditor.ShaderGraph.Texture2DArrayInputMaterialSlot\",\n   
     \"m_ObjectId\": \"6da48385196e4531b0fbd0bf75844a4e\",\n    \"m_Id\": 0,\n   
     \"m_DisplayName\": \"tex\",\n    \"m_SlotType\": 0,\n    \"m_Hidden\": false,\n   
     \"m_ShaderOutputName\": \"tex\",\n    \"m_StageCapability\": 3,\n    \"m_BareResource\":
@@ -1430,9 +1412,9 @@ MonoBehaviour:
     \"c1ec1989293d47aab1fed11edc9df44d\",\n    \"m_Group\": {\n        \"m_Id\":
     \"\"\n    },\n    \"m_Name\": \"UV\",\n    \"m_DrawState\": {\n        \"m_Expanded\":
     true,\n        \"m_Position\": {\n            \"serializedVersion\": \"2\",\n           
-    \"x\": -290.0000305175781,\n            \"y\": -224.0,\n            \"width\":
-    145.00001525878907,\n            \"height\": 129.0\n        }\n    },\n    \"m_Slots\":
-    [\n        {\n            \"m_Id\": \"a36764a62a8f41eeada55f15bdd52bc2\"\n       
+    \"x\": -205.99998474121095,\n            \"y\": -132.00001525878907,\n           
+    \"width\": 145.0,\n            \"height\": 129.00001525878907\n        }\n   
+    },\n    \"m_Slots\": [\n        {\n            \"m_Id\": \"a36764a62a8f41eeada55f15bdd52bc2\"\n       
     }\n    ],\n    \"synonyms\": [\n        \"texcoords\",\n        \"coords\",\n       
     \"coordinates\"\n    ],\n    \"m_Precision\": 0,\n    \"m_PreviewExpanded\":
     false,\n    \"m_PreviewMode\": 0,\n    \"m_CustomColors\": {\n        \"m_SerializableColors\":
@@ -1579,10 +1561,10 @@ MonoBehaviour:
     m_Tooltip: 
   m_Pos:
     serializedVersion: 2
-    x: 602
+    x: 552
     y: 73
-    width: 981
-    height: 501
+    width: 959
+    height: 443
   m_ViewDataDictionary: {fileID: 0}
   m_OverlayCanvas:
     m_LastAppliedPresetName: Default
@@ -2062,7 +2044,7 @@ MonoBehaviour:
     }\n    ],\n    \"synonyms\": [],\n    \"m_Precision\": 0,\n    \"m_PreviewExpanded\":
     true,\n    \"m_PreviewMode\": 0,\n    \"m_CustomColors\": {\n        \"m_SerializableColors\":
     []\n    },\n    \"m_SerializedDescriptor\": \"SurfaceDescription.Occlusion\"\n}\n\n"
-  m_AssetMaybeChangedOnDisk: 1
+  m_AssetMaybeChangedOnDisk: 0
   m_AssetMaybeDeleted: 0
 --- !u!114 &19
 MonoBehaviour:
@@ -2084,10 +2066,10 @@ MonoBehaviour:
     m_Tooltip: 
   m_Pos:
     serializedVersion: 2
-    x: 289
-    y: 595
-    width: 1262
-    height: 404
+    x: 266
+    y: 734
+    width: 1217
+    height: 265
   m_ViewDataDictionary: {fileID: 0}
   m_OverlayCanvas:
     m_LastAppliedPresetName: Default
@@ -2113,9 +2095,9 @@ MonoBehaviour:
     m_Tooltip: 
   m_Pos:
     serializedVersion: 2
-    x: 1553
+    x: 1485
     y: 73
-    width: 366
+    width: 434
     height: 926
   m_ViewDataDictionary: {fileID: 0}
   m_OverlayCanvas:
@@ -2155,9 +2137,9 @@ MonoBehaviour:
     m_Tooltip: 
   m_Pos:
     serializedVersion: 2
-    x: 1407
+    x: 1553
     y: 73
-    width: 512
+    width: 366
     height: 926
   m_ViewDataDictionary: {fileID: 0}
   m_OverlayCanvas:
@@ -2165,7 +2147,7 @@ MonoBehaviour:
     m_SaveData: []
     m_OverlaysVisible: 1
   m_Spl:
-    ID: 683
+    ID: 461
     splitterInitialOffset: 0
     currentActiveSplitter: -1
     realSizes:
@@ -2249,7 +2231,7 @@ MonoBehaviour:
       name: Adventure
       fullName: Adventure
       resultStatus: 1
-      duration: 0.1809035
+      duration: 0.196471
       messages: 
       output: 
       stacktrace: 
@@ -2265,7 +2247,7 @@ MonoBehaviour:
       name: AsmLogicTest.dll
       fullName: D:/Github/Flat.Adventure/Adventure/Library/ScriptAssemblies/AsmLogicTest.dll
       resultStatus: 1
-      duration: 0.1365853
+      duration: 0.1644624
       messages: 
       output: 
       stacktrace: 
@@ -2281,7 +2263,7 @@ MonoBehaviour:
       name: Tests
       fullName: Tests
       resultStatus: 1
-      duration: 0.1357979
+      duration: 0.1638222
       messages: 
       output: 
       stacktrace: 
@@ -2297,7 +2279,7 @@ MonoBehaviour:
       name: Logic
       fullName: Tests.Logic
       resultStatus: 1
-      duration: 0.1355186
+      duration: 0.1635353
       messages: 
       output: 
       stacktrace: 
@@ -2313,7 +2295,7 @@ MonoBehaviour:
       name: Data
       fullName: Tests.Logic.Data
       resultStatus: 1
-      duration: 0.1321249
+      duration: 0.1598129
       messages: 
       output: 
       stacktrace: 
@@ -2329,7 +2311,7 @@ MonoBehaviour:
       name: ChunkTest
       fullName: Tests.Logic.Data.ChunkTest
       resultStatus: 1
-      duration: 0.127112
+      duration: 0.0844222
       messages: 
       output: 
       stacktrace: 
@@ -2345,7 +2327,7 @@ MonoBehaviour:
       name: Chunk
       fullName: Tests.Logic.Data.ChunkTest.Chunk
       resultStatus: 1
-      duration: 0.0733086
+      duration: 0.0554934
       messages: 
       output: 
       stacktrace: 
@@ -2362,7 +2344,7 @@ MonoBehaviour:
       name: GetSetIndexer
       fullName: Tests.Logic.Data.ChunkTest.GetSetIndexer
       resultStatus: 1
-      duration: 0.0337115
+      duration: 0.0128221
       messages: 
       output: 
       stacktrace: 
@@ -2378,8 +2360,8 @@ MonoBehaviour:
       uniqueId: AsmLogicTest.dll/Tests/Logic/Data/[AsmLogicTest][Tests.Logic.Data.InterpolationTest][suite]
       name: InterpolationTest
       fullName: Tests.Logic.Data.InterpolationTest
-      resultStatus: 0
-      duration: 0
+      resultStatus: 1
+      duration: 0.0169888
       messages: 
       output: 
       stacktrace: 
@@ -2394,8 +2376,8 @@ MonoBehaviour:
       uniqueId: AsmLogicTest.dll/Tests/Logic/Data/InterpolationTest/[AsmLogicTest][Tests.Logic.Data.InterpolationTest.Circle]
       name: Circle
       fullName: Tests.Logic.Data.InterpolationTest.Circle
-      resultStatus: 0
-      duration: 0
+      resultStatus: 1
+      duration: 0.0015588
       messages: 
       output: 
       stacktrace: 
@@ -2411,8 +2393,8 @@ MonoBehaviour:
       uniqueId: AsmLogicTest.dll/Tests/Logic/Data/InterpolationTest/[AsmLogicTest][Tests.Logic.Data.InterpolationTest.CircleIn]
       name: CircleIn
       fullName: Tests.Logic.Data.InterpolationTest.CircleIn
-      resultStatus: 0
-      duration: 0
+      resultStatus: 1
+      duration: 0.0002267
       messages: 
       output: 
       stacktrace: 
@@ -2428,8 +2410,8 @@ MonoBehaviour:
       uniqueId: AsmLogicTest.dll/Tests/Logic/Data/InterpolationTest/[AsmLogicTest][Tests.Logic.Data.InterpolationTest.CircleOut]
       name: CircleOut
       fullName: Tests.Logic.Data.InterpolationTest.CircleOut
-      resultStatus: 0
-      duration: 0
+      resultStatus: 1
+      duration: 0.0002385
       messages: 
       output: 
       stacktrace: 
@@ -2445,8 +2427,8 @@ MonoBehaviour:
       uniqueId: AsmLogicTest.dll/Tests/Logic/Data/InterpolationTest/[AsmLogicTest][Tests.Logic.Data.InterpolationTest.Exp10]
       name: Exp10
       fullName: Tests.Logic.Data.InterpolationTest.Exp10
-      resultStatus: 0
-      duration: 0
+      resultStatus: 1
+      duration: 0.0002648
       messages: 
       output: 
       stacktrace: 
@@ -2462,8 +2444,8 @@ MonoBehaviour:
       uniqueId: AsmLogicTest.dll/Tests/Logic/Data/InterpolationTest/[AsmLogicTest][Tests.Logic.Data.InterpolationTest.Exp10In]
       name: Exp10In
       fullName: Tests.Logic.Data.InterpolationTest.Exp10In
-      resultStatus: 0
-      duration: 0
+      resultStatus: 1
+      duration: 0.0001855
       messages: 
       output: 
       stacktrace: 
@@ -2479,8 +2461,8 @@ MonoBehaviour:
       uniqueId: AsmLogicTest.dll/Tests/Logic/Data/InterpolationTest/[AsmLogicTest][Tests.Logic.Data.InterpolationTest.Exp10Out]
       name: Exp10Out
       fullName: Tests.Logic.Data.InterpolationTest.Exp10Out
-      resultStatus: 0
-      duration: 0
+      resultStatus: 1
+      duration: 0.0001833
       messages: 
       output: 
       stacktrace: 
@@ -2496,8 +2478,8 @@ MonoBehaviour:
       uniqueId: AsmLogicTest.dll/Tests/Logic/Data/InterpolationTest/[AsmLogicTest][Tests.Logic.Data.InterpolationTest.Exp5]
       name: Exp5
       fullName: Tests.Logic.Data.InterpolationTest.Exp5
-      resultStatus: 0
-      duration: 0
+      resultStatus: 1
+      duration: 0.0001981
       messages: 
       output: 
       stacktrace: 
@@ -2513,8 +2495,8 @@ MonoBehaviour:
       uniqueId: AsmLogicTest.dll/Tests/Logic/Data/InterpolationTest/[AsmLogicTest][Tests.Logic.Data.InterpolationTest.Exp5In]
       name: Exp5In
       fullName: Tests.Logic.Data.InterpolationTest.Exp5In
-      resultStatus: 0
-      duration: 0
+      resultStatus: 1
+      duration: 0.0001735
       messages: 
       output: 
       stacktrace: 
@@ -2530,8 +2512,8 @@ MonoBehaviour:
       uniqueId: AsmLogicTest.dll/Tests/Logic/Data/InterpolationTest/[AsmLogicTest][Tests.Logic.Data.InterpolationTest.Exp5Out]
       name: Exp5Out
       fullName: Tests.Logic.Data.InterpolationTest.Exp5Out
-      resultStatus: 0
-      duration: 0
+      resultStatus: 1
+      duration: 0.0001803
       messages: 
       output: 
       stacktrace: 
@@ -2547,8 +2529,8 @@ MonoBehaviour:
       uniqueId: AsmLogicTest.dll/Tests/Logic/Data/InterpolationTest/[AsmLogicTest][Tests.Logic.Data.InterpolationTest.Linear]
       name: Linear
       fullName: Tests.Logic.Data.InterpolationTest.Linear
-      resultStatus: 0
-      duration: 0
+      resultStatus: 1
+      duration: 0.0001552
       messages: 
       output: 
       stacktrace: 
@@ -2564,8 +2546,8 @@ MonoBehaviour:
       uniqueId: AsmLogicTest.dll/Tests/Logic/Data/InterpolationTest/[AsmLogicTest][Tests.Logic.Data.InterpolationTest.Pow2]
       name: Pow2
       fullName: Tests.Logic.Data.InterpolationTest.Pow2
-      resultStatus: 0
-      duration: 0
+      resultStatus: 1
+      duration: 0.0001873
       messages: 
       output: 
       stacktrace: 
@@ -2581,8 +2563,8 @@ MonoBehaviour:
       uniqueId: AsmLogicTest.dll/Tests/Logic/Data/InterpolationTest/[AsmLogicTest][Tests.Logic.Data.InterpolationTest.Pow2In]
       name: Pow2In
       fullName: Tests.Logic.Data.InterpolationTest.Pow2In
-      resultStatus: 0
-      duration: 0
+      resultStatus: 1
+      duration: 0.0001952
       messages: 
       output: 
       stacktrace: 
@@ -2598,8 +2580,8 @@ MonoBehaviour:
       uniqueId: AsmLogicTest.dll/Tests/Logic/Data/InterpolationTest/[AsmLogicTest][Tests.Logic.Data.InterpolationTest.Pow2InInverse]
       name: Pow2InInverse
       fullName: Tests.Logic.Data.InterpolationTest.Pow2InInverse
-      resultStatus: 0
-      duration: 0
+      resultStatus: 1
+      duration: 0.0001772
       messages: 
       output: 
       stacktrace: 
@@ -2615,8 +2597,8 @@ MonoBehaviour:
       uniqueId: AsmLogicTest.dll/Tests/Logic/Data/InterpolationTest/[AsmLogicTest][Tests.Logic.Data.InterpolationTest.Pow2Out]
       name: Pow2Out
       fullName: Tests.Logic.Data.InterpolationTest.Pow2Out
-      resultStatus: 0
-      duration: 0
+      resultStatus: 1
+      duration: 0.0001768
       messages: 
       output: 
       stacktrace: 
@@ -2632,8 +2614,8 @@ MonoBehaviour:
       uniqueId: AsmLogicTest.dll/Tests/Logic/Data/InterpolationTest/[AsmLogicTest][Tests.Logic.Data.InterpolationTest.Pow2OutInverse]
       name: Pow2OutInverse
       fullName: Tests.Logic.Data.InterpolationTest.Pow2OutInverse
-      resultStatus: 0
-      duration: 0
+      resultStatus: 1
+      duration: 0.0001894
       messages: 
       output: 
       stacktrace: 
@@ -2649,8 +2631,8 @@ MonoBehaviour:
       uniqueId: AsmLogicTest.dll/Tests/Logic/Data/InterpolationTest/[AsmLogicTest][Tests.Logic.Data.InterpolationTest.Pow3]
       name: Pow3
       fullName: Tests.Logic.Data.InterpolationTest.Pow3
-      resultStatus: 0
-      duration: 0
+      resultStatus: 1
+      duration: 0.0001863
       messages: 
       output: 
       stacktrace: 
@@ -2666,8 +2648,8 @@ MonoBehaviour:
       uniqueId: AsmLogicTest.dll/Tests/Logic/Data/InterpolationTest/[AsmLogicTest][Tests.Logic.Data.InterpolationTest.Pow3In]
       name: Pow3In
       fullName: Tests.Logic.Data.InterpolationTest.Pow3In
-      resultStatus: 0
-      duration: 0
+      resultStatus: 1
+      duration: 0.0001796
       messages: 
       output: 
       stacktrace: 
@@ -2683,8 +2665,8 @@ MonoBehaviour:
       uniqueId: AsmLogicTest.dll/Tests/Logic/Data/InterpolationTest/[AsmLogicTest][Tests.Logic.Data.InterpolationTest.Pow3InInverse]
       name: Pow3InInverse
       fullName: Tests.Logic.Data.InterpolationTest.Pow3InInverse
-      resultStatus: 0
-      duration: 0
+      resultStatus: 1
+      duration: 0.0002413
       messages: 
       output: 
       stacktrace: 
@@ -2700,8 +2682,8 @@ MonoBehaviour:
       uniqueId: AsmLogicTest.dll/Tests/Logic/Data/InterpolationTest/[AsmLogicTest][Tests.Logic.Data.InterpolationTest.Pow3Out]
       name: Pow3Out
       fullName: Tests.Logic.Data.InterpolationTest.Pow3Out
-      resultStatus: 0
-      duration: 0
+      resultStatus: 1
+      duration: 0.0001907
       messages: 
       output: 
       stacktrace: 
@@ -2717,8 +2699,8 @@ MonoBehaviour:
       uniqueId: AsmLogicTest.dll/Tests/Logic/Data/InterpolationTest/[AsmLogicTest][Tests.Logic.Data.InterpolationTest.Pow3OutInverse]
       name: Pow3OutInverse
       fullName: Tests.Logic.Data.InterpolationTest.Pow3OutInverse
-      resultStatus: 0
-      duration: 0
+      resultStatus: 1
+      duration: 0.0001834
       messages: 
       output: 
       stacktrace: 
@@ -2734,8 +2716,8 @@ MonoBehaviour:
       uniqueId: AsmLogicTest.dll/Tests/Logic/Data/InterpolationTest/[AsmLogicTest][Tests.Logic.Data.InterpolationTest.Pow4]
       name: Pow4
       fullName: Tests.Logic.Data.InterpolationTest.Pow4
-      resultStatus: 0
-      duration: 0
+      resultStatus: 1
+      duration: 0.0001851
       messages: 
       output: 
       stacktrace: 
@@ -2751,8 +2733,8 @@ MonoBehaviour:
       uniqueId: AsmLogicTest.dll/Tests/Logic/Data/InterpolationTest/[AsmLogicTest][Tests.Logic.Data.InterpolationTest.Pow4In]
       name: Pow4In
       fullName: Tests.Logic.Data.InterpolationTest.Pow4In
-      resultStatus: 0
-      duration: 0
+      resultStatus: 1
+      duration: 0.0002193
       messages: 
       output: 
       stacktrace: 
@@ -2768,8 +2750,8 @@ MonoBehaviour:
       uniqueId: AsmLogicTest.dll/Tests/Logic/Data/InterpolationTest/[AsmLogicTest][Tests.Logic.Data.InterpolationTest.Pow4Out]
       name: Pow4Out
       fullName: Tests.Logic.Data.InterpolationTest.Pow4Out
-      resultStatus: 0
-      duration: 0
+      resultStatus: 1
+      duration: 0.0001851
       messages: 
       output: 
       stacktrace: 
@@ -2785,8 +2767,8 @@ MonoBehaviour:
       uniqueId: AsmLogicTest.dll/Tests/Logic/Data/InterpolationTest/[AsmLogicTest][Tests.Logic.Data.InterpolationTest.Pow5]
       name: Pow5
       fullName: Tests.Logic.Data.InterpolationTest.Pow5
-      resultStatus: 0
-      duration: 0
+      resultStatus: 1
+      duration: 0.0001887
       messages: 
       output: 
       stacktrace: 
@@ -2802,8 +2784,8 @@ MonoBehaviour:
       uniqueId: AsmLogicTest.dll/Tests/Logic/Data/InterpolationTest/[AsmLogicTest][Tests.Logic.Data.InterpolationTest.Pow5In]
       name: Pow5In
       fullName: Tests.Logic.Data.InterpolationTest.Pow5In
-      resultStatus: 0
-      duration: 0
+      resultStatus: 1
+      duration: 0.0001771
       messages: 
       output: 
       stacktrace: 
@@ -2819,8 +2801,8 @@ MonoBehaviour:
       uniqueId: AsmLogicTest.dll/Tests/Logic/Data/InterpolationTest/[AsmLogicTest][Tests.Logic.Data.InterpolationTest.Pow5Out]
       name: Pow5Out
       fullName: Tests.Logic.Data.InterpolationTest.Pow5Out
-      resultStatus: 0
-      duration: 0
+      resultStatus: 1
+      duration: 0.0001791
       messages: 
       output: 
       stacktrace: 
@@ -2836,8 +2818,8 @@ MonoBehaviour:
       uniqueId: AsmLogicTest.dll/Tests/Logic/Data/InterpolationTest/[AsmLogicTest][Tests.Logic.Data.InterpolationTest.Sine]
       name: Sine
       fullName: Tests.Logic.Data.InterpolationTest.Sine
-      resultStatus: 0
-      duration: 0
+      resultStatus: 1
+      duration: 0.0003583
       messages: 
       output: 
       stacktrace: 
@@ -2853,8 +2835,8 @@ MonoBehaviour:
       uniqueId: AsmLogicTest.dll/Tests/Logic/Data/InterpolationTest/[AsmLogicTest][Tests.Logic.Data.InterpolationTest.SineIn]
       name: SineIn
       fullName: Tests.Logic.Data.InterpolationTest.SineIn
-      resultStatus: 0
-      duration: 0
+      resultStatus: 1
+      duration: 0.0002268
       messages: 
       output: 
       stacktrace: 
@@ -2870,8 +2852,8 @@ MonoBehaviour:
       uniqueId: AsmLogicTest.dll/Tests/Logic/Data/InterpolationTest/[AsmLogicTest][Tests.Logic.Data.InterpolationTest.SineOut]
       name: SineOut
       fullName: Tests.Logic.Data.InterpolationTest.SineOut
-      resultStatus: 0
-      duration: 0
+      resultStatus: 1
+      duration: 0.0002623
       messages: 
       output: 
       stacktrace: 
@@ -2887,8 +2869,8 @@ MonoBehaviour:
       uniqueId: AsmLogicTest.dll/Tests/Logic/Data/InterpolationTest/[AsmLogicTest][Tests.Logic.Data.InterpolationTest.Smooth]
       name: Smooth
       fullName: Tests.Logic.Data.InterpolationTest.Smooth
-      resultStatus: 0
-      duration: 0
+      resultStatus: 1
+      duration: 0.0001655
       messages: 
       output: 
       stacktrace: 
@@ -2904,8 +2886,8 @@ MonoBehaviour:
       uniqueId: AsmLogicTest.dll/Tests/Logic/Data/InterpolationTest/[AsmLogicTest][Tests.Logic.Data.InterpolationTest.Smooth2]
       name: Smooth2
       fullName: Tests.Logic.Data.InterpolationTest.Smooth2
-      resultStatus: 0
-      duration: 0
+      resultStatus: 1
+      duration: 0.000188
       messages: 
       output: 
       stacktrace: 
@@ -2921,8 +2903,8 @@ MonoBehaviour:
       uniqueId: AsmLogicTest.dll/Tests/Logic/Data/InterpolationTest/[AsmLogicTest][Tests.Logic.Data.InterpolationTest.Smoother]
       name: Smoother
       fullName: Tests.Logic.Data.InterpolationTest.Smoother
-      resultStatus: 0
-      duration: 0
+      resultStatus: 1
+      duration: 0.0001681
       messages: 
       output: 
       stacktrace: 
@@ -2938,8 +2920,8 @@ MonoBehaviour:
       uniqueId: AsmLogicTest.dll/Tests/Logic/Data/[AsmLogicTest][Tests.Logic.Data.NoiseTest][suite]
       name: NoiseTest
       fullName: Tests.Logic.Data.NoiseTest
-      resultStatus: 0
-      duration: 0
+      resultStatus: 1
+      duration: 0.033821
       messages: 
       output: 
       stacktrace: 
@@ -2954,8 +2936,8 @@ MonoBehaviour:
       uniqueId: AsmLogicTest.dll/Tests/Logic/Data/NoiseTest/[AsmLogicTest][Tests.Logic.Data.NoiseTest.Random_RandomnessSpread]
       name: Random_RandomnessSpread
       fullName: Tests.Logic.Data.NoiseTest.Random_RandomnessSpread
-      resultStatus: 0
-      duration: 0
+      resultStatus: 1
+      duration: 0.0039931
       messages: 
       output: 
       stacktrace: 
@@ -2971,8 +2953,8 @@ MonoBehaviour:
       uniqueId: AsmLogicTest.dll/Tests/Logic/Data/NoiseTest/[AsmLogicTest][Tests.Logic.Data.NoiseTest.Random_SameSeedSameValue]
       name: Random_SameSeedSameValue
       fullName: Tests.Logic.Data.NoiseTest.Random_SameSeedSameValue
-      resultStatus: 0
-      duration: 0
+      resultStatus: 1
+      duration: 0.0002893
       messages: 
       output: 
       stacktrace: 
@@ -2988,8 +2970,8 @@ MonoBehaviour:
       uniqueId: AsmLogicTest.dll/Tests/Logic/Data/NoiseTest/[AsmLogicTest][Tests.Logic.Data.NoiseTest.RandomInt_RandomnessSpread]
       name: RandomInt_RandomnessSpread
       fullName: Tests.Logic.Data.NoiseTest.RandomInt_RandomnessSpread
-      resultStatus: 0
-      duration: 0
+      resultStatus: 1
+      duration: 0.0009399
       messages: 
       output: 
       stacktrace: 
@@ -3005,8 +2987,8 @@ MonoBehaviour:
       uniqueId: AsmLogicTest.dll/Tests/Logic/Data/NoiseTest/[AsmLogicTest][Tests.Logic.Data.NoiseTest.RandomInt_SameSeedSameValue]
       name: RandomInt_SameSeedSameValue
       fullName: Tests.Logic.Data.NoiseTest.RandomInt_SameSeedSameValue
-      resultStatus: 0
-      duration: 0
+      resultStatus: 1
+      duration: 0.0003457
       messages: 
       output: 
       stacktrace: 
@@ -3022,8 +3004,8 @@ MonoBehaviour:
       uniqueId: AsmLogicTest.dll/Tests/Logic/Data/NoiseTest/[AsmLogicTest][Tests.Logic.Data.NoiseTest.RandomRange_RandomnessSpread]
       name: RandomRange_RandomnessSpread
       fullName: Tests.Logic.Data.NoiseTest.RandomRange_RandomnessSpread
-      resultStatus: 0
-      duration: 0
+      resultStatus: 1
+      duration: 0.000373
       messages: 
       output: 
       stacktrace: 
@@ -3039,8 +3021,8 @@ MonoBehaviour:
       uniqueId: AsmLogicTest.dll/Tests/Logic/Data/NoiseTest/[AsmLogicTest][Tests.Logic.Data.NoiseTest.RandomRange_SameSeedSameValue]
       name: RandomRange_SameSeedSameValue
       fullName: Tests.Logic.Data.NoiseTest.RandomRange_SameSeedSameValue
-      resultStatus: 0
-      duration: 0
+      resultStatus: 1
+      duration: 0.0001732
       messages: 
       output: 
       stacktrace: 
@@ -3056,8 +3038,8 @@ MonoBehaviour:
       uniqueId: AsmLogicTest.dll/Tests/Logic/Data/NoiseTest/[AsmLogicTest][Tests.Logic.Data.NoiseTest.RandomRangeInt_RandomnessSpread]
       name: RandomRangeInt_RandomnessSpread
       fullName: Tests.Logic.Data.NoiseTest.RandomRangeInt_RandomnessSpread
-      resultStatus: 0
-      duration: 0
+      resultStatus: 1
+      duration: 0.0013607
       messages: 
       output: 
       stacktrace: 
@@ -3073,8 +3055,8 @@ MonoBehaviour:
       uniqueId: AsmLogicTest.dll/Tests/Logic/Data/NoiseTest/[AsmLogicTest][Tests.Logic.Data.NoiseTest.RandomRangeInt_SameSeedSameValue]
       name: RandomRangeInt_SameSeedSameValue
       fullName: Tests.Logic.Data.NoiseTest.RandomRangeInt_SameSeedSameValue
-      resultStatus: 0
-      duration: 0
+      resultStatus: 1
+      duration: 0.000329
       messages: 
       output: 
       stacktrace: 
@@ -3090,8 +3072,8 @@ MonoBehaviour:
       uniqueId: AsmLogicTest.dll/Tests/Logic/Data/NoiseTest/[AsmLogicTest][Tests.Logic.Data.NoiseTest.Wave2D_SameSeedSameValue]
       name: Wave2D_SameSeedSameValue
       fullName: Tests.Logic.Data.NoiseTest.Wave2D_SameSeedSameValue
-      resultStatus: 0
-      duration: 0
+      resultStatus: 1
+      duration: 0.0003346
       messages: 
       output: 
       stacktrace: 
@@ -3107,8 +3089,8 @@ MonoBehaviour:
       uniqueId: AsmLogicTest.dll/Tests/Logic/Data/NoiseTest/[AsmLogicTest][Tests.Logic.Data.NoiseTest.Wave2D_ValueRange]
       name: Wave2D_ValueRange
       fullName: Tests.Logic.Data.NoiseTest.Wave2D_ValueRange
-      resultStatus: 0
-      duration: 0
+      resultStatus: 1
+      duration: 0.000299
       messages: 
       output: 
       stacktrace: 
@@ -3124,8 +3106,8 @@ MonoBehaviour:
       uniqueId: AsmLogicTest.dll/Tests/Logic/Data/NoiseTest/[AsmLogicTest][Tests.Logic.Data.NoiseTest.Wave3D_SameSeedSameValue]
       name: Wave3D_SameSeedSameValue
       fullName: Tests.Logic.Data.NoiseTest.Wave3D_SameSeedSameValue
-      resultStatus: 0
-      duration: 0
+      resultStatus: 1
+      duration: 0.0004104
       messages: 
       output: 
       stacktrace: 
@@ -3141,8 +3123,8 @@ MonoBehaviour:
       uniqueId: AsmLogicTest.dll/Tests/Logic/Data/NoiseTest/[AsmLogicTest][Tests.Logic.Data.NoiseTest.Wave3D_ValueRange]
       name: Wave3D_ValueRange
       fullName: Tests.Logic.Data.NoiseTest.Wave3D_ValueRange
-      resultStatus: 0
-      duration: 0
+      resultStatus: 1
+      duration: 0.0003305
       messages: 
       output: 
       stacktrace: 
@@ -3158,8 +3140,8 @@ MonoBehaviour:
       uniqueId: AsmLogicTest.dll/Tests/Logic/Data/[AsmLogicTest][Tests.Logic.Data.VoxelTest][suite]
       name: VoxelTest
       fullName: Tests.Logic.Data.VoxelTest
-      resultStatus: 0
-      duration: 0
+      resultStatus: 1
+      duration: 0.1554504
       messages: 
       output: 
       stacktrace: 
@@ -3174,8 +3156,8 @@ MonoBehaviour:
       uniqueId: AsmLogicTest.dll/Tests/Logic/Data/VoxelTest/[AsmLogicTest][Tests.Logic.Data.VoxelTest.Pack]
       name: Pack
       fullName: Tests.Logic.Data.VoxelTest.Pack
-      resultStatus: 0
-      duration: 0
+      resultStatus: 1
+      duration: 0.1319861
       messages: 
       output: 
       stacktrace: 
@@ -3191,8 +3173,8 @@ MonoBehaviour:
       uniqueId: AsmLogicTest.dll/Tests/Logic/Data/VoxelTest/[AsmLogicTest][Tests.Logic.Data.VoxelTest.ToByte]
       name: ToByte
       fullName: Tests.Logic.Data.VoxelTest.ToByte
-      resultStatus: 0
-      duration: 0
+      resultStatus: 1
+      duration: 0.0024055
       messages: 
       output: 
       stacktrace: 
@@ -3208,8 +3190,8 @@ MonoBehaviour:
       uniqueId: AsmLogicTest.dll/Tests/Logic/Data/VoxelTest/[AsmLogicTest][Tests.Logic.Data.VoxelTest.ToFloat]
       name: ToFloat
       fullName: Tests.Logic.Data.VoxelTest.ToFloat
-      resultStatus: 0
-      duration: 0
+      resultStatus: 1
+      duration: 0.0009689
       messages: 
       output: 
       stacktrace: 
@@ -3221,13 +3203,13 @@ MonoBehaviour:
       - Uncategorized
       parentId: 1050
       parentUniqueId: AsmLogicTest.dll/Tests/Logic/Data/[AsmLogicTest][Tests.Logic.Data.VoxelTest][suite]
-    m_ResultText: Chunk (0,073s)
+    m_ResultText: VoxelTest (0,155s)
     m_ResultStacktrace: 
     m_TestListState:
       scrollPos: {x: 0, y: 0}
-      m_SelectedIDs: 6e5a2579
-      m_LastClickedID: 2032491118
-      m_ExpandedIDs: 2400818aba64308d3cfb0f9c471b2f9df18e4fa66d8beab46d2673c3e18fa7c3921304d9b0c3c4de53f4a10c23d39d3f85118e4dffffff7f
+      m_SelectedIDs: 98599dc3
+      m_LastClickedID: -1013098088
+      m_ExpandedIDs: 2400818aba64308d3cfb0f9c471b2f9df18e4fa66d8beab46d2673c398599dc3e18fa7c3921304d9b0c3c4de53f4a10c23d39d3f85118e4dffffff7f
       m_RenameOverlay:
         m_UserAcceptedRename: 0
         m_Name: 
