@@ -35,6 +35,7 @@ namespace Adventure.Game.Manager.ShapeGeneration {
 		}
 		
 		public delegate void ChunkRemeshListener(Chunk chunk, Mesh mesh);
+		public delegate void ChunkRemeshLodListener(Chunk chunk, Mesh mesh, Vector3Int minLimit, Vector3Int maxLimit);
 
 		// Constants
 		protected const int CHUNK_MAX_VERTEX = 16 * 16 * 16 * 6 * 3;
@@ -42,9 +43,10 @@ namespace Adventure.Game.Manager.ShapeGeneration {
 
 		// Per Mesh
 		protected Vector2[] voxels;
-		protected Chunk currentChunk;
+		public Chunk currentChunk;
 		protected Chunk[] adjacentChunks;
-
+		protected Vector3Int minLimit, maxLimit;
+		
 		protected ChunkRemeshListener OnChunkRemesh;
 		protected int indexCount = 0;
 		protected int indexCountLiquid = 0;

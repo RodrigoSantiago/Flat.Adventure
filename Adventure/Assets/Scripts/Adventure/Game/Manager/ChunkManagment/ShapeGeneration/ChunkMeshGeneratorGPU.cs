@@ -24,12 +24,12 @@ namespace Adventure.Game.Manager.ShapeGeneration {
 
 		private ComputeShader shader;
 		private ChunkRemeshListener OnChunkRemesh;
-		private ChunkRemeshListener OnChunkRemeshLod;
+		private ChunkRemeshLodListener OnChunkRemeshLod;
 
 		private int solid, liquid, solidLod, bakeSolid, bakeLiquid;
 		private GraphicsBuffer triangleTable, triangleTransitionTable;
 
-		public ChunkMeshGeneratorGPU(ComputeShader shader, ChunkRemeshListener chunkRemeshListener, ChunkRemeshListener chunkRemeshLodListener) : base(chunkRemeshListener) {
+		public ChunkMeshGeneratorGPU(ComputeShader shader, ChunkRemeshListener chunkRemeshListener, ChunkRemeshLodListener chunkRemeshLodListener) : base(chunkRemeshListener) {
 			this.shader = shader;
 			this.OnChunkRemesh = chunkRemeshListener;
 			this.OnChunkRemeshLod = chunkRemeshLodListener;
@@ -110,7 +110,8 @@ namespace Adventure.Game.Manager.ShapeGeneration {
 			if (CreateDerivedChunk(voxels, chunk, settings, chunks)) {
 				this.currentChunk = chunk;
 				this.isRemeshing = true;
-				
+				this.minLimit = minLimit;
+				this.maxLimit = maxLimit;
 				voxelBuffer.SetData(voxels);
 				counterSolid.SetData(new uint[] { 0 });
 				//counterLiquid.SetData(new uint[]{0});
@@ -181,7 +182,7 @@ namespace Adventure.Game.Manager.ShapeGeneration {
 			isRemeshing = false;
 			indexCount = 0;
 
-			OnChunkRemeshLod?.Invoke(currentChunk, mesh);
+			OnChunkRemeshLod?.Invoke(currentChunk, mesh, minLimit, maxLimit);
 		}
 
 		private Mesh ComposeMesh(int vertexCount) {

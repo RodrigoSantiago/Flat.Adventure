@@ -204,10 +204,12 @@ MonoBehaviour:
   - {fileID: 2100000, guid: 3f16e4b014b67d347b010024e3ffa66d, type: 2}
   - {fileID: 2100000, guid: 6c5a03ebe5e49334f80947b6a307551f, type: 2}
   renderSplit: 0
-  minViewSize: 8
-  maxViewSize: 8
+  renderTrans: 1
+  minViewSize: 4
+  maxViewSize: 4
   viewHeight: 16
-  position: {x: 256, y: 128, z: 256}
+  lodCount: 
+  position: {x: 512, y: 128, z: 512}
 --- !u!1 &493311667
 GameObject:
   m_ObjectHideFlags: 0

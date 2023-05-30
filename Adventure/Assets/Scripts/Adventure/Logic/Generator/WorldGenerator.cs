@@ -1,6 +1,6 @@
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
-using Adventure.Logic.ChunkManagment;
 using Adventure.Logic.Data;
 using UnityEngine;
 
@@ -12,7 +12,7 @@ namespace Adventure.Logic.Generator {
         private readonly World world;
         private readonly WorldMap worldMap;
         
-        private readonly Queue<ChunkRequest> request = new();
+        private readonly LinkedList<ChunkRequest> request = new();
         private readonly Queue<ChunkRequest> done = new();
         private readonly Thread thread;
 
@@ -26,7 +26,14 @@ namespace Adventure.Logic.Generator {
 
         public void AddChunkRequest(ChunkRequest chunkRequest) {
             lock (request) {
-                request.Enqueue(chunkRequest);
+                request.AddLast(chunkRequest);
+                Monitor.PulseAll(request);
+            }
+        }
+
+        public void AddChunkRequestPriority(ChunkRequest chunkRequest) {
+            lock (request) {
+                request.AddFirst(chunkRequest);
                 Monitor.PulseAll(request);
             }
         }
@@ -39,7 +46,8 @@ namespace Adventure.Logic.Generator {
                         Monitor.Wait(request);
                     }
 
-                    chunkRequest = request.Dequeue();
+                    chunkRequest = request.FirstOrDefault();
+                    request.RemoveFirst();
                 }
 
                 if (chunkRequest.lod == 0) {
@@ -71,7 +79,7 @@ namespace Adventure.Logic.Generator {
                 
                 for (int y = 0; y < 16; y++) {
                     float m2 = (h - (local.y + y));
-                    var voxel = new Voxel(m2 / 2 + 0.5f, 2);
+                    var voxel = new Voxel(m2 / 2 + 0.5f, local.y + y < 16 ? 1 : 2);
                     voxels[x + y * 16 + z * 256] = voxel;
                     if (x == 0 && y == 0 && z == 0) {
                         baseVoxel = voxel;

@@ -1,12 +1,10 @@
 ﻿using System.Collections.Generic;
-using System.Threading;
 using Adventure.Logic.Data;
-using Adventure.Logic.Generator;
 using UnityEngine;
 
-namespace Adventure.Logic.ChunkManagment {
+namespace Adventure.Logic.Generator {
     public class WorldChunkController {
-        private const int MAX_LOD = 1;
+        private const int MAX_LOD = 4;
         
         private readonly World world;
         private readonly WorldGenerator generator;
@@ -68,12 +66,14 @@ namespace Adventure.Logic.ChunkManagment {
             if (requestLod[lod].TryGetValue(localLod, out var request)) {
                 request.AddChunk(chunk);
                 if (request.IsReady()) {
-                    generator.AddChunkRequest(request);
+                    generator.AddChunkRequestPriority(request);
                 }
             }
         }
 
         public void RequestChunk(Vector3Int local, WorldPlayerController source = null, int lod = 0) {
+            local = world.settings.Pos(local);
+            
             if (local / (16 * (1 << lod)) * (16 * (1 << lod)) != local) {
                 Debug.Log("Invalid request " + local+" >> "+lod);
                 return;

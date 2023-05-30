@@ -2,7 +2,7 @@
 using Adventure.Logic.Data;
 using UnityEngine;
 
-namespace Adventure.Logic.ChunkManagment {
+namespace Adventure.Logic.Generator {
     public class ChunkRequest {
         public readonly Vector3Int local;
         public readonly int lod;
@@ -41,10 +41,10 @@ namespace Adventure.Logic.ChunkManagment {
         }
 
         private static readonly Vector3Int[] looper = {
-            new Vector3Int(0, 0, 0), new Vector3Int(1, 0, 0),
-            new Vector3Int(0, 1, 0), new Vector3Int(1, 1, 0),
-            new Vector3Int(0, 0, 1), new Vector3Int(1, 0, 1),
-            new Vector3Int(0, 1, 1), new Vector3Int(1, 1, 1),
+            new Vector3Int(0, 0, 0), new Vector3Int(8, 0, 0),
+            new Vector3Int(0, 8, 0), new Vector3Int(8, 8, 0),
+            new Vector3Int(0, 0, 8), new Vector3Int(8, 0, 8),
+            new Vector3Int(0, 8, 8), new Vector3Int(8, 8, 8),
         };
 
         public void PackChunks() {
@@ -62,10 +62,10 @@ namespace Adventure.Logic.ChunkManagment {
                 for (int iy = 0; iy < 16; iy += 2)
                 for (int ix = 0; ix < 16; ix += 2) {
                     Voxel vox = lChunk[ix, iy, iz];
-                    if (vox.volume != 1 && vox.volume != 0) {
+                    if (vox.vol != 0 && vox.vol != 15) {
                         vox = new Voxel((vox.volume + 0.5f) * 0.5f, vox.material);
                     }
-                    voxels[(pt.x * 8 + ix / 2) + (pt.y * 8 + iy / 2) * 16 + (pt.z * 8 + iz / 2) * 256] = vox;
+                    voxels[(pt.x + ix / 2) + (pt.y + iy / 2) * 16 + (pt.z + iz / 2) * 256] = vox;
                     if (isSingle && vox != single) {
                         isSingle = false;
                     }

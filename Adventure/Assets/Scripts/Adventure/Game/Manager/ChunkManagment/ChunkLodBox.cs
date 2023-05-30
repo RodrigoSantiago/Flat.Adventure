@@ -1,14 +1,16 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 
 namespace Adventure.Game.Manager.ChunkManagment {
+    [Serializable]
     public struct ChunkLodBox {
-        public readonly int lod;
-        
-        public Vector3Int min { get; set; }
-        public Vector3Int size { get; set; }
+        public int lod;
+
+        public Vector3Int min;
+        public Vector3Int size;
         public Vector3Int max { get => min + size; }
 
-        public ChunkLodBox(int lod, Vector3Int min, Vector3Int size) {
+        public ChunkLodBox(int lod, Vector3Int min = default, Vector3Int size = default) {
             this.lod = lod;
             this.min = min;
             this.size = size;

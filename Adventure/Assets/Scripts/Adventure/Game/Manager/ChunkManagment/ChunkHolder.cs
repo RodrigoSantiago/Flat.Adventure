@@ -11,8 +11,8 @@ namespace Adventure.Game.Manager.ChunkManagment {
         public Mesh mesh { get; private set; }
         public Mesh lodMesh { get; private set; }
         public bool ready { get; private set; }
-        public bool lodReady { get; private set; }
         public bool hasNeighboors;
+        private int lodReadyInt;
         
         public ChunkHolder(int lod) {
             this.lod = lod;
@@ -22,14 +22,21 @@ namespace Adventure.Game.Manager.ChunkManagment {
             this.chunk = chunk;
         }
         
-        public void MeshLodReady(Mesh lodMesh) {
+        public void MeshLodReady(Mesh lodMesh, Vector3Int minLimit, Vector3Int maxLimit) {
             this.lodMesh = lodMesh;
-            this.lodReady = true;
+            lodReadyInt = (minLimit.x << 0) | (minLimit.y << 1) | (minLimit.z << 2) |
+                          (maxLimit.x << 3) | (maxLimit.y << 4) | (maxLimit.z << 5);
         }
         
         public void MeshReady(Mesh mesh) {
             this.mesh = mesh;
             this.ready = true;
+        }
+
+        public bool IsLodReady(Vector3Int minLimit, Vector3Int maxLimit) {
+            int t = (minLimit.x << 0) | (minLimit.y << 1) | (minLimit.z << 2) |
+                          (maxLimit.x << 3) | (maxLimit.y << 4) | (maxLimit.z << 5);
+            return t == lodReadyInt;
         }
     }
 }

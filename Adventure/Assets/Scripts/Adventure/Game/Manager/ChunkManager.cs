@@ -11,13 +11,16 @@ using UnityEngine;
 namespace Adventure.Game.Manager {
     
     public class ChunkManager : MonoBehaviour {
-
+        public static int maxViewLod = 4;
+        
         public Material groundMaterial;
         public ComputeShader marchingCubesCompute;
         public GameObject objPreview;
         public GameObject objPreview2;
+        public GameObject objCube;
         public Material[] matPreview;
         public bool renderSplit = false;
+        public bool renderTrans = true;
 
         private ChunkMeshGenerator meshGenerator;
 
@@ -27,6 +30,7 @@ namespace Adventure.Game.Manager {
         public int minViewSize = 8;
         public int maxViewSize = 8;
         public int viewHeight = 16;
+        public int[] lodCount;
         public Vector3 position = new Vector3(64, 0, 64);
         public Vector3Int local {
             get {
@@ -39,22 +43,30 @@ namespace Adventure.Game.Manager {
         }
 
         private Dictionary<Vector3Int, ChunkHolder>[] chunks;
-        private Vector3Int[] lodCenter = new Vector3Int[2];
-        private ChunkLodBox[] lodBox = new ChunkLodBox[2];
-        private ChunkLodBox[] lodBoxIn = new ChunkLodBox[2];
-        private ChunkLodBox[] renderLodBox = new ChunkLodBox[2];
-        private ChunkLodBox[] renderLodBoxIn = new ChunkLodBox[2];
+        public Vector3Int[] lodCenter = new Vector3Int[maxViewLod];
+        public ChunkLodBox[] lodBox = new ChunkLodBox[maxViewLod];
+        public ChunkLodBox[] lodBoxIn = new ChunkLodBox[maxViewLod];
+        public ChunkLodBox[] renderLodBox = new ChunkLodBox[maxViewLod];
+        public ChunkLodBox[] renderLodBoxIn = new ChunkLodBox[maxViewLod];
+        public GameObject[] instances;
 
-        private bool ready;
+        private int ready = -1;
         private Vector3Int renderLocal;
         private Vector3Int requestLocal;
         private Vector3Int prevRequestLocal;
         private Vector3Int prevRequestLocalLod1;
         
         private void Start() {
-            chunks = new Dictionary<Vector3Int, ChunkHolder>[2];
-            for (int i = 0; i < chunks.Length; i++) {
+            chunks = new Dictionary<Vector3Int, ChunkHolder>[maxViewLod];
+            lodCount = new int[maxViewLod];
+            instances = new GameObject[maxViewLod];
+            for (int i = 0; i < maxViewLod; i++) {
                 chunks[i] = new Dictionary<Vector3Int, ChunkHolder>();
+                lodBox[i] = new ChunkLodBox(i);
+                lodBoxIn[i] = new ChunkLodBox(i);
+                renderLodBox[i] = new ChunkLodBox(i);
+                renderLodBoxIn[i] = new ChunkLodBox(i);
+                instances[i] = Instantiate(objCube, Vector3.zero, Quaternion.identity);
             }
 
             RefreshLod();
@@ -98,6 +110,7 @@ namespace Adventure.Game.Manager {
         }
 
         public void OnChunkReceived(Chunk chunk) {
+            lodCount[chunk.lod]++;
             if (chunks[chunk.lod].TryGetValue(chunk.local, out var holder)) {
                 holder.ChunkReady(chunk);
             }
@@ -115,26 +128,30 @@ namespace Adventure.Game.Manager {
             }*/
         }
 
-        public void OnChunkRemeshLod(Chunk chunk, Mesh meshLod) {
-            chunks[chunk.lod][chunk.local].MeshLodReady(meshLod);
+        public void OnChunkRemeshLod(Chunk chunk, Mesh meshLod, Vector3Int minLimit, Vector3Int maxLimit) {
+            chunks[chunk.lod][chunk.local].MeshLodReady(meshLod, minLimit, maxLimit);
             RemeshChunks();
         }
 
         private void RequestLoop() {
             if (prevRequestLocal != lodCenter[0]) {
                 prevRequestLocal = lodCenter[0];
-                ready = false;
+                ready = -1;
                 RequestToPlay(0);
             }
-            
-            if (!ready) {
-                ready = IsLodReady(0);
-                if (ready) {
-                    RequestToPlay(1);
+
+            for (int lod = 0; lod < maxViewLod; lod++) {
+                if (ready == lod - 1) {
+                    if (IsLodReady(lod)) {
+                        Debug.Log(lod+" > ready");
+                        ready = lod;
+                        if (lod + 1 < maxViewLod)
+                            RequestToPlay(lod + 1);
+                    }
                 }
             }
 
-            if (ready) {
+            if (ready >= 0) {
                 renderLocal = prevRequestLocal;
                 for (int i = 0; i < renderLodBox.Length; i++) {
                     renderLodBox[i] = lodBox[i];
@@ -146,14 +163,17 @@ namespace Adventure.Game.Manager {
         private void RequestToPlay(int lod) {
             List<Vector3Int> requests = new List<Vector3Int>();
             int n = 16 * (1 << lod);
+            for (int y = Math.Max(0, lodBox[lod].min.y - n); y < Math.Min(settings.height, lodBox[lod].max.y + n); y += n)
             for (int x = lodBox[lod].min.x - n; x < lodBox[lod].max.x + n; x += n)
-            for (int y = lodBox[lod].min.y - n; y < lodBox[lod].max.y + n; y += n)
             for (int z = lodBox[lod].min.z - n; z < lodBox[lod].max.z + n; z += n) {
                 var key = settings.Pos(new Vector3Int(x, y, z));
                 if (lod > 0 && lodBoxIn[lod].Contains(key)) continue;
-                if (settings.IsInside(key) && !chunks[lod].ContainsKey(key)) requests.Add(key);
+                if (settings.IsInside(key) && !chunks[lod].ContainsKey(key)) {
+                    requests.Add(key);
+                }
             }
-
+            
+            Debug.Log(lod+" >> "+requests.Count);
             SortRequests(requests, lodCenter[lod]);
             foreach (var request in requests) {
                 chunks[lod][request] = new ChunkHolder(lod);
@@ -176,9 +196,9 @@ namespace Adventure.Game.Manager {
             var view = new Vector3Int(minViewSize, minViewSize, minViewSize);
             var size = view * 2;
             
-            for (int i = 0; i < 2; i++) {
-                int n1 = 16 * (1 << i);
-                int n2 = 16 * (1 << (i + 1));
+            for (int i = 0; i < maxViewLod; i++) {
+                int n1 = 16 * (1 << i) * (i == maxViewLod - 1 ? 2 : 1);
+                int n2 = i + 1 == maxViewLod ? 16 * (1 << i) : 16 * (1 << (i + 1));
                 lodCenter[i] = local / n2 * n2;
                 lodBox[i].min = lodCenter[i] - view * n1;
                 lodBox[i].size = size * n1;
@@ -186,15 +206,23 @@ namespace Adventure.Game.Manager {
                     lodBoxIn[i].min = lodBox[i - 1].min + new Vector3Int(n1, n1, n1);
                     lodBoxIn[i].size = lodBox[i - 1].size - new Vector3Int(n1, n1, n1) * 2;
                 }
+
+                var p = lodBox[i].min;
+                p.y = Mathf.Max(0, p.y);
+                var s = lodBox[i].size;
+                s.y = Mathf.Min(settings.height, p.y + s.y) - p.y;
+                instances[i].transform.position = p;
+                instances[i].transform.localScale = s;
             }
         }
         
         public bool IsLodReady(int lod) {
             int n = 16 * (1 << lod);
+            for (int y = Math.Max(0, lodBox[lod].min.y); y < Math.Min(settings.height, lodBox[lod].max.y); y += n)
             for (int x = lodBox[lod].min.x; x < lodBox[lod].max.x; x += n)
-            for (int y = lodBox[lod].min.y; y < lodBox[lod].max.y; y += n)
             for (int z = lodBox[lod].min.z; z < lodBox[lod].max.z; z += n) {
                 var key = settings.Pos(new Vector3Int(x, y, z));
+                if (lod > 0 && lodBox[lod - 1].Contains(new Vector3Int(x, y, z))) continue;
                 if (settings.IsInside(key) && (!chunks[lod].TryGetValue(key, out var holder) || !holder.ready)) {
                     return false;
                 }
@@ -204,9 +232,11 @@ namespace Adventure.Game.Manager {
         }
 
         private void RemeshChunks() {
-            if (meshGenerator.isRemeshing) return;
+            if (meshGenerator.isRemeshing) {
+                return;
+            }
 
-            for (int lod = 0; lod < 2; lod++) {
+            for (int lod = 0; lod < maxViewLod; lod++) {
                 foreach (var (loc, holder) in chunks[lod]) {
                     if (holder.chunk == null) continue;
                     if (!holder.ready) {
@@ -219,18 +249,10 @@ namespace Adventure.Game.Manager {
                                 return;
                             }
                         }
-                    } else if (holder.mesh != null && !holder.lodReady) {
-                        if (lodBox[lod].LodLimit(loc, out var minlimit, out var maxLimit)) {
+                    } else if (holder.mesh != null && lod + 1 < maxViewLod) {
+                        if (lodBox[lod].LodLimit(loc, out var minlimit, out var maxLimit) && !holder.IsLodReady(minlimit, maxLimit)) {
                             if (!meshGenerator.RemeshChunkLod(holder.chunk, settings, chunks[lod], minlimit, maxLimit)) {
-                                holder.MeshLodReady(null);
-                            } else {
-                                return;
-                            }
-                        }
-
-                        if (renderLodBox[lod].LodLimit(loc, out  minlimit, out maxLimit)) {
-                            if (!meshGenerator.RemeshChunkLod(holder.chunk, settings, chunks[lod], minlimit, maxLimit)) {
-                                holder.MeshLodReady(null);
+                                holder.MeshLodReady(null, minlimit, maxLimit);
                             } else {
                                 return;
                             }
@@ -259,48 +281,44 @@ namespace Adventure.Game.Manager {
         }
 
         private void RenderChunks() {
-            RenderParams renderParams = new RenderParams(groundMaterial);
+            RenderParams rParams = new RenderParams(groundMaterial);
 
-            float off = 0.01f;
-            foreach (var entry in chunks[0]) {
-                var m = entry.Value.mesh;
-                var lm = entry.Value.lodMesh;
-                if (m == null) continue;
+            for (int lod = 0; lod < maxViewLod; lod++) {
+                int lod1 = lod + 1;
+                int lodMul = 1 << lod;
+                int lod1Mul = 1 << lod1;
+                int n1 = 16 * lod1Mul;
+                var matScale = Matrix4x4.Scale(Vector3.one * (lodMul * (renderSplit ? 0.95f : 1)));
                 
-                var pos = settings.CloserPos(entry.Key, renderLocal);
+                foreach (var (loc, holder) in chunks[lod]) {
+                    if (holder.mesh == null) continue;
                 
-                if (renderLodBox[0].Contains(pos)) {
-                    Vector3 extraPos = Vector3.zero;
-                    Vector3 scale = Vector3.one;
-                    
-                    if (renderLodBox[0].LodLimit(pos, out var minLimit, out var maxLimit)) {
-                        /*extraPos = new Vector3(minLimit.x * off, minLimit.y * off, minLimit.z * off);
-                        scale = new Vector3(
-                            (16f - (minLimit.x + maxLimit.x) * off) / 16f, 
-                            (16f - (minLimit.y + maxLimit.y) * off) / 16f, 
-                            (16f - (minLimit.z + maxLimit.z) * off) / 16f);*/
-                        if (lm != null) {
-                            var ma = Matrix4x4.Translate(pos) * Matrix4x4.Scale(Vector3.one * (renderSplit ? 0.95f : 1));
-                            Graphics.RenderMesh(in renderParams, lm, 0, ma);
+                    var pos = settings.CloserPos(loc, renderLocal);
+                    var preview = IsInsideRenderBox(pos, lod) || 
+                                  (lod1 < maxViewLod && IsInsideRenderBox(pos, lod1) 
+                                                     && (!chunks[lod1].TryGetValue(pos / n1 * n1, out var off) || off.mesh == null));
+                    if (preview) {
+                        var matrix = Matrix4x4.Translate(pos) * matScale;
+                        if (renderTrans && holder.lodMesh != null && renderLodBox[lod].LodLimit(pos, out _, out _)) {
+                            Graphics.RenderMesh(in rParams, holder.lodMesh, 0, matrix);
                         }
+                        Graphics.RenderMesh(in rParams, holder.mesh, 0, matrix);
                     }
-                    var matrix = Matrix4x4.Translate(pos + extraPos) * Matrix4x4.Scale(scale * (renderSplit ? 0.95f : 1));
-                    Graphics.RenderMesh(in renderParams, m, 0, matrix);
-                }
-            }
-
-            foreach (var entry in chunks[1]) {
-                var m = entry.Value.mesh;
-                if (m == null) continue;
-
-                var pos = settings.CloserPos(entry.Key, renderLocal);
-                if (renderLodBox[1].Contains(pos) && !renderLodBox[0].Contains(pos)) {
-                    var matrix = Matrix4x4.Translate(pos) * Matrix4x4.Scale(Vector3.one * (renderSplit ? 1.90f : 2));
-                    Graphics.RenderMesh(in renderParams, m, 0, matrix);
                 }
             }
         }
 
+        private bool IsInsideRenderBox(Vector3Int local, int lod) {
+            return lod == 0
+                ? renderLodBox[lod].Contains(local)
+                : renderLodBox[lod].Contains(local) && !renderLodBox[lod - 1].Contains(local);
+        }
+
+        private bool IsEqualDistance(Vector3Int pos, Vector3Int closerPos, Vector3Int original) {
+            return Math.Abs(pos.x - closerPos.x) == Math.Abs(pos.x - original.x) &&
+                   Math.Abs(pos.z - closerPos.z) == Math.Abs(pos.z - original.z);
+        }
+        
         private void DebugPreview() {
             var holder = chunks[0][Vector3Int.zero];
             for (int x = 0; x < 16; x++) 

@@ -26,7 +26,7 @@ namespace Adventure.Game {
         }
 
         public void CreateWorld() {
-            world = new World(1234, 1024, 256, 1024);
+            world = new World(1234, 2048, 256, 2048);
         }
 
         public void ConnectToWorld() {
