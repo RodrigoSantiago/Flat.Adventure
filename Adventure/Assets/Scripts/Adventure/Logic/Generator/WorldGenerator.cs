@@ -88,7 +88,7 @@ namespace Adventure.Logic.Generator {
                     }
                 }
             }
-
+            
             return single ? new Chunk(local, 0, true, baseVoxel) : new Chunk(local, 0, true, voxels);
         }
     }
