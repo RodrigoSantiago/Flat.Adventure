@@ -206,11 +206,12 @@ void unpack_palette_float(in float4 uv0, out float3 uv1) {
 }
 
 void biplanar_cubes_float(
-    Texture2DArray tex, Texture2DArray map, SamplerState state, float3 p, float3 n, float3 palette, float3 material,
+    Texture2DArray tex, Texture2DArray map, SamplerState state, float3 p, float3 n, float3 palette, float3 material, float scale,
     out float4 rgba, out float3 normal, out float metallic, out float smoothness, out float4 emission, out float aocclusion) {
     
     float3 dpdx = ddx(p);
     float3 dpdy = ddy(p);
+    p = p * scale;
     const uint3 value[] = {
         uint3(0, 2, 1),
         uint3(1, 2, 0),

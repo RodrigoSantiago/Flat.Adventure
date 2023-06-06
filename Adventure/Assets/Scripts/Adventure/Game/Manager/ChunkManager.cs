@@ -11,7 +11,9 @@ using UnityEngine;
 namespace Adventure.Game.Manager {
     
     public class ChunkManager : MonoBehaviour {
-        public static int maxViewLod = 1;
+        public static int maxViewLod = 2;
+        public static ChunkManager current;
+        public static ChunkPhysics physics { get => current.chunkPhysics; }
         
         public Material groundMaterial;
         public ComputeShader marchingCubesCompute;
@@ -22,11 +24,10 @@ namespace Adventure.Game.Manager {
         public bool renderSplit = false;
         public bool renderTrans = true;
 
-        private ChunkMeshGenerator meshGenerator;
-
         public WorldPlayerController controller;
         public WorldSettings settings;
         
+        // Settings
         public int minViewSize = 8;
         public int maxViewSize = 8;
         public int viewHeight = 16;
@@ -42,25 +43,32 @@ namespace Adventure.Game.Manager {
             }
         }
 
-        private Dictionary<Vector3Int, ChunkHolder>[] chunks;
+        public GameObject[] instances;
+        public Transform rayCastIn;
+        public Transform rayCastOut;
+        public LineRenderer line;
+        public LineRenderer line2;
+
+        // Composition
+        private ChunkMeshGenerator meshGenerator;
+        private ChunkPhysics chunkPhysics;
+
+        // Cache Variables
+        private Dictionary<Vector3Int, ChunkHolder>[] chunks = new Dictionary<Vector3Int, ChunkHolder>[maxViewLod];
         private Vector3Int[] lodCenter = new Vector3Int[maxViewLod];
         private ChunkLodBox[] lodBox = new ChunkLodBox[maxViewLod];
         private ChunkLodBox[] lodBoxIn = new ChunkLodBox[maxViewLod];
         private ChunkLodBox[] renderLodBox = new ChunkLodBox[maxViewLod];
         private ChunkLodBox[] renderLodBoxIn = new ChunkLodBox[maxViewLod];
-        public GameObject[] instances;
-        public Transform rayCastIn;
-        public Transform rayCastOut;
-        public LineRenderer line;
-
+        
         private int ready = -1;
         private Vector3Int renderLocal;
         private Vector3Int requestLocal;
         private Vector3Int prevRequestLocal;
         private Vector3Int prevRequestLocalLod1;
         
-        private void Start() {
-            chunks = new Dictionary<Vector3Int, ChunkHolder>[maxViewLod];
+        private void Awake() {
+            current = this;
             lodCount = new int[maxViewLod];
             instances = new GameObject[maxViewLod];
             for (int i = 0; i < maxViewLod; i++) {
@@ -78,8 +86,6 @@ namespace Adventure.Game.Manager {
                 renderLodBox[i] = lodBox[i];
                 renderLodBoxIn[i] = lodBoxIn[i];
             }
-            
-            UnsafeUtility.SetLeakDetectionMode(NativeLeakDetectionMode.Enabled);
         }
 
         private void OnEnable() {
@@ -87,6 +93,10 @@ namespace Adventure.Game.Manager {
                 //meshGenerator = new ChunkMeshGeneratorCPU(OnChunkRemesh);
                 meshGenerator = new ChunkMeshGeneratorGPU(marchingCubesCompute, OnChunkRemesh, OnChunkRemeshLod);
                 meshGenerator.Init();
+            }
+
+            if (chunkPhysics == null) {
+                chunkPhysics = new ChunkPhysics(this, chunks[0]);
             }
         }
 
@@ -104,15 +114,21 @@ namespace Adventure.Game.Manager {
             }
             if (Input.GetKeyDown(KeyCode.A)) {
             }
-            Vector3 from = rayCastIn.position;
-            Vector3 to = rayCastOut.position;
-            Vector3 collision = new Vector3();
-            float dist = 0;
-            if (Raycast(from, Vector3.Normalize(to - from), Vector3.Distance(from, to), ref collision, ref dist)) {
-                
+
+            if (chunkPhysics != null) {
+                Vector3 from = rayCastIn.position;
+                Vector3 to = rayCastOut.position;
+                if (chunkPhysics.Raycast(from, Vector3.Normalize(to - from), Vector3.Distance(from, to),
+                        out var dist, out var collision, out var normal, out var voxel)) {
+                }
+                line2.SetPosition(0, collision);
+                line2.SetPosition(1, collision + (normal * 2));
+                line2.SetPosition(2, collision);
+                line2.SetPosition(3, collision + Vector3.Cross(normal, new Vector3(1, 0, 0)) * 2);
+
+                line.SetPosition(0, from);
+                line.SetPosition(1, collision);
             }
-            line.SetPosition(0, from);
-            line.SetPosition(1, collision);
         }
 
         private void LateUpdate() {
@@ -124,10 +140,6 @@ namespace Adventure.Game.Manager {
             lodCount[chunk.lod]++;
             if (chunks[chunk.lod].TryGetValue(chunk.local, out var holder)) {
                 holder.ChunkReady(chunk);
-            }
-
-            if (chunk.local == new Vector3Int(512, 64, 480)) {
-                DebugPreview(chunk.local);
             }
         }
 
@@ -343,160 +355,6 @@ namespace Adventure.Game.Manager {
                 obj.transform.localScale = Vector3.Lerp(new Vector3(0.05f, 0.05f, 0.05f), new Vector3(0.25f, 0.25f, 0.25f), voxel.volume);
                 obj.GetComponent<Renderer>().material = matPreview[voxel.material];
             }
-        }
-
-        public void ReadVoxels(Vector3Int voxel, ref Vector3Int[] readVoxels) {
-            
-        }
-
-        public Voxel GetVoxel(Vector3Int pos) {
-            pos = settings.Pos(pos);
-            
-            Vector3Int grid = new Vector3Int(pos.x / 16 * 16, pos.y / 16 * 16, pos.z / 16 * 16);
-            if (chunks[0].TryGetValue(grid, out var chunkHolder)) {
-                return chunkHolder.chunk?[pos - grid] ?? default;
-            }
-
-            return default;
-        }
-
-
-        private static Vector3 notFound = new Vector3(-1, -1, -1);
-        private Voxel[] readVoxels = new Voxel[8];
-        private Vector3Int voxelLastChunkPos = new Vector3Int(-1, -1, -1);
-        private ChunkHolder voxelLastHolder;
-        
-        private static readonly Vector3Int[] VertexOffset ={
-            new Vector3Int(0, 0, 0), new Vector3Int(1, 0, 0), new Vector3Int(1, 1, 0), new Vector3Int(0, 1, 0),
-            new Vector3Int(0, 0, 1), new Vector3Int(1, 0, 1), new Vector3Int(1, 1, 1), new Vector3Int(0, 1, 1)
-        };
-        
-        private float GetValueAt(Vector3Int cell, Vector3 pos) {
-            float mx = pos.x - cell.x;
-            float my = pos.y - cell.y;
-            float mz = pos.z - cell.z;
-
-            float ix1 = Mathf.Lerp(readVoxels[0].volume, readVoxels[1].volume, mx);
-            float ix2 = Mathf.Lerp(readVoxels[3].volume, readVoxels[2].volume, mx);
-            float iy1 = Mathf.Lerp(ix1, ix2, my);
-	    
-            float ix3 = Mathf.Lerp(readVoxels[4].volume, readVoxels[5].volume, mx);
-            float ix4 = Mathf.Lerp(readVoxels[7].volume, readVoxels[6].volume, mx);
-            float iy2 = Mathf.Lerp(ix3, ix4, my);
-
-            return Mathf.Lerp(iy1, iy2, mz) - 0.5f;
-        }
-        
-        private Vector3 GetCollision(Vector3 posA, Vector3 posB, Vector3 dir, float sign) {
-            Vector3Int cell = new Vector3Int(
-                Mathf.FloorToInt((posA.x + posB.x) * 0.5f), 
-                Mathf.FloorToInt((posA.y + posB.y) * 0.5f),
-                Mathf.FloorToInt((posA.z + posB.z) * 0.5f));
-            bool test = false;
-            for (int i = 0; i < 8; i++) {
-                Vector3Int pos = settings.Pos(cell + VertexOffset[i]);
-                Vector3Int chunkPos = new Vector3Int(pos.x / 16 * 16, pos.y / 16 * 16, pos.z / 16 * 16);
-                if (chunkPos != voxelLastChunkPos) {
-                    voxelLastChunkPos = chunkPos;
-                    if (!chunks[0].TryGetValue(chunkPos, out voxelLastHolder)) return notFound;
-                }
-                if (voxelLastHolder.chunk == null) return notFound;
-
-                readVoxels[i] = voxelLastHolder.chunk[pos - chunkPos];
-                if (readVoxels[i].volume > 0.5) {
-                    test = true;
-                }
-            }
-
-            if (!test) {
-                // No Collision
-                return notFound;
-            }
-            
-            float vA = GetValueAt(cell, posA);
-            if (vA > 0) {
-                // Collision on A
-                return posA;
-            }
-            
-            float vB = GetValueAt(cell, posB);
-            Vector3 posC = posB;
-            
-            if (vB * sign < -0.01 * sign) {
-                posC = Vector3.Lerp(posA, posB, 0.5f);
-                float vC = GetValueAt(cell, posC);
-                if (vC * sign < -0.01 * sign) {
-                    // No Collision
-                    return notFound;
-                }
-            }
-            
-            posA += dir * -vA;
-            while (Mathf.FloorToInt(posA.x) == cell.x && 
-                   Mathf.FloorToInt(posA.y) == cell.y &&
-                   Mathf.FloorToInt(posA.z) == cell.z) {
-                vA = GetValueAt(cell, posA);
-                if (vA * sign >= -0.01 * sign) {
-                    // Ray Collision
-                    return posA;
-                }
-                posA += dir * -vA;
-            }
-
-            // Collision on B or C
-            return posC;
-        }
-
-        public bool Raycast(Vector3 start, Vector3 dir, float maxDistance, ref Vector3 collision, ref float distance) {
-            if (Mathf.Max(Math.Abs(dir.x), Math.Abs(dir.y), Math.Abs(dir.z)) <= 0.01) {
-                distance = maxDistance;
-                collision = start + dir * distance;
-                return false;
-            }
-            
-            Vector3Int gridPos = new Vector3Int((int)start.x, (int)start.y, (int)start.z);
-            Vector3Int rayStep = new Vector3Int(dir.x < 0 ? -1 : 1, dir.y < 0 ? -1 : 1, dir.z < 0 ? -1 : 1);
-            Vector3 rayStepSize = new Vector3(Math.Abs(1f / dir.x), Math.Abs(1f / dir.y), Math.Abs(1f / dir.z));
-            Vector3 rayLen = new Vector3(
-                dir.x < 0 ? (start.x - (gridPos.x)) * rayStepSize.x : ((gridPos.x + 1) - start.x) * rayStepSize.x,
-                dir.y < 0 ? (start.y - (gridPos.y)) * rayStepSize.y : ((gridPos.y + 1) - start.y) * rayStepSize.y,
-                dir.z < 0 ? (start.z - (gridPos.z)) * rayStepSize.z : ((gridPos.z + 1) - start.z) * rayStepSize.z
-            );
-            Vector3 pos = start;
-            
-            float fDistance = 0.0f;
-            while (fDistance < maxDistance) {
-                if (rayLen.x <= rayLen.y && rayLen.x <= rayLen.z) {
-                    gridPos.x += rayStep.x;
-                    fDistance = rayLen.x;
-                    rayLen.x += rayStepSize.x;
-                } else if (rayLen.y <= rayLen.z) {
-                    gridPos.y += rayStep.y;
-                    fDistance = rayLen.y;
-                    rayLen.y += rayStepSize.y;
-                } else {
-                    gridPos.z += rayStep.z;
-                    fDistance = rayLen.z;
-                    rayLen.z += rayStepSize.z;
-                }
-
-                if (fDistance > maxDistance) {
-                    fDistance = maxDistance;
-                }
-
-                Vector3 next = start + dir * fDistance;
-                Vector3 col = GetCollision(pos, next, dir, 1);
-                if (col.x > -1) {
-                    distance = fDistance;
-                    collision = col;
-                    return true;
-                }
-                pos = next;
-            }
-
-            distance = maxDistance;
-            collision = start + dir * distance;
-            return false;
         }
     }
 }

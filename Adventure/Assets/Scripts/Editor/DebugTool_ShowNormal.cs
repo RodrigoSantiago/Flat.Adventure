@@ -1,11 +1,11 @@
 using UnityEditor;
 using UnityEngine;
 
-[CustomEditor(typeof(MeshFilter))]
+//[CustomEditor(typeof(MeshFilter))]
 public class DebugTool_ShowNormal : Editor 
 {
     
-    private const string     EDITOR_PREF_KEY = "_normals_length";
+    /*private const string     EDITOR_PREF_KEY = "_normals_length";
     private const string     EDITOR_PREF_BOOL = "_show_normals";
     private       Mesh       mesh;
     private       MeshFilter mf;
@@ -46,5 +46,5 @@ public class DebugTool_ShowNormal : Editor
             EditorPrefs.SetBool(EDITOR_PREF_BOOL, showNormals);
             EditorPrefs.SetFloat(EDITOR_PREF_KEY, normalsLength);
         }
-    }
+    }*/
 }
