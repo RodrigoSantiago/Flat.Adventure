@@ -34,6 +34,7 @@ namespace Adventure.Game {
             localController.world = world;
             chunkManager.controller = localController;
             chunkManager.settings = world.settings;
+            chunkManager.enabled = true;
             
             world.AddController(localController);
         }

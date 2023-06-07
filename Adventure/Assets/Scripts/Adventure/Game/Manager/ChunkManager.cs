@@ -11,7 +11,7 @@ using UnityEngine;
 namespace Adventure.Game.Manager {
     
     public class ChunkManager : MonoBehaviour {
-        public static int maxViewLod = 2;
+        public static int maxViewLod = 4;
         public static ChunkManager current;
         public static ChunkPhysics physics { get => current.chunkPhysics; }
         
@@ -52,14 +52,13 @@ namespace Adventure.Game.Manager {
         // Composition
         private ChunkMeshGenerator meshGenerator;
         private ChunkPhysics chunkPhysics;
+        private ChunkRenderer chunkRenderer;
 
         // Cache Variables
         private Dictionary<Vector3Int, ChunkHolder>[] chunks = new Dictionary<Vector3Int, ChunkHolder>[maxViewLod];
         private Vector3Int[] lodCenter = new Vector3Int[maxViewLod];
         private ChunkLodBox[] lodBox = new ChunkLodBox[maxViewLod];
         private ChunkLodBox[] lodBoxIn = new ChunkLodBox[maxViewLod];
-        private ChunkLodBox[] renderLodBox = new ChunkLodBox[maxViewLod];
-        private ChunkLodBox[] renderLodBoxIn = new ChunkLodBox[maxViewLod];
         
         private int ready = -1;
         private Vector3Int renderLocal;
@@ -70,21 +69,12 @@ namespace Adventure.Game.Manager {
         private void Awake() {
             current = this;
             lodCount = new int[maxViewLod];
-            instances = new GameObject[maxViewLod];
+            //instances = new GameObject[maxViewLod];
             for (int i = 0; i < maxViewLod; i++) {
                 chunks[i] = new Dictionary<Vector3Int, ChunkHolder>();
                 lodBox[i] = new ChunkLodBox(i);
                 lodBoxIn[i] = new ChunkLodBox(i);
-                renderLodBox[i] = new ChunkLodBox(i);
-                renderLodBoxIn[i] = new ChunkLodBox(i);
-                instances[i] = Instantiate(objCube, Vector3.zero, Quaternion.identity);
-            }
-
-            RefreshLod();
-            renderLocal = local;
-            for (int i = 0; i < renderLodBox.Length; i++) {
-                renderLodBox[i] = lodBox[i];
-                renderLodBoxIn[i] = lodBoxIn[i];
+                //instances[i] = Instantiate(objCube, Vector3.zero, Quaternion.identity);
             }
         }
 
@@ -95,9 +85,11 @@ namespace Adventure.Game.Manager {
                 meshGenerator.Init();
             }
 
-            if (chunkPhysics == null) {
-                chunkPhysics = new ChunkPhysics(this, chunks[0]);
-            }
+            chunkPhysics ??= new ChunkPhysics(this, chunks[0]);
+            chunkRenderer ??= new ChunkRenderer(settings, chunks, groundMaterial, maxViewLod);
+            
+            renderLocal = local;
+            RefreshLod();
         }
 
         private void OnDisable() {
@@ -133,7 +125,8 @@ namespace Adventure.Game.Manager {
 
         private void LateUpdate() {
             RemeshChunks();
-            RenderChunks();
+            chunkRenderer.renderSplit = renderSplit;
+            chunkRenderer.Render();
         }
 
         public void OnChunkReceived(Chunk chunk) {
@@ -179,10 +172,6 @@ namespace Adventure.Game.Manager {
 
             if (ready >= 0) {
                 renderLocal = prevRequestLocal;
-                for (int i = 0; i < renderLodBox.Length; i++) {
-                    renderLodBox[i] = lodBox[i];
-                    renderLodBoxIn[i] = lodBoxIn[i];
-                }
             }
         }
 
@@ -201,7 +190,7 @@ namespace Adventure.Game.Manager {
             
             SortRequests(requests, lodCenter[lod]);
             foreach (var request in requests) {
-                chunks[lod][request] = new ChunkHolder(lod);
+                chunks[lod][request] = new ChunkHolder(lod, request);
                 controller.RequestChunk(request, lod);
             }
         }
@@ -232,12 +221,14 @@ namespace Adventure.Game.Manager {
                     lodBoxIn[i].size = lodBox[i - 1].size - new Vector3Int(n1, n1, n1) * 2;
                 }
 
-                var p = lodBox[i].min;
-                p.y = Mathf.Max(0, p.y);
-                var s = lodBox[i].size;
-                s.y = Mathf.Min(settings.height, p.y + s.y) - p.y;
-                instances[i].transform.position = p;
-                instances[i].transform.localScale = s;
+                // var p = lodBox[i].min;
+                // p.y = Mathf.Max(0, p.y);
+                // var s = lodBox[i].size;
+                // s.y = Mathf.Min(settings.height, p.y + s.y) - p.y;
+                //instances[i].transform.position = p;
+                //instances[i].transform.localScale = s;
+                
+                chunkRenderer.UpdateRenderBox(i, lodBox[i]);
             }
         }
         
@@ -257,9 +248,7 @@ namespace Adventure.Game.Manager {
         }
 
         private void RemeshChunks() {
-            if (meshGenerator.isRemeshing) {
-                return;
-            }
+            if (meshGenerator == null || meshGenerator.isRemeshing) return;
 
             for (int lod = 0; lod < maxViewLod; lod++) {
                 foreach (var (loc, holder) in chunks[lod]) {
@@ -275,7 +264,7 @@ namespace Adventure.Game.Manager {
                             }
                         }
                     } else if (holder.mesh != null && lod + 1 < maxViewLod) {
-                        if (renderLodBox[lod].LodLimit(loc, out var minlimit, out var maxLimit) && !holder.IsLodReady(minlimit, maxLimit)) {
+                        if (lodBox[lod].LodLimit(loc, out var minlimit, out var maxLimit) && !holder.IsLodReady(minlimit, maxLimit)) {
                             if (!meshGenerator.RemeshChunkLod(holder.chunk, settings, chunks[lod], minlimit, maxLimit)) {
                                 holder.MeshLodReady(null, minlimit, maxLimit);
                             } else {
@@ -303,45 +292,6 @@ namespace Adventure.Game.Manager {
             }
 
             return true;
-        }
-
-        private void RenderChunks() {
-            RenderParams rParams = new RenderParams(groundMaterial);
-
-            for (int lod = 0; lod < maxViewLod; lod++) {
-                int lod1 = lod + 1;
-                int lodMul = 1 << lod;
-                int lod1Mul = 1 << lod1;
-                int n1 = 16 * lod1Mul;
-                var matScale = Matrix4x4.Scale(Vector3.one * (lodMul * (renderSplit ? 0.95f : 1)));
-                
-                foreach (var (loc, holder) in chunks[lod]) {
-                    if (holder.mesh == null) continue;
-                
-                    var pos = settings.CloserPos(loc, renderLocal);
-                    var preview = IsInsideRenderBox(pos, lod) || 
-                                  (lod1 < maxViewLod && IsInsideRenderBox(pos, lod1) 
-                                                     && (!chunks[lod1].TryGetValue(pos / n1 * n1, out var off) || off.mesh == null));
-                    if (preview) {
-                        var matrix = Matrix4x4.Translate(pos) * matScale;
-                        if (renderTrans && holder.lodMesh != null && renderLodBox[lod].LodLimit(pos, out _, out _)) {
-                            Graphics.RenderMesh(in rParams, holder.lodMesh, 0, matrix);
-                        }
-                        Graphics.RenderMesh(in rParams, holder.mesh, 0, matrix);
-                    }
-                }
-            }
-        }
-
-        private bool IsInsideRenderBox(Vector3Int local, int lod) {
-            return lod == 0
-                ? renderLodBox[lod].Contains(local)
-                : renderLodBox[lod].Contains(local) && !renderLodBox[lod - 1].Contains(local);
-        }
-
-        private bool IsEqualDistance(Vector3Int pos, Vector3Int closerPos, Vector3Int original) {
-            return Math.Abs(pos.x - closerPos.x) == Math.Abs(pos.x - original.x) &&
-                   Math.Abs(pos.z - closerPos.z) == Math.Abs(pos.z - original.z);
         }
         
         private void DebugPreview(Vector3Int pos) {

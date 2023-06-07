@@ -13,6 +13,7 @@ namespace Adventure.Game.Manager.UnitManagment {
 
         public float moveSpeed = 5.0f;
         public float rotateSpeed = 45.0f;
+        public float moveSpeedAcc = 5.0f;
         public float jumpSpeed = 10.0f;
         public float radius = 0.5f;
         public Vector3 speed = new Vector3();
@@ -48,14 +49,25 @@ namespace Adventure.Game.Manager.UnitManagment {
         public Vector3 rotation;
         public GameObject debugPoint;
         public LineRenderer line;
-        private bool locke;
+        private bool locke = true;
         private Vector3 unitBackNormal;
         private Vector3 unitGroundNormal;
+        private float acc;
+        private bool lastJump;
+
+        public Animator anim;
+
+        private void Awake() {
+            anim.SetFloat("MotionSpeed", 1);
+        }
+
+        public void OnFootstep() {
+            
+        }
 
         public void Update() {
             var pos = transform.position;
             
-
             if (Input.GetKeyDown(KeyCode.Escape)) {
                 locke = !locke;
             }
@@ -90,46 +102,26 @@ namespace Adventure.Game.Manager.UnitManagment {
                 }
             }
 
-            if (controlForce.y > 0.6) {
-                controlForce = controlForce * (1 - controlForce.y) / (1 - 0.6f);
+            if (Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.S)) {
+                acc += moveSpeedAcc * Time.deltaTime;
+            } else {
+                acc -= moveSpeedAcc * Time.deltaTime;
             }
-           /* line.SetPosition(0, pos);
-            line.SetPosition(1, pos + (groundCollision ? groundNormal * 2 : new Vector3(0, 0, 0)));
-            line.SetPosition(2, pos);
-            line.SetPosition(3, pos + controlForce * 2);
-            line.SetPosition(4, pos);
-            line.SetPosition(5, pos + Vector3.Cross(transform.right, groundNormal) * 2);*/
 
-            speed = controlForce * (moveSpeed * Time.deltaTime) + new Vector3(0, gravitySpeed, 0);
+            acc = Mathf.Clamp01(acc);
+
+            if (controlForce.y > 0.5) {
+                controlForce *= Mathf.Clamp01(1 - ((controlForce.y - 0.5f) * 4f));
+            }
+
+            anim.SetFloat("Speed", acc * moveSpeed);
+
+            speed = controlForce * (moveSpeed * acc * Time.deltaTime) + new Vector3(0, gravitySpeed, 0);
             
             velocity = speed.magnitude;
             if (velocity != 0) {
-                dir = Vector3.Normalize(speed);
-                Vector3 rot1 = dir == Vector3.up ? Vector3.right : Vector3.Cross(dir, Vector3.up);
-                Vector3 rot2 = dir == Vector3.up ? Vector3.left : -Vector3.Cross(dir, Vector3.up);
-                Vector3 rot3 = rot1 == Vector3.up ? dir : Vector3.Cross(rot1, dir);
-                Vector3 rot4 = rot1 == Vector3.up ? dir : -Vector3.Cross(rot1, dir);
-                rot1 = Vector3.Slerp(rot1, dir, 0.5f);
-                rot2 = Vector3.Slerp(rot2, dir, 0.5f);
-                rot3 = Vector3.Slerp(rot3, dir, 0.5f);
-                rot4 = Vector3.Slerp(rot4, dir, 0.5f);
-                debugPoint.transform.position = pos + rot3 * radius * 2;
-                line.positionCount = 7;
-                line.SetPosition(0, pos);
-                line.SetPosition(1, pos + rot1 * radius);
-                line.SetPosition(2, pos + rot2 * radius);
-                line.SetPosition(3, pos + rot3 * radius);
-                line.SetPosition(4, pos + rot4 * radius);
-                line.SetPosition(5, pos);
-                line.SetPosition(6, pos + dir * (radius * 3));
-
-                ChunkManager.physics.Raycast(pos + dir * radius, dir, velocity, out var dis);
-                ChunkManager.physics.Raycast(pos + rot1 * radius, dir, velocity, out var dis1);
-                ChunkManager.physics.Raycast(pos + rot2 * radius, dir, velocity, out var dis2);
-                ChunkManager.physics.Raycast(pos + rot3 * radius, dir, velocity, out var dis3);
-                ChunkManager.physics.Raycast(pos + rot4 * radius, dir, velocity, out var dis4);
-                
-                speed = dir * ((dis + dis1 + dis2 + dis3 + dis4) / 5f);
+                dir = speed / velocity;
+                speed = CastMoveVector(dir, velocity);
             }
 
             Vector3 outForce = GetOutForce() * (Time.deltaTime * 10);
@@ -140,8 +132,19 @@ namespace Adventure.Game.Manager.UnitManagment {
             startJumpTime -= Time.deltaTime;
             if (isGrounded && startJumpTime <= 0) {
                 gravitySpeed = 0;
+                anim.SetBool("Grounded", true);
+                anim.SetBool("FreeFall", false);
+                if (lastJump) {
+                    anim.SetBool("Jump", false);
+                    lastJump = false;
+                }
             } else {
                 gravitySpeed = Math.Max(gravitySpeed - gravity * Time.deltaTime, -maxGravitySpeed);
+                if (!lastJump) {
+                    anim.SetBool("Grounded", false);
+                    anim.SetBool("FreeFall", true);
+                    lastJump = true;
+                }
             }
             
             if (gravitySpeed > 0) {
@@ -154,6 +157,8 @@ namespace Adventure.Game.Manager.UnitManagment {
                 if (isGrounded) {
                     gravitySpeed = jumpSpeed * Mathf.Clamp01(groundNormal.y);
                     startJumpTime = 0.5f;
+                    anim.SetBool("Jump", true);
+                    lastJump = true;
                 }
             }
 
@@ -161,23 +166,41 @@ namespace Adventure.Game.Manager.UnitManagment {
             MoveCameraIdeal();
         }
 
+        private readonly Vector3[] fourPoints = {
+            Vector3.Slerp(Vector3.forward, Vector3.up, 0.5f),
+            Vector3.Slerp(Vector3.forward, Vector3.down, 0.5f),
+            Vector3.Slerp(Vector3.forward, Vector3.left, 0.5f),
+            Vector3.Slerp(Vector3.forward, Vector3.right, 0.5f),
+        };
+
+        public Vector3 CastMoveVector(Vector3 dir, float speed) {
+            var pos = transform.position;
+            
+            Quaternion fromRot = Quaternion.FromToRotation(Vector3.forward, dir);
+            Vector3 rot1 = fromRot * fourPoints[0];
+            Vector3 rot2 = fromRot * fourPoints[1];
+            Vector3 rot3 = fromRot * fourPoints[2];
+            Vector3 rot4 = fromRot * fourPoints[3];
+
+            ChunkManager.physics.Raycast(pos + dir * radius, dir, speed, out var dis);
+            ChunkManager.physics.Raycast(pos + rot1 * radius, dir, speed, out var dis1);
+            ChunkManager.physics.Raycast(pos + rot2 * radius, dir, speed, out var dis2);
+            ChunkManager.physics.Raycast(pos + rot3 * radius, dir, speed, out var dis3);
+            ChunkManager.physics.Raycast(pos + rot4 * radius, dir, speed, out var dis4);
+            
+            return dir * ((dis + dis1 + dis2 + dis3 + dis4) / 5f);
+        }
+        
         public void MoveCameraIdeal() {
-            Vector3 unitBack;
-            Vector3 unitUp;
-            if (groundCollision) {
-                unitUp = groundNormal;
-                unitGroundNormal = Vector3.Slerp(unitGroundNormal, unitUp, Time.deltaTime * 5f);
-            } else {
-                unitUp = new Vector3(0, 1, 0);
-                unitGroundNormal = Vector3.Slerp(unitGroundNormal, unitUp, Time.deltaTime);
-            }
-            unitBack = -Vector3.Cross(transform.right, unitGroundNormal);
-            unitBackNormal = unitBack;//Vector3.Slerp(unitBackNormal, unitBack, Time.deltaTime * 5f);
-            Vector3 lerpCamera = Vector3.Slerp(unitBackNormal, new Vector3(0, 1, 0), Mathf.Lerp(0.1f, 0.75f, Mathf.Clamp01(cameraAngle)));
+            unitGroundNormal = Vector3.Slerp(unitGroundNormal, groundNormal, Time.deltaTime * (groundCollision ? 5f : 1f));
+            unitBackNormal = -Vector3.Cross(transform.right, unitGroundNormal);
+            float angle = 1 - Mathf.Clamp01(Vector3.Angle(unitBackNormal, new Vector3(0, 1, 0)) / 90);
+            Vector3 lerpCamera = Vector3.Slerp(unitBackNormal, new Vector3(0, 1, 0), Mathf.Lerp(0.05f, 0.75f, cameraAngle));
 
-            var pos = transform.position + lerpCamera * cameraDistance;
+            float distance = 1 + (cameraDistance * Mathf.Lerp(1f, 0f, angle * (1 - cameraAngle)));
+            var pos = transform.position + lerpCamera * distance;
 
-            cameraTransform.position = Vector3.Lerp(cameraTransform.position, pos, Time.deltaTime * 5f);
+            cameraTransform.position = pos;//Vector3.Lerp(cameraTransform.position, pos, Time.deltaTime * 5f);
             cameraTransform.LookAt(transform.position + new Vector3(0, 1, 0));
         }
 
@@ -189,6 +212,8 @@ namespace Adventure.Game.Manager.UnitManagment {
             } else {
                 groundCollision = ChunkManager.physics.Raycast(pos, new Vector3(0, -1, 0), radius + groundCheckDistance);
             }
+
+            groundCollision.hit &= groundNormal.y > 0.6f;
         }
 
         public void CeilCheck() {

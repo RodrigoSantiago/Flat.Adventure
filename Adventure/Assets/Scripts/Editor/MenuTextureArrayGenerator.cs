@@ -1,6 +1,5 @@
 #if UNITY_EDITOR
 
-using System;
 using UnityEngine;
 using UnityEditor;
 using Object = UnityEngine.Object;
@@ -22,7 +21,7 @@ public class MenuTextureArrayGenerator : EditorWindow {
         saveDir = AssetDatabase.LoadAssetAtPath<Object>("Assets");
     }
 
-    [MenuItem("Texture Tools/Array Generator")]
+    [MenuItem("Custom Tools/Texture Array Generator")]
     public static void Init() {
         GetWindow(typeof(MenuTextureArrayGenerator), false, "Texture Array Generator");
     }

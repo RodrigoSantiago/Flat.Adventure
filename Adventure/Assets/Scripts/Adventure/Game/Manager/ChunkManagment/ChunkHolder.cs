@@ -6,6 +6,7 @@ namespace Adventure.Game.Manager.ChunkManagment {
         private static readonly int[] size = {8, 64, 512};
         
         public readonly int lod;
+        public readonly Vector3Int local;
         
         public Chunk chunk { get; private set; }
         public Mesh mesh { get; private set; }
@@ -14,8 +15,9 @@ namespace Adventure.Game.Manager.ChunkManagment {
         public bool hasNeighboors;
         private int lodReadyInt;
         
-        public ChunkHolder(int lod) {
+        public ChunkHolder(int lod, Vector3Int local) {
             this.lod = lod;
+            this.local = local;
         }
 
         public void ChunkReady(Chunk chunk) {

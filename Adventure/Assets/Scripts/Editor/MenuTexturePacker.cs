@@ -1,4 +1,6 @@
-﻿using UnityEditor;
+﻿#if UNITY_EDITOR
+
+using UnityEditor;
 using UnityEngine;
 
 public class MenuTexturePacker : EditorWindow {
@@ -10,7 +12,7 @@ public class MenuTexturePacker : EditorWindow {
     private Texture2D aoTexture;
     private Texture2D emTexture;
 
-    [MenuItem("Texture Tools/Pack Textures")]
+    [MenuItem("Custom Tools/Texture PBR Pack")]
     static void Init() {
         GetWindow(typeof(MenuTexturePacker)).Show();
     }
@@ -169,3 +171,5 @@ public class MenuTexturePacker : EditorWindow {
         }
     }
 }
+
+#endif
