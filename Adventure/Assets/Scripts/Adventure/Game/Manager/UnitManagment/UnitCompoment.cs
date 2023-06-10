@@ -1,14 +1,24 @@
 ﻿using System;
 using Adventure.Game.Manager.ChunkManagment;
+using Adventure.Game.Manager.UnitManagment.Controllers;
+using Adventure.Game.Manager.UnitManagment.Weapons;
 using Adventure.Logic.Data;
 using UnityEngine;
 
 namespace Adventure.Game.Manager.UnitManagment {
     public class UnitCompoment : MonoBehaviour {
-
+        public enum VerticalState { STAND, JUMP, FALL };
+        
         private static Vector3[] forceSearch = {
             new Vector3(1, 0, 0), new Vector3(0, 1, 0), new Vector3(0, 0, 1),
             new Vector3(-1, 0, 0), new Vector3(0, -1, 0), new Vector3(0, 0, -1)
+        };
+        
+        private readonly Vector3[] fourPoints = {
+            Vector3.Slerp(Vector3.forward, Vector3.up, 0.5f),
+            Vector3.Slerp(Vector3.forward, Vector3.down, 0.5f),
+            Vector3.Slerp(Vector3.forward, Vector3.left, 0.5f),
+            Vector3.Slerp(Vector3.forward, Vector3.right, 0.5f),
         };
 
         public float moveSpeed = 5.0f;
@@ -26,39 +36,48 @@ namespace Adventure.Game.Manager.UnitManagment {
         public float cameraAngle = 0.5f;
         public Transform cameraTransform;
         
-        [Header("Ground")] 
-        public float groundCheckDistance = 0.1f;
-        public float groundExtraCheckDistance = 0.5f;
-        public ChunkCollisionHit groundCollision;
-        public ChunkCollisionHit groundCollisionExtra;
-        public bool isGrounded { get => groundCollision; }
-        public Vector3 groundNormal { get => groundCollision ? groundCollision.normal : groundCollisionExtra ? groundCollisionExtra.normal : Vector3.up; }
-
-        [Header("Ceiling")] 
-        public float ceilingCheckDistance = 0.1f;
-        public ChunkCollisionHit ceilingCollision;
-        public bool isCeiling { get => ceilingCollision; }
+        [Header("Movement")] 
+        public VerticalState verState = VerticalState.FALL;
+        public float inputForce;
+        public Vector3 moveDir;
         
+        [Header("Ground")] 
+        public float groundDistNormal = 0.5f;
+        public float groundDistToFall = 0.2f;
+        public float groundDistToStand = 0.1f;
+        public float ceilingDist = 0.1f;
+        
+        public ChunkCollisionHit upCollision;
+        public ChunkCollisionHit downCollision;
+        public ChunkCollisionHit fowardCollision;
+        
+        public Vector3 groundNormal { get => downCollision ? downCollision.normal : Vector3.up; }
+
         [Header("Gravity")] 
         public float gravity = 0.9f;
-        public float maxGravitySpeed = 10.0f;
+        public float maxGravitySpeed = 2.0f;
         public float gravitySpeed;
 
-        private float startJumpTime = 0;
+        private float jumpTimer = 0;
         
         public Vector3 rotation;
         public GameObject debugPoint;
         public LineRenderer line;
+
         private bool locke = true;
+        
         private Vector3 unitBackNormal;
         private Vector3 unitGroundNormal;
-        private float acc;
         private bool lastJump;
+        private float aimTime;
 
         public Animator anim;
+        public UnitController controller;
+        public Weapon leftWeapon;
+        public Weapon rightWeapon;
 
-        private void Awake() {
-            anim.SetFloat("MotionSpeed", 1);
+        private void Start() {
+            
         }
 
         public void OnFootstep() {
@@ -68,110 +87,120 @@ namespace Adventure.Game.Manager.UnitManagment {
         public void Update() {
             var pos = transform.position;
             
-            if (Input.GetKeyDown(KeyCode.Escape)) {
-                locke = !locke;
-            }
-            if (locke) {
-                cameraAngle += -Input.GetAxis("Mouse Y") / 100f;
-                rotation.y += Input.GetAxis("Mouse X");
-                Cursor.lockState = CursorLockMode.Locked;
-                cameraAngle = Mathf.Clamp01(cameraAngle);
-            } else {
-                Cursor.lockState = CursorLockMode.None;
-                if (Input.GetKey(KeyCode.A)) {
-                    rotation.y -= rotateSpeed * Time.deltaTime;
-                } else if (Input.GetKey(KeyCode.D)) {
-                    rotation.y += rotateSpeed * Time.deltaTime;
-                }
-            }
-            
-            transform.rotation = Quaternion.Euler(rotation);
-
-            Vector3 controlForce = new Vector3();
-            if (Input.GetKey(KeyCode.W)) {
-                if (groundCollision && transform.right != groundNormal) {
-                    controlForce = Vector3.Cross(transform.right, groundNormal);
-                } else {
-                    controlForce = transform.forward;
-                }
-            } else if (Input.GetKey(KeyCode.S)) {
-                if (groundCollision && transform.right != groundNormal) {
-                    controlForce = -Vector3.Cross(transform.right, groundNormal);
-                } else {
-                    controlForce = -transform.forward;
-                }
-            }
-
-            if (Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.S)) {
-                acc += moveSpeedAcc * Time.deltaTime;
-            } else {
-                acc -= moveSpeedAcc * Time.deltaTime;
-            }
-
-            acc = Mathf.Clamp01(acc);
-
-            if (controlForce.y > 0.5) {
-                controlForce *= Mathf.Clamp01(1 - ((controlForce.y - 0.5f) * 4f));
-            }
-
-            anim.SetFloat("Speed", acc * moveSpeed);
-
-            speed = controlForce * (moveSpeed * acc * Time.deltaTime) + new Vector3(0, gravitySpeed, 0);
-            
-            velocity = speed.magnitude;
-            if (velocity != 0) {
-                dir = speed / velocity;
-                speed = CastMoveVector(dir, velocity);
-            }
-
-            Vector3 outForce = GetOutForce() * (Time.deltaTime * 10);
-            transform.position += speed + outForce;
+            CalculateInputValues();
 
             GroundCheck();
-            CeilCheck();
-            startJumpTime -= Time.deltaTime;
-            if (isGrounded && startJumpTime <= 0) {
-                gravitySpeed = 0;
-                anim.SetBool("Grounded", true);
-                anim.SetBool("FreeFall", false);
-                if (lastJump) {
-                    anim.SetBool("Jump", false);
-                    lastJump = false;
-                }
+            
+            StateChange();
+            StateLoop();
+
+            line.positionCount = 3;
+            line.SetPosition(0, pos);
+            line.SetPosition(1, pos + moveDir * 2);
+            line.SetPosition(2, pos - moveDir * 2);
+
+            if (downCollision && Input.GetKeyDown(KeyCode.Space)) {
+                gravitySpeed = jumpSpeed;
+                jumpTimer = 0.5f;
+                verState = VerticalState.JUMP;
+                anim.SetBool("Jump", true);
             } else {
-                gravitySpeed = Math.Max(gravitySpeed - gravity * Time.deltaTime, -maxGravitySpeed);
-                if (!lastJump) {
-                    anim.SetBool("Grounded", false);
-                    anim.SetBool("FreeFall", true);
-                    lastJump = true;
-                }
+                anim.SetBool("Jump", false);
+            }
+
+            if (Input.GetKeyDown(KeyCode.Q)) {
+                anim.SetTrigger("Attack");
+            }
+
+            speed = (moveDir * (moveSpeed * Time.deltaTime)) + (new Vector3(0, gravitySpeed, 0) * Time.deltaTime);
+            velocity = speed.magnitude;
+            if (velocity > 0.001) {
+                dir = speed / velocity;
             }
             
-            if (gravitySpeed > 0) {
-                if (isCeiling) {
-                    gravitySpeed = 0;
-                }
-            }
+            anim.SetFloat("Speed", moveDir.magnitude * moveSpeed);
+            anim.SetBool("FreeFall", downCollision.distance >= radius + groundDistToFall);
+            anim.SetBool("Grounded", downCollision.distance < radius + groundDistToFall);
             
-            if (Input.GetKeyDown(KeyCode.Space)) {
-                if (isGrounded) {
-                    gravitySpeed = jumpSpeed * Mathf.Clamp01(groundNormal.y);
-                    startJumpTime = 0.5f;
-                    anim.SetBool("Jump", true);
-                    lastJump = true;
-                }
-            }
+            Vector3 outForce = GetOutForce() * (Time.deltaTime * 10);
+            transform.position += CastMoveVector(dir, velocity) + outForce;
+            transform.rotation = Quaternion.Euler(rotation);
 
             ChunkManager.current.position = transform.position;
             MoveCameraIdeal();
         }
 
-        private readonly Vector3[] fourPoints = {
-            Vector3.Slerp(Vector3.forward, Vector3.up, 0.5f),
-            Vector3.Slerp(Vector3.forward, Vector3.down, 0.5f),
-            Vector3.Slerp(Vector3.forward, Vector3.left, 0.5f),
-            Vector3.Slerp(Vector3.forward, Vector3.right, 0.5f),
-        };
+        private void StateChange() {
+            if (verState == VerticalState.FALL) {
+                if (downCollision && downCollision.distance < radius + groundDistToStand) {
+                    verState = VerticalState.STAND;
+                }
+            } else if (verState == VerticalState.STAND) {
+                if (!downCollision || downCollision.distance >= radius + groundDistToFall) {
+                    verState = VerticalState.FALL;
+                }
+            } else if (verState == VerticalState.JUMP) {
+                jumpTimer -= Time.deltaTime;
+                CeilCheck();
+                if (jumpTimer <= 0 || upCollision) {
+                    if (downCollision && downCollision.distance < radius + groundDistToStand) {
+                        verState = VerticalState.STAND;
+                    } else {
+                        verState = VerticalState.FALL;
+                    }
+                }
+            }
+        }
+
+        private void CalculateInputValues() {
+            if (Input.GetKeyDown(KeyCode.Escape)) {
+                locke = !locke;
+            }
+            if (locke) {
+                if (Input.GetMouseButton(0) || Input.GetMouseButton(1)) {
+                    aimTime = 0.5f;
+                } else if ((aimTime -= Time.deltaTime) <= 0) {
+                    cameraAngle += -Input.GetAxis("Mouse Y") / 100f;
+                    cameraAngle = Mathf.Clamp01(cameraAngle);
+                }
+            } else {
+            }
+
+            rotation.y = controller.rotation;
+
+            float acc = (moveSpeedAcc > 0 ? 1 / moveSpeedAcc : 999) * Time.deltaTime;
+            float inputVer = controller.axis.y;
+            inputForce = inputForce < inputVer
+                ? (inputForce + acc < inputVer ? inputForce + acc : inputVer)
+                : (inputForce - acc > inputVer ? inputForce - acc : inputVer); 
+            
+            if (downCollision) {
+                moveDir = Vector3.Cross(transform.right, downCollision.normal) * inputForce;
+            } else {
+                moveDir = transform.forward * inputForce;
+            }
+            
+            if (downCollision && moveDir.y > 0) {
+                moveDir.y *= ReverseLerp(0.1f, 0.7f, downCollision.normal.y);
+            }
+        }
+
+        private void StateLoop() {
+            if (verState == VerticalState.FALL) {
+                gravitySpeed = Mathf.Max(-maxGravitySpeed, gravitySpeed - gravity * Time.deltaTime);
+                
+            } else if (verState == VerticalState.STAND) {
+                if (downCollision.distance >= radius + 0.05f && downCollision.normal.y > 0.8) {
+                    gravitySpeed = Mathf.Max(-maxGravitySpeed, gravitySpeed - gravity * Time.deltaTime);
+                } else {
+                    gravitySpeed = 0;
+                }
+                
+            } else if (verState == VerticalState.JUMP) {
+                gravitySpeed = Mathf.Max(-maxGravitySpeed, gravitySpeed - gravity * Time.deltaTime);
+                
+            } 
+        }
 
         public Vector3 CastMoveVector(Vector3 dir, float speed) {
             var pos = transform.position;
@@ -192,7 +221,7 @@ namespace Adventure.Game.Manager.UnitManagment {
         }
         
         public void MoveCameraIdeal() {
-            unitGroundNormal = Vector3.Slerp(unitGroundNormal, groundNormal, Time.deltaTime * (groundCollision ? 5f : 1f));
+            unitGroundNormal = Vector3.Slerp(unitGroundNormal, groundNormal, Time.deltaTime * (downCollision ? 5f : 1f));
             unitBackNormal = -Vector3.Cross(transform.right, unitGroundNormal);
             float angle = 1 - Mathf.Clamp01(Vector3.Angle(unitBackNormal, new Vector3(0, 1, 0)) / 90);
             Vector3 lerpCamera = Vector3.Slerp(unitBackNormal, new Vector3(0, 1, 0), Mathf.Lerp(0.05f, 0.75f, cameraAngle));
@@ -204,21 +233,18 @@ namespace Adventure.Game.Manager.UnitManagment {
             cameraTransform.LookAt(transform.position + new Vector3(0, 1, 0));
         }
 
-        public void GroundCheck() {
+        private void GroundCheck() {
             var pos = transform.position;
-            groundCollisionExtra = ChunkManager.physics.Raycast(pos, new Vector3(0, -1, 0), radius + groundExtraCheckDistance);
-            if (groundCollision) {
-                groundCollision = groundCollisionExtra;
-            } else {
-                groundCollision = ChunkManager.physics.Raycast(pos, new Vector3(0, -1, 0), radius + groundCheckDistance);
-            }
-
-            groundCollision.hit &= groundNormal.y > 0.6f;
+            downCollision = ChunkManager.physics.Raycast(pos, new Vector3(0, -1, 0), radius + groundDistNormal);
         }
 
-        public void CeilCheck() {
+        private void CeilCheck() {
             var pos = transform.position;
-            ceilingCollision = ChunkManager.physics.Raycast(pos, new Vector3(0, 1, 0), radius + ceilingCheckDistance);
+            upCollision = ChunkManager.physics.Raycast(pos, new Vector3(0, 1, 0), radius + ceilingDist);
+        }
+        
+        private static float ReverseLerp(float min, float max, float value) {
+            return Mathf.Clamp01((value - min) / (max - min));
         }
         
         public Vector3 GetOutForce() {

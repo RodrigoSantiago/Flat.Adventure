@@ -1,0 +1,160 @@
+            Staff | Wand | Ring | Grimoire | Sword | Gauntlet | Spear | Katana | Hammer | Bow | Chains | Dagger | Shield
+Staff     |       |      | Ring | Grimoire | Sword | Gauntlet |       |        |        |     |        | Dagger | Shield
+Wand      |       | Wand | Ring | Grimoire | Sword | Gauntlet |       |        |        | Bow | Chains | Dagger |       
+Ring      | Staff | Wand | Ring | Grimoire | Sword | Gauntlet | Spear | Katana |        | Bow | Chains | Dagger | Shield
+Grimoire  | Staff | Wand | Ring |          |       |          |       |        |        |     |        |        |       
+Sword     | Staff | Wand | Ring |          | Sword | Gauntlet | Spear |        |        |     |        | Dagger | Shield
+Gauntlet  | Staff | Wand | Ring |          | Sword | Gauntlet | Spear | Katana |        | Bow | Chains | Dagger | Shield
+Spear     |       |      | Ring |          |       | Gauntlet |       |        |        |     |        | Dagger | Shield
+Hammer    |       |      |      |          |       |          |       |        |        |     |        |        |        
+Katana    |       | Wand | Ring |          | Sword | Gauntlet |       |[Katana]|        |     |        | Dagger |        
+Bow       |       |      | Ring |          |       | Gauntlet |       |        |        |     |        | Dagger |       
+Chains    |       |      | Ring |          |       | Gauntlet |       |        |        |     |        | Dagger |        
+Dagger    | Staff | Wand | Ring |          | Sword | Gauntlet | Spear | Katana |        | Bow | Chains | Dagger |       
+Shield    | Staff |      | Ring |          | Sword | Gauntlet | Spear |        |        |     |        |        |        
+ 
+Não é permitido ter duas de "2 maos" ao mesmo tempo
+Se o outro for guardável, o poder de 2 maos é usado
+Grimorio pode ser usado com qualquer coisa não magica, poré terá o mesmo uso de uma "Espada"
+
+Concealable : A mão com a arma fica disponível quando não está em uso [Ring, Gauntlet, Dagger]
+Two-Handed: Se o segundo for um "Concealable", ganha poder adicional. O outro item não pode ser outro Two-Handed [Staff, Spear]
+Precise: O segundo item não pode ser um "Burdensome" [Wand, Dagger]
+Precise Two-Handed: O segundo item precisa ser um "Concealable" [Katana, Bow, Chains]
+Caster: Itens que lançam magias de um "Spellable" [Staff, Wand, Ring]
+Spellable: Itens que podem ser usados por "Caster" [Grimoire]
+Heavy: Itens que gastam as duas mãos, e impedem até mesmo "Concealable" [Hammer, Heavy-Sword]
+Nito Jutsu: Permite o uso com as duas mãos, se identicos [Katana]
+Burdensome: Impede o uso de equipamentos "Precise" [Shield]
+
+- Staff [Two-Handed|Caster]
+- Wand [Precise|Caster]
+- Ring [Concealable|Caster]
+- Grimoire [Spellable]
+- Sword []
+- Gauntlet [Concealable]
+- Spear [Two-Handed|Precise]
+- Hammer [Heavy]
+- Katana [Two-Handed|Precise|Nito Jutsu]
+- Bow [Two-Handed|Precise]
+- Chains [Two-Handed|Precise]
+- Dagger [Concealable|Precise]
+- Shield [Burdensome]
+
+Animações Necessárias
+- Staff + Double Handed
+ Swing [Left/Right/Up-Down] > [Big/Small]
+ Trust [Up/Foward/Floor]
+ Defense
+ Rune Writing
+ Hold - Energy Gathering [Up/Backwards]
+ Flying Spell
+ Help Hand
+ Advance [Default]
+
+- Wand
+ Swing [Left/Right/Up-Down/Down-Up] > [Big/Small]
+ Trust [Up/Foward/Down]
+ Defense
+ Rune Writing
+ Hold - Energy Gathering [Up/Backwards]
+ Flying Spell
+ Help Hand
+ Advance [Default]
+
+- Ring
+ Throw [Foward/Up/Down]
+ Hold - Energy Gathering [Up/Backwards/Side/Hands Face Palm Up] > Sides Converge to double hands
+ Release - Long Energy Shot Foward/Aim [Finger/Open Hands]
+           Fast Swing Release Direction Bending [Left/RIght/Down Up/Up Down]
+           Open Arms[Face Palm Open]
+           Body Flying Release
+ Defense Position
+ Rune Writing
+ Help Hand
+ Bright
+ Advance [Default]
+
+- Grimory
+ Holding
+ Page Flip
+ Swing [Left/Right]
+ Trust [Foward]
+ Defense
+ Advance [Default]
+
+- Sword/Katana + Double Handed
+ Swing [Left/Right/Up-Down/Down-Up] > [Big/Small]
+ Trust [Foward/Floor] > [Big/Small]
+ Hold [Backwards]
+ Advance [Trust/Swing]
+ Defense
+ Skills [Multi Hits, Mult Trusting, Trust and Rool, Critical Head Cut]
+ 
+- Gauntlet
+ Swing [Left/Right/Up-Down/Down-Up] > [Big for Scracthing Types]
+ Punch, Nudge, Upper Cut [For Hands Types]
+ Trust [Foward] > [Big/Small]
+ Defense
+ Advance [Hands/Kick]
+ Skills [Multi Punchs, Mult Belly Punch, Neck Choke]
+ Tchi Blocker
+
+- Spear + Double Handed
+ Swing [Left/Right/Up-Down/Down-Up] > [Big/Small]
+ Trust [Foward/Aim] > [Big/Small]
+ Hold [Backwards]
+ Defense
+ Advance [Trust/Row Skill]
+ Skills [Mult Trusting, Trust and Rool, Critical Head Trust]
+
+- Hammer
+ Swing [Left/Right/Up-Down] > [Big/Small]
+ Trust [Foward/Down] > [Big/Small]
+ Hold [Backwards]
+ Defense
+ Advance [Trust Foward]
+ Skills [Swing Foward Defense, Magic Rotation Turbo]
+ Heavy Single Handed
+
+- Bow
+ Swing [Left/Right]
+ Recharge, Aim
+ Hold [Power Aim]
+ Defense
+ Advance [Slide Aim]
+ Backarads [Slide Aim]
+ Skills [Multishot without Recharge]
+
+- Chains
+ Rodar dos lados
+ [gira/gira] + [arremecar][apertar gira ao chegar interrompe o -para tras-]
+ Arremeçar para frente + Para tras 
+ [gira][gira] + [arremecar][aperta gira ao tocar no inimigo] + [arremecar para trazer/ir]
+ [gira][gira] + [arremecar][aperta gira ao tocar no inimigo] + [segurar gira para conter]
+ Rotacioanr em cima + Arremeçar para os lados + Rotação em cima com maior alcance
+ Enrrolar no [inimigo/ algo] + Rotacionar e arremeçar [menores]
+ Enrrolar no [inimigo/ algo] + Ir em direção ao inimigo [maiores/construções]
+ Enrrolar no [inimigo/ algo] + Conter [menores]
+ Se tiver proximo de inimigo,
+ Skill [Choke]
+ Defesa [Gira na frente]
+ Defesa DUpla [Girar Duas pontas]
+ Girar de atras/baixo pra cima pra frente
+ Quanto ativada skill,
+
+- Dagger + Special For Double Daggers
+ Swing [Left/Right/Foward-Release]
+ Trust [Insert] > [Small]
+ Hold [Aim/Power Aim]
+ Defense [Phathon Avoid]
+ Advance [Insert]
+ Skills [Shot 360º]
+
+- Shield
+ Swing [Side/Foward]
+ Trust [Foward]
+ Defense [Hide Behind]
+ Hold [Power Defense]
+ Advance [Foward Shield]
+ Skills [Captain Killer, Opposite Hands Noise]
