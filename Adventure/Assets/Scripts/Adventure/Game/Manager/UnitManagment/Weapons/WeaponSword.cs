@@ -6,6 +6,8 @@ namespace Adventure.Game.Manager.UnitManagment.Weapons {
             if (unit.anim.GetCurrentAnimatorStateInfo(1).IsName("Idle")) {
                 unit.anim.SetTrigger("Attack");
             }
+            unit.anim.SetTrigger("Attack");
+            Debug.Log("primaryMouseHolding");
         }
     }
 }

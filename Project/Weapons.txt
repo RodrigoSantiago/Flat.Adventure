@@ -158,3 +158,16 @@ Animações Necessárias
  Hold [Power Defense]
  Advance [Foward Shield]
  Skills [Captain Killer, Opposite Hands Noise]
+
+
+- Idle
+- Walk [4x]
+- Run [4x]
+
+[Equipament Override]
+- Left
+- Right
+
+[Animações Conjuntas]
+[No hand default > Por exemplo se nao houver animação esquerda a direita passiva sobrepõe]
+[Animações conjuntas ativam 2 animações ao mesmo tempo]
