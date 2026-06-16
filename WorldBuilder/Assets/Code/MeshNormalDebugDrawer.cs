@@ -37,6 +37,12 @@ namespace Code {
                 Vector3 normal = transform.TransformDirection(
                     MeshDebugData.Normals[i]
                 ).normalized;
+                
+                if (onlyFacingCamera && cam != null) {
+                    Vector3 toCamera = (cam.transform.position - pos).normalized;
+                    if (Vector3.Dot(normal, toCamera) <= 0f)
+                        continue;
+                }
 
                 Debug.DrawLine(
                     pos,

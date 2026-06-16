@@ -6,6 +6,7 @@ namespace Code {
         public const int SIZE_1 = 32;
         public const int SIZE_2 = 32 * 32;
         public const int SIZE_3 = 32 * 32 * 32;
+        public const int SIZE_4 = 34 * 34 * 34;
 
         public readonly float[] CubeDensity = {
             0.00f, 0.10f, 0.20f, 0.30f, 0.40f, 0.45f, 
@@ -13,19 +14,22 @@ namespace Code {
             0.80f, 0.85f, 0.90f, 0.95f, 1.00f
         };
         
-        public byte[] density;  // [4]
-        public byte[] material; // [6]
+        public uint[] density;  // [4]
+        public uint[] material; // [6]
 
         public float GetDensity(int x, int y, int z) {
-            int den = density[(x + (y * SIZE_2) + (z * SIZE_1)) / 2];
-            if ((x & 0x1) == 0x1) {
-                return CubeDensity[(den & 0b11110000) >> 4];
-            }
-            return CubeDensity[den & 0b1111];
+            int voxelIndex = x + (z * SIZE_1) + (y * SIZE_2);
+
+            int uintIndex = voxelIndex >> 3;
+            int shift = (voxelIndex & 7) << 2;
+
+            int den = (int)((density[uintIndex] >> shift) & 0xF);
+
+            return CubeDensity[den];
         }
 
         public void SetDensity(int x, int y, int z, float den) {
-            int index = (x + (y * SIZE_2) + (z * SIZE_1)) / 2;
+            int voxelIndex = x + (z * SIZE_1) + (y * SIZE_2);
 
             int value = 0;
             float best = float.MaxValue;
@@ -38,16 +42,12 @@ namespace Code {
                 }
             }
 
-            byte current = density[index];
-            if ((x & 1) == 1) {
-                density[index] = (byte)((current & 0x0F) | (value << 4));
-            } else {
-                density[index] = (byte)((current & 0xF0) | value);
-            }
-        }
+            int uintIndex = voxelIndex >> 3;
+            int shift = (voxelIndex & 7) << 2;
 
-        public int GetMaterial(int x, int y, int z) {
-            return material[(x + (y * SIZE_2) + (z * SIZE_1)) / 2];
+            uint mask = (uint)(0xFu << shift);
+
+            density[uintIndex] = (density[uintIndex] & ~mask) | ((uint)value << shift);
         }
     }
 }

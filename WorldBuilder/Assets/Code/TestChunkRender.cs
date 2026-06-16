@@ -9,9 +9,8 @@ namespace Code {
         private ChunkMeshGenerator gen;
         
         private void Start() {
-            byte[] chuckData = new byte[Chunk.SIZE_3 / 2];
             var chunk = new Chunk();
-            chunk.density = chuckData;
+            chunk.density = new uint[Chunk.SIZE_3 / 4];
             
             float radius = Chunk.SIZE_1 * 0.4f;
             Vector3 center = new(
@@ -19,7 +18,7 @@ namespace Code {
                 Chunk.SIZE_1 * 0.5f,
                 Chunk.SIZE_1 * 0.5f
             );
-            /*const float aa = 1.0f;
+            const float aa = 1.0f;
             for (int y = 0; y < Chunk.SIZE_1; y++) {
                 for (int z = 0; z < Chunk.SIZE_1; z++) {
                     for (int x = 0; x < Chunk.SIZE_1; x++) {
@@ -35,7 +34,7 @@ namespace Code {
                         chunk.SetDensity(x, y, z, density);
                     }
                 }
-            }*/
+            }
             
             const int baseMargin = 2;
             const int floorHeight = 5;
@@ -61,15 +60,30 @@ namespace Code {
                             if (inside)
                                 density = 1.0f;
                         }
-
-                        chunk.SetDensity(x, y, z, density);
+                        if (density != 0)
+                            chunk.SetDensity(x, y, z, density);
                     }
                 }
             }
+            
+            var chunkSoil = new Chunk();
+            chunkSoil.density = new uint[Chunk.SIZE_3 / 4];
+            for (int y = 0; y < 3; y++) {
+                for (int z = 0; z < Chunk.SIZE_1; z++) {
+                    for (int x = 0; x < Chunk.SIZE_1; x++) {
+                        chunkSoil.SetDensity(x, y, z, 15);
+                        chunk.SetDensity(x, y, z, 15);
+                    }
+                }
+            }
+            
+            DateTime start = DateTime.Now;
             gen = new ChunkMeshGenerator(shader);
             gen.Init();
-            gen.Remesh(chunk, (mesh) => {
+            gen.Remesh(chunk, chunkSoil, (mesh) => {
                 filter.sharedMesh = mesh;
+                var period = DateTime.Now.Subtract(start);
+                Debug.Log(period);
             });
         }
     

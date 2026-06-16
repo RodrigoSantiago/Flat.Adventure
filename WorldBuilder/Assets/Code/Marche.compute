@@ -1,10 +1,10 @@
-#pragma kernel Marche
-#pragma kernel BakeSolid
+#pragma kernel BuildVertex
+#pragma kernel BuildMesh
 
 struct GeneratedVertex {
-    float3 position;
+    int3 position;
     float3 normal;
-    float4 uv0;
+    int4 uv0;
 };
 struct GeneratedVertexLow {
     uint2 position;
@@ -15,54 +15,60 @@ struct GeneratedVertexLow {
 #define SIZE_1 32
 #define SIZE_2 1024
 #define SIZE_3 32768
-#define NORMD 0.025
 
-static const float LUT[16] = {
+#define EXTRA_1 34
+#define EXTRA_2 1156
+
+#define CHUNKS_1 6
+#define CHUNKS_2 36
+#define CHUNKS_3 216
+
+#define BUFFER_SIZE 2122416
+
+
+//
+// BuildVertex
+//
+uint4 chunk_pos;
+
+StructuredBuffer<int> TriangleTable;
+        
+StructuredBuffer<uint> VoxelBuffer;
+StructuredBuffer<uint> ChunkBuffer;
+
+RWStructuredBuffer<uint> ExtraCounter;
+RWStructuredBuffer<uint> VertexCounter;
+RWStructuredBuffer<uint2> VoxelsCounter;
+RWStructuredBuffer<GeneratedVertex> VertexBuffer;
+
+static const float lut[16] = {
     0.00, 0.10, 0.20, 0.30, 0.40, 0.45, 
     0.55, 0.60, 0.65, 0.70, 0.75,
     0.80, 0.85, 0.90, 0.95, 1.00
 };
 
-StructuredBuffer<int> TriangleTable;
-        
-StructuredBuffer<uint> VoxelBuffer;
-RWStructuredBuffer<uint> CounterSolid;
-
-RWStructuredBuffer<GeneratedVertex> VertexSolid;
-
-StructuredBuffer<GeneratedVertex> MeshInput;
-RWStructuredBuffer<GeneratedVertexLow> MeshVertexBuffer;
-RWStructuredBuffer<uint> MeshIndexBuffer;
-
-void WriteVertex(const uint offset, const float3 p, const float3 n, const float3 uv0, const float uv1) {
+void WriteVertex(const uint offset, const float3 p, const float3 n, const int3 id, const int uv) {
     GeneratedVertex vertex;
-    vertex.position = p;
+    vertex.position = (int3)round(p * 1024);
     vertex.normal = n;
-    vertex.uv0 = float4(uv0.x, uv0.y, uv0.z, uv1);
-    VertexSolid[offset] = vertex;
+    vertex.uv0 = float4(id, uv);
+    VertexBuffer[offset] = vertex;
 }
 
-//
-// Solid Default Marching
-//
-
-float GetVox(uint x, uint y, uint z) {
-    const uint index = x + z * SIZE_1 + y * SIZE_2;
-    const uint packed = VoxelBuffer[index >> 3];
+float ReadVoxel(const uint x, const uint y, const uint z) {
+    const uint index = (x & 31) + (z & 31) * SIZE_1 + (y & 31) * SIZE_2;
+    const uint offset = ChunkBuffer[(x >> 5) + (z >> 5) * CHUNKS_1 + (y >> 5) * CHUNKS_2];
+    const uint packed = VoxelBuffer[offset + (index >> 3)];
 
     const uint shift = (index & 7) * 4;
     const uint density = (packed >> shift) & 0xF;
 
-    return LUT[density];
+    return lut[density];
 }
 
-float2 SampleSolid(const uint3 pos) {
-    const float vox = GetVox(pos.x, pos.y, pos.z);
+float2 SampleVoxel(const uint3 pos) {
+    const float vox = ReadVoxel(pos.x, pos.y, pos.z);
     return float2(vox, 0);
-}
-
-float SampleVoxel(const uint3 pos) {
-    return GetVox(pos.x, pos.y, pos.z).x;
 }
 
 uint3 CubeVertex(const uint index) {
@@ -83,126 +89,45 @@ uint2 EdgeVertexPair(const uint index) {
     return uint2(v1, v2);
 }
 
-float3 GetSurfaceNormal2(const float3 pos) {
-    const int3 base = floor(pos);
-    const float fra = max(max((pos - base).x, (pos - base).y), (pos - base).z);
-    const int3 si0 = ceil(pos - base);
-    const int3 si1 = int3(si0.z, si0.x, si0.y);
-    const int3 si2 = int3(si0.y, si0.z, si0.x);
-    
-    const float coord_a0 = SampleVoxel(base);
-    const float coord_a1 = SampleVoxel(base + si0);
-
-    const float coord_b0 = SampleVoxel(base + si1);
-    const float coord_b1 = SampleVoxel(base + si1 + si0);
-    const float coord_b2 = SampleVoxel(base - si1);
-    const float coord_b3 = SampleVoxel(base - si1 + si0);
-
-    const float coord_c0 = SampleVoxel(base + si2);
-    const float coord_c1 = SampleVoxel(base + si2 + si0);
-    const float coord_c2 = SampleVoxel(base - si2);
-    const float coord_c3 = SampleVoxel(base - si2 + si0);
-
-    const float lerp_a0 = lerp(coord_a0, coord_a1, fra); // The Center. Always 0.5 = On Surface
-    const float lerp_b0 = lerp(coord_b0, coord_b1, fra);
-    const float lerp_b2 = lerp(coord_b2, coord_b3, fra);
-    const float lerp_c0 = lerp(coord_c0, coord_c1, fra);
-    const float lerp_c2 = lerp(coord_c2, coord_c3, fra);
-
-    const float na0 = lerp(coord_a0, coord_a1, fra + NORMD) - .5f;
-    const float na2 = lerp(coord_a0, coord_a1, fra - NORMD) - .5f;
-    const float nb0 = lerp(lerp_a0, lerp_b0, NORMD) - .5f;
-    const float nb2 = lerp(lerp_a0, lerp_b2, NORMD) - .5f;
-    const float nc0 = lerp(lerp_a0, lerp_c0, NORMD) - .5f;
-    const float nc2 = lerp(lerp_a0, lerp_c2, NORMD) - .5f;
-
-    const float3 sa = si0 * (na0 - na2);
-    const float3 sb = si1 * (nb0 - nb2);
-    const float3 sc = si2 * (nc0 - nc2);
-    return  -normalize(sa + sb + sc);
-}
-float SampleVoxelTrilinear(float3 pos)
-{
-    int3 p0 = (int3)floor(pos);
-    float3 f = frac(pos);
-
-    float c000 = SampleVoxel(p0 + int3(0,0,0));
-    float c100 = SampleVoxel(p0 + int3(1,0,0));
-    float c010 = SampleVoxel(p0 + int3(0,1,0));
-    float c110 = SampleVoxel(p0 + int3(1,1,0));
-
-    float c001 = SampleVoxel(p0 + int3(0,0,1));
-    float c101 = SampleVoxel(p0 + int3(1,0,1));
-    float c011 = SampleVoxel(p0 + int3(0,1,1));
-    float c111 = SampleVoxel(p0 + int3(1,1,1));
-
-    float c00 = lerp(c000, c100, f.x);
-    float c10 = lerp(c010, c110, f.x);
-    float c01 = lerp(c001, c101, f.x);
-    float c11 = lerp(c011, c111, f.x);
-
-    float c0 = lerp(c00, c10, f.y);
-    float c1 = lerp(c01, c11, f.y);
-
-    return lerp(c0, c1, f.z);
-}
-float3 GetSurfaceNormal(float3 pos)
-{
-    const float eps = 0.025f;
-
-    float dx =
-        SampleVoxelTrilinear(pos + float3(eps,0,0)) -
-        SampleVoxelTrilinear(pos - float3(eps,0,0));
-
-    float dy =
-        SampleVoxelTrilinear(pos + float3(0,eps,0)) -
-        SampleVoxelTrilinear(pos - float3(0,eps,0));
-
-    float dz =
-        SampleVoxelTrilinear(pos + float3(0,0,eps)) -
-        SampleVoxelTrilinear(pos - float3(0,0,eps));
-
-    return -normalize(float3(dx, dy, dz));
-}
-
-[numthreads(4, 4, 4)]
-void Marche(uint3 id : SV_DispatchThreadID) {
+[numthreads(2, 2, 2)]
+void BuildVertex(uint3 id : SV_DispatchThreadID) {
+    const uint3 vx = id + chunk_pos.xyz - uint3(1, 1, 1);
     
     uint selector = 0;
     float2 samples[8];
     uint i;
     for (i = 0; i < 8; i++) {
-        samples[i] = SampleSolid(id + CubeVertex(i));
+        samples[i] = SampleVoxel(vx + CubeVertex(i));
         selector |= (samples[i].x < 0.5) << i;
     }
     
     if (selector == 0 || selector == 0xff) return;
     
     float3 vertices[12];
-    float3 normals[12];
-    // float material[12];
     for (i = 0; i < 12; i++) {
         const uint2 pair = EdgeVertexPair(i);
         const float2 sample1 = samples[pair.x];
         const float2 sample2 = samples[pair.y];
-        const float3 vertex1 = id + CubeVertex(pair.x);
-        const float3 vertex2 = id + CubeVertex(pair.y);
+        const float3 vertex1 = vx + CubeVertex(pair.x);
+        const float3 vertex2 = vx + CubeVertex(pair.y);
         const float param = (0.5 - sample1.x) / (sample2.x - sample1.x);
         
-        vertices[i] = lerp(vertex1, vertex2, param);
-        normals[i] = GetSurfaceNormal(vertices[i]);
-        // material[i] = abs(
-        //     sample1.x == 0 ? sample2.y :
-        //     sample2.x == 0 ? sample1.y :param < 0.5 ? sample1.y : sample2.y);
-
-        // const uint condition = abs(normals[i].x) > 0.99 && abs(normals[i].y) < 0.01 && abs(normals[i].z) < 0.01;
-        // normals[i].xyz = lerp(normals[i].xyz, float3(sign(normals[i].x) * 0.99, 0.01, 0.01), condition);
+        vertices[i] = lerp(vertex1, vertex2, param) - chunk_pos.xyz - uint3(1, 1, 1);
     }
 
     const uint table_index = selector * 19;
     const uint max = TriangleTable[table_index];
+    
     uint index;
-    InterlockedAdd(CounterSolid[0], max, index);
+    if (id.x == 0  || id.y == 0  || id.z == 0 ||
+        id.x == 33 || id.y == 33 || id.z == 33) {
+        InterlockedAdd(ExtraCounter[0], max, index);
+        index = BUFFER_SIZE - index - max;
+    } else {
+        InterlockedAdd(VertexCounter[0], max, index);
+    }
+    
+    VoxelsCounter[id.x + (id.z * EXTRA_1) + (id.y * EXTRA_2)] = uint2(index, max);
     
     for (i = 0; i < 18; i+= 3) {
         const int t_index0 = TriangleTable[table_index + i + 1];
@@ -210,28 +135,58 @@ void Marche(uint3 id : SV_DispatchThreadID) {
         const int t_index2 = TriangleTable[table_index + i + 3];
         if (t_index0 < 0) return;
 
-        float3 normal = normalize(cross(vertices[t_index1] - vertices[t_index0], vertices[t_index2] - vertices[t_index0]));
-        const float3 uv0 = float3(0, 0, 0); // float3(material[t_index0], material[t_index1], material[t_index2]);
-        WriteVertex(index + i    , vertices[t_index0], normals[t_index0], uv0, 1);
-        WriteVertex(index + i + 1, vertices[t_index1], normals[t_index1], uv0, 2);
-        WriteVertex(index + i + 2, vertices[t_index2], normals[t_index2], uv0, 3);
+        const float3 normal = normalize(
+            cross(
+                vertices[t_index1] - vertices[t_index0],
+                vertices[t_index2] - vertices[t_index0]
+            )
+        );
+        WriteVertex(index + i    , vertices[t_index0], normal, id, 0);
+        WriteVertex(index + i + 1, vertices[t_index1], normal, id, 0);
+        WriteVertex(index + i + 2, vertices[t_index2], normal, id, 0);
     }
 }
 
+//
+// BuildMesh
+//
+uint4 vertex_count;
 
-//
-// Bake After Marching
-//
+StructuredBuffer<uint2> MeshCounter;
+StructuredBuffer<GeneratedVertex> MeshInput;
+
+RWStructuredBuffer<GeneratedVertexLow> MeshVertexBuffer;
+RWStructuredBuffer<uint> MeshIndexBuffer;
 
 [numthreads(64, 1, 1)]
-void BakeSolid(uint3 id : SV_DispatchThreadID) {
+void BuildMesh(uint3 id : SV_DispatchThreadID) {
     const uint index = id.x;
+    if (index >= vertex_count.x) return;
+    
     GeneratedVertex ver = MeshInput[index];
+    
+    float3 normal = float3(0.0, 0.0, 0.0);
+    for (int x = -1; x <= 1; x++)
+    for (int y = -1; y <= 1; y++)
+    for (int z = -1; z <= 1; z++) {
+        int2 counter = MeshCounter[x + ver.uv0.x + ((z + ver.uv0.z) * EXTRA_1) + ((y + ver.uv0.y) * EXTRA_2)];
+        for (int i = 0; i < 18; i++) {
+            if (i == counter.y) break;
+            const GeneratedVertex other = MeshInput[counter.x + i];
+            if (other.position.x == ver.position.x &&
+                other.position.y == ver.position.y &&
+                other.position.z == ver.position.z) {
+                normal += other.normal;
+            }
+        }
+    }
+    normal = normalize(normal);
+    
     GeneratedVertexLow low;
-    low.position.x = f32tof16(ver.position.x) | (f32tof16(ver.position.y) << 16);
-    low.position.y = f32tof16(ver.position.z) | (f32tof16(1.0) << 16);
-    low.normal.x = f32tof16(ver.normal.x) | (f32tof16(ver.normal.y) << 16);
-    low.normal.y = f32tof16(ver.normal.z) | (f32tof16(1.0) << 16);
+    low.position.x = f32tof16(ver.position.x / 1024.0) | (f32tof16(ver.position.y / 1024.0) << 16);
+    low.position.y = f32tof16(ver.position.z / 1024.0) | (f32tof16(1.0) << 16);
+    low.normal.x = f32tof16(normal.x) | (f32tof16(normal.y) << 16);
+    low.normal.y = f32tof16(normal.z) | (f32tof16(1.0) << 16);
     low.uv0.x = f32tof16(ver.uv0.x) | (f32tof16(ver.uv0.y) << 16);
     low.uv0.y = f32tof16(ver.uv0.z) | (f32tof16(ver.uv0.w) << 16);
     MeshVertexBuffer[index] = low;
