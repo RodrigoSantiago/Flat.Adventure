@@ -6,15 +6,15 @@ namespace Code {
         public const int SIZE_1 = 32;
         public const int SIZE_2 = 32 * 32;
         public const int SIZE_3 = 32 * 32 * 32;
-        public const int SIZE_4 = 34 * 34 * 34;
+        public const int SIZE_4 = 34 * 34 * 34; // Padding Chunks
 
         public readonly float[] CubeDensity = {
-            0.00f, 0.10f, 0.20f, 0.30f, 0.40f, 0.45f, 
+            0.00f, 0.10f, 0.20f, 0.30f, 0.40f, 0.45f,
             0.55f, 0.60f, 0.65f, 0.70f, 0.75f,
             0.80f, 0.85f, 0.90f, 0.95f, 1.00f
         };
-        
-        public uint[] density;  // [4]
+
+        public uint[] density; // [4]
         public uint[] material; // [6]
 
         public float GetDensity(int x, int y, int z) {
@@ -48,6 +48,23 @@ namespace Code {
             uint mask = (uint)(0xFu << shift);
 
             density[uintIndex] = (density[uintIndex] & ~mask) | ((uint)value << shift);
+        }
+
+        public int GetMaterial(int x, int y, int z) {
+            int voxelIndex = x + (z * SIZE_1) + (y * SIZE_2);
+            
+            int uintIndex = voxelIndex >> 2;
+            int shift = (voxelIndex & 3) << 3;
+            return (int)((material[uintIndex] >> shift) & 0xFF);
+        }
+
+        public void SetMaterial(int x, int y, int z, int value) {
+            int voxelIndex = x + (z * SIZE_1) + (y * SIZE_2);
+            
+            int uintIndex = voxelIndex >> 2;
+            int shift = (voxelIndex & 3) << 3;
+            uint mask = 0xFFu << shift;
+            material[uintIndex] = (material[uintIndex] & ~mask) | ((uint)value << shift);
         }
     }
 }

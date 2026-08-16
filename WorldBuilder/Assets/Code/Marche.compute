@@ -5,11 +5,13 @@ struct GeneratedVertex {
     int3 position;
     float3 normal;
     int4 uv0;
+    int4 uv1;
 };
 struct GeneratedVertexLow {
     uint2 position;
     uint2 normal;
     uint2 uv0;
+    uint2 uv1;
 };
 
 #define SIZE_1 32
@@ -35,6 +37,7 @@ StructuredBuffer<int> TriangleTable;
         
 StructuredBuffer<uint> VoxelBuffer;
 StructuredBuffer<uint> ChunkBuffer;
+StructuredBuffer<uint> MaterialBuffer;
 
 RWStructuredBuffer<uint> ExtraCounter;
 RWStructuredBuffer<uint> VertexCounter;
@@ -47,28 +50,33 @@ static const float lut[16] = {
     0.80, 0.85, 0.90, 0.95, 1.00
 };
 
-void WriteVertex(const uint offset, const float3 p, const float3 n, const int3 id, const int uv) {
+void WriteVertex(const uint offset, const float3 p, const float3 n, const int3 id, const int uv, const float4 mat) {
     GeneratedVertex vertex;
     vertex.position = (int3)round(p * 1024);
     vertex.normal = n;
-    vertex.uv0 = float4(id, uv);
+    vertex.uv0 = int4(id, uv);
+    vertex.uv1 = mat;
     VertexBuffer[offset] = vertex;
 }
 
-float ReadVoxel(const uint x, const uint y, const uint z) {
+float2 ReadVoxel(const uint x, const uint y, const uint z) {
     const uint index = (x & 31) + (z & 31) * SIZE_1 + (y & 31) * SIZE_2;
     const uint offset = ChunkBuffer[(x >> 5) + (z >> 5) * CHUNKS_1 + (y >> 5) * CHUNKS_2];
-    const uint packed = VoxelBuffer[offset + (index >> 3)];
 
-    const uint shift = (index & 7) * 4;
-    const uint density = (packed >> shift) & 0xF;
+    const uint densityPacked = VoxelBuffer[offset + (index >> 3)];
+    const uint densityShift = (index & 7) * 4;
+    const uint density = (densityPacked >> densityShift) & 0xF;
 
-    return lut[density];
+    const uint materialPacked = MaterialBuffer[offset * 2 + (index >> 2)];
+    const uint materialShift = (index & 3) * 8;
+    const uint material = (materialPacked >> materialShift) & 0xFF;
+
+    return float2(lut[density], material);
 }
 
 float2 SampleVoxel(const uint3 pos) {
-    const float vox = ReadVoxel(pos.x, pos.y, pos.z);
-    return float2(vox, 0);
+    const float2 vox = ReadVoxel(pos.x, pos.y, pos.z);
+    return float2(vox.x, vox.y);
 }
 
 uint3 CubeVertex(const uint index) {
@@ -103,7 +111,8 @@ void BuildVertex(uint3 id : SV_DispatchThreadID) {
     
     if (selector == 0 || selector == 0xff) return;
     
-    float3 vertices[12];
+    float4 vertices[12];
+    float4 materials[12];
     for (i = 0; i < 12; i++) {
         const uint2 pair = EdgeVertexPair(i);
         const float2 sample1 = samples[pair.x];
@@ -111,8 +120,9 @@ void BuildVertex(uint3 id : SV_DispatchThreadID) {
         const float3 vertex1 = vx + CubeVertex(pair.x);
         const float3 vertex2 = vx + CubeVertex(pair.y);
         const float param = (0.5 - sample1.x) / (sample2.x - sample1.x);
+        const float mat = sample1.x >= sample2.x ? param >= 0.75 ? sample2.y : sample1.y : param < 0.25 ? sample1.y : sample2.y;
         
-        vertices[i] = lerp(vertex1, vertex2, param) - chunk_pos.xyz - uint3(1, 1, 1);
+        vertices[i] = float4(lerp(vertex1, vertex2, param) - chunk_pos.xyz - uint3(1, 1, 1), mat);
     }
 
     const uint table_index = selector * 19;
@@ -137,13 +147,31 @@ void BuildVertex(uint3 id : SV_DispatchThreadID) {
 
         const float3 normal = normalize(
             cross(
-                vertices[t_index1] - vertices[t_index0],
-                vertices[t_index2] - vertices[t_index0]
+                vertices[t_index1].xyz - vertices[t_index0].xyz,
+                vertices[t_index2].xyz - vertices[t_index0].xyz
             )
         );
-        WriteVertex(index + i    , vertices[t_index0], normal, id, 0);
-        WriteVertex(index + i + 1, vertices[t_index1], normal, id, 0);
-        WriteVertex(index + i + 2, vertices[t_index2], normal, id, 0);
+        // x[MatA] y[WeightA] z[MatB] w[WeightB]
+        float3 mat = float3(vertices[t_index0].w, vertices[t_index1].w, vertices[t_index2].w); 
+        // Material List
+        const float4 mat0 = float4(materials[t_index0].xz, materials[t_index1].xz);
+        const float2 mat1 = materials[t_index2].xz;
+
+        // Vertex Weight 0
+        const float4 vw00 = float4(materials[t_index0].yw, 0.0, 0.0);
+        const float2 vw01 = float2(0.0, 0.0);
+        
+        // Vertex Weight 1
+        const float4 vw10 = float4(0.0, 0.0, materials[t_index1].yw);
+        const float2 vw11 = float2(0.0, 0.0);
+        
+        // Vertex Weight 2
+        const float4 vw20 = float4(0.0, 0.0, 0.0, 0.0);
+        const float2 vw21 = float2(materials[t_index2].yw);
+        
+        WriteVertex(index + i    , vertices[t_index0].xyz, normal, id, 0.0, float4(mat, 0.0));
+        WriteVertex(index + i + 1, vertices[t_index1].xyz, normal, id, 0.0, float4(mat, 1.0));
+        WriteVertex(index + i + 2, vertices[t_index2].xyz, normal, id, 0.0, float4(mat, 2.0));
     }
 }
 
@@ -187,8 +215,10 @@ void BuildMesh(uint3 id : SV_DispatchThreadID) {
     low.position.y = f32tof16(ver.position.z / 1024.0) | (f32tof16(1.0) << 16);
     low.normal.x = f32tof16(normal.x) | (f32tof16(normal.y) << 16);
     low.normal.y = f32tof16(normal.z) | (f32tof16(1.0) << 16);
-    low.uv0.x = f32tof16(ver.uv0.x) | (f32tof16(ver.uv0.y) << 16);
-    low.uv0.y = f32tof16(ver.uv0.z) | (f32tof16(ver.uv0.w) << 16);
+    low.uv0.x = f32tof16(ver.uv1.x) | (f32tof16(ver.uv1.y) << 16);
+    low.uv0.y = f32tof16(ver.uv1.z) | (f32tof16(ver.uv1.w) << 16);
+    low.uv1.x = f32tof16(ver.uv1.w == 0.0 ? 1.0 : 0.0) | (f32tof16(ver.uv1.w == 1.0 ? 1.0 : 0.0) << 16);
+    low.uv1.y = f32tof16(ver.uv1.w == 2.0 ? 1.0 : 0.0) | (f32tof16(0.0) << 16);
     MeshVertexBuffer[index] = low;
     MeshIndexBuffer[index] = index;
 }

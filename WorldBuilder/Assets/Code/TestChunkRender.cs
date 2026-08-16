@@ -10,7 +10,8 @@ namespace Code {
         
         private void Start() {
             var chunk = new Chunk();
-            chunk.density = new uint[Chunk.SIZE_3 / 4];
+            chunk.density = new uint[Chunk.SIZE_3 / 8];
+            chunk.material = new uint[Chunk.SIZE_3 / 4];
             
             float radius = Chunk.SIZE_1 * 0.4f;
             Vector3 center = new(
@@ -65,9 +66,17 @@ namespace Code {
                     }
                 }
             }
+            for (int y = 0; y < 8; y++) {
+                for (int z = 0; z < Chunk.SIZE_1; z++) {
+                    for (int x = 0; x < Chunk.SIZE_1; x++) {
+                        chunk.SetMaterial(x, y, z, 1);
+                    }
+                }
+            }
             
             var chunkSoil = new Chunk();
-            chunkSoil.density = new uint[Chunk.SIZE_3 / 4];
+            chunkSoil.density = new uint[Chunk.SIZE_3 / 8];
+            chunkSoil.material = new uint[Chunk.SIZE_3 / 4];
             for (int y = 0; y < 3; y++) {
                 for (int z = 0; z < Chunk.SIZE_1; z++) {
                     for (int x = 0; x < Chunk.SIZE_1; x++) {

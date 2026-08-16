@@ -5,14 +5,15 @@ using UnityEngine.Rendering;
 
 namespace Code {
 	public delegate void ChunkRemeshListener(Mesh mesh);
-	public delegate void ChunkBufferListener(GraphicsBuffer VertexBuffer, int VertexCount);
 
 	public class ChunkMeshGenerator {
-		private static uint[] emptyChunk = new uint[Chunk.SIZE_3 / 4];
+		private static uint[] emptyDensity = new uint[Chunk.SIZE_3 / 8];
+		private static uint[] emptyMaterial = new uint[Chunk.SIZE_3 / 4];
 		
 		// Source
 		private GraphicsBuffer voxelBuffer;
 		private GraphicsBuffer chunkBuffer;
+		private GraphicsBuffer materialBuffer;
 		private GraphicsBuffer triangleTable;
 
 		// Destination
@@ -34,10 +35,19 @@ namespace Code {
 			buildVertex = shader.FindKernel("BuildVertex");
 			buildMesh = shader.FindKernel("BuildMesh");
 
-			voxelBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Structured, Chunk.SIZE_3 * 216 / 2, sizeof(uint));
-			chunkBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Structured, 216, sizeof(uint));
+			/*
+			 * Size :
+			 *  LOD 0 - 3 * 3 * 3 (1 + 2) = 27
+			 *  LOD 1 - 4 * 4 * 4 (2 + 2) = 64
+			 *  LOD 2 - 6 * 6 * 6 (4 + 2) = 216
+			 * Each Voxel uses 4 bits (32bit / 8 = 4bit) - I used uint because it is GPU friendly
+			 */
+			voxelBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Structured, Chunk.SIZE_3 / 8 * (6 * 6 * 6), sizeof(uint));
+			materialBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Structured, Chunk.SIZE_3 / 4 * (6 * 6 * 6), sizeof(uint));
+			chunkBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Structured, 6 * 6 * 6, sizeof(uint));
 
-			vertexBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Structured, Chunk.SIZE_4 * (3 * 18), sizeof(float) * (3 + 3 + 4));
+			// 3 * 18 = Max Vertex per Voxel
+			vertexBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Structured, Chunk.SIZE_4 * (3 * 18), sizeof(float) * (3 + 3 + 4 + 4)); 
 			extraCounter = new GraphicsBuffer(GraphicsBuffer.Target.Structured, 1, sizeof(int));
 			vertexCounter = new GraphicsBuffer(GraphicsBuffer.Target.Structured, 1, sizeof(int));
 			voxelsCounter = new GraphicsBuffer(GraphicsBuffer.Target.Structured, Chunk.SIZE_4, sizeof(int) * 2);
@@ -48,16 +58,19 @@ namespace Code {
 			// Input
 			shader.SetBuffer(buildVertex, "TriangleTable", triangleTable);
 			shader.SetBuffer(buildVertex, "VoxelBuffer", voxelBuffer);
+			shader.SetBuffer(buildVertex, "MaterialBuffer", materialBuffer);
 			shader.SetBuffer(buildVertex, "ChunkBuffer", chunkBuffer);
 			
 			// Output
-			shader.SetBuffer(buildVertex, "VertexBuffer", vertexBuffer);
-			shader.SetBuffer(buildVertex, "ExtraCounter", extraCounter);
-			shader.SetBuffer(buildVertex, "VertexCounter", vertexCounter);
-			shader.SetBuffer(buildVertex, "VoxelsCounter", voxelsCounter);
+			shader.SetBuffer(buildVertex, "VertexBuffer", vertexBuffer);		// List<GeneratedVertex>
+			shader.SetBuffer(buildVertex, "ExtraCounter", extraCounter);		// Vertex indices from padding
+			shader.SetBuffer(buildVertex, "VertexCounter", vertexCounter);		// Vertex indices from content
+			shader.SetBuffer(buildVertex, "VoxelsCounter", voxelsCounter);		// List<Start Index, Triangle Count>
 			
-			shader.SetBuffer(buildMesh, "MeshInput", vertexBuffer);
-			shader.SetBuffer(buildMesh, "MeshCounter", voxelsCounter);
+			shader.SetBuffer(buildMesh, "MeshInput", vertexBuffer);				// Input from buildVertex[VertexCounter]
+			shader.SetBuffer(buildMesh, "MeshCounter", voxelsCounter);			// Input from buildVertex[VoxelsCounter]
+			
+			// The VoxelsCounter is a list of all voxels, indexed by position. It is useful to calculate normals
 
 		}
 
@@ -65,27 +78,32 @@ namespace Code {
 			triangleTable.Release();
 			voxelBuffer.Release();
 			vertexBuffer.Release();
+			materialBuffer.Release();
 			vertexCounter.Release();
 			voxelsCounter.Release();
 			chunkBuffer.Release();
 			extraCounter.Release();
 		}
 
-		public void Remesh(Chunk chunk, Chunk soil, ChunkRemeshListener OnChunkRemesh) {
-			int size = Chunk.SIZE_3 / 4;
-			uint x = Chunk.SIZE_3 / 4;
-			voxelBuffer.SetData(emptyChunk);
-			voxelBuffer.SetData(chunk.density, 0, size * 1, chunk.density.Length);
-			voxelBuffer.SetData(soil.density, 0, size * 2, soil.density.Length);
+		public void Remesh(Chunk chunk, Chunk soil, ChunkRemeshListener onChunkRemesh) {
+			int sizeD = Chunk.SIZE_3 / 8;
+			voxelBuffer.SetData(emptyDensity);
+			voxelBuffer.SetData(chunk.density, 0, sizeD * 1, chunk.density.Length);
+			voxelBuffer.SetData(soil.density, 0, sizeD * 2, soil.density.Length);
+			
+			int sizeM = Chunk.SIZE_3 / 4;
+			materialBuffer.SetData(emptyMaterial);
+			materialBuffer.SetData(chunk.material, 0, sizeM * 1, chunk.material.Length);
+			materialBuffer.SetData(soil.material, 0, sizeM * 2, soil.material.Length);
 			
 			uint[] chunkIndex = new uint[6 * 6 * 6];
 			
 			for (int px = 0; px < 3; px++) {
 				for (int pz = 0; pz < 3; pz++) {
-					chunkIndex[px + 1 * 36 + pz * 6] = x * 2;
+					chunkIndex[px + 1 * 36 + pz * 6] = 0;
 				}
 			}
-			chunkIndex[1 + 36 + 6] = x;
+			chunkIndex[1 + 36 + 6] = (uint)sizeD;
 			
 			chunkBuffer.SetData(chunkIndex);
 			vertexCounter.SetData(new uint[] { 0 });
@@ -98,21 +116,22 @@ namespace Code {
 				var data = request.GetData<uint>();
 				int indexCount = (int)data[0];
 				if (indexCount == 0) {
-					OnChunkRemesh?.Invoke(null);
+					onChunkRemesh?.Invoke(null);
 				} else {
-					ComposeMesh(indexCount, OnChunkRemesh);
+					ComposeMesh(indexCount, onChunkRemesh);
 				}
 			});
 		}
 
-		private void ComposeMesh(int vertexCount, ChunkRemeshListener OnChunkRemesh) {
+		private void ComposeMesh(int vertexCount, ChunkRemeshListener onChunkRemesh) {
 			Mesh mesh = new Mesh();
 			mesh.indexFormat = IndexFormat.UInt32;
 			mesh.indexBufferTarget = GraphicsBuffer.Target.Structured;
 			mesh.SetVertexBufferParams(vertexCount,
 				new VertexAttributeDescriptor(VertexAttribute.Position, VertexAttributeFormat.Float16, 4),
 				new VertexAttributeDescriptor(VertexAttribute.Normal, VertexAttributeFormat.Float16, 4),
-				new VertexAttributeDescriptor(VertexAttribute.TexCoord0, VertexAttributeFormat.Float16, 4)
+				new VertexAttributeDescriptor(VertexAttribute.TexCoord0, VertexAttributeFormat.Float16, 4),
+				new VertexAttributeDescriptor(VertexAttribute.TexCoord1, VertexAttributeFormat.Float16, 4)
 			);
 			mesh.SetIndexBufferParams(vertexCount, IndexFormat.UInt32);
 			mesh.subMeshCount = 1;
@@ -134,39 +153,23 @@ namespace Code {
 			AsyncGPUReadback.Request(meshVertex, (request) => {
 				meshVertex.Dispose();
 				meshIndex.Dispose();
-				OnChunkRemesh?.Invoke(mesh);
+				onChunkRemesh?.Invoke(mesh);
 			});
 		}
-	
-		private void toDebug(AsyncGPUReadbackRequest request) {
-			var gpuVertices = request.GetData<GeneratedVertexLow>();
+	}
+    
+	[StructLayout(LayoutKind.Sequential)]
+	public struct GeneratedVertex {
+		public Vector3Int position;
+		public Vector3 normal;
+		public Vector4 uv0;
+		public Vector4 uv1;
 
-			MeshDebugData.Vertices = new Vector3[gpuVertices.Length];
-			MeshDebugData.Normals = new Vector3[gpuVertices.Length];
-
-			for (int i = 0; i < gpuVertices.Length; i++) {
-				GeneratedVertexLow v = gpuVertices[i];
-
-				ushort px = (ushort)(v.position0 & 0xFFFF);
-				ushort py = (ushort)(v.position0 >> 16);
-				ushort pz = (ushort)(v.position1 & 0xFFFF);
-
-				ushort nx = (ushort)(v.normal0 & 0xFFFF);
-				ushort ny = (ushort)(v.normal0 >> 16);
-				ushort nz = (ushort)(v.normal1 & 0xFFFF);
-
-				MeshDebugData.Vertices[i] = new Vector3(
-					Mathf.HalfToFloat(px),
-					Mathf.HalfToFloat(py),
-					Mathf.HalfToFloat(pz)
-				);
-
-				MeshDebugData.Normals[i] = new Vector3(
-					Mathf.HalfToFloat(nx),
-					Mathf.HalfToFloat(ny),
-					Mathf.HalfToFloat(nz)
-				).normalized;
-			}
+		public override string ToString() {
+			return $"Pos=({position.x}, {position.y}, {position.z}) " +
+			       $"Nor=({normal.x}, {normal.y}, {normal.z}) " +
+			       $"UV0=({uv0.x}, {uv0.y}, {uv0.z}, {uv0.w})" +
+			       $"UV1=({uv1.x}, {uv1.y}, {uv1.z}, {uv1.w})";
 		}
 	}
 
@@ -180,6 +183,8 @@ namespace Code {
 
 	    public uint uv00;
 	    public uint uv01;
+	    public uint uv10;
+	    public uint uv11;
 		
 	    private static float HalfToFloat(ushort value) {
 		    return Mathf.HalfToFloat(value);
@@ -204,18 +209,18 @@ namespace Code {
 		    ushort u2 = (ushort)(uv01 & 0xFFFF);
 		    ushort u3 = (ushort)(uv01 >> 16);
 
+		    ushort u4 = (ushort)(uv10 & 0xFFFF);
+		    ushort u5 = (ushort)(uv10 >> 16);
+
+		    ushort u6 = (ushort)(uv11 & 0xFFFF);
+		    ushort u7 = (ushort)(uv11 >> 16);
+
 		    return position0 + ", " + position1 + " = " +
 		           $"Pos=({HalfToFloat(px)}, {HalfToFloat(py)}, {HalfToFloat(pz)}, {HalfToFloat(pw)}) " +
 		           $"Nor=({HalfToFloat(nx)}, {HalfToFloat(ny)}, {HalfToFloat(nz)}, {HalfToFloat(nw)}) " +
-		           $"UV=({HalfToFloat(u0)}, {HalfToFloat(u1)}, {HalfToFloat(u2)}, {HalfToFloat(u3)})";
+		           $"UV0=({HalfToFloat(u0)}, {HalfToFloat(u1)}, {HalfToFloat(u2)}, {HalfToFloat(u3)}) " +
+		           $"UV1=({HalfToFloat(u4)}, {HalfToFloat(u5)}, {HalfToFloat(u6)}, {HalfToFloat(u7)}) ";
 	    }
-    }
-    
-    [StructLayout(LayoutKind.Sequential)]
-    public struct GeneratedVertex {
-	    public Vector3Int position;
-	    public Vector3 normal;
-	    public Vector4 uv0;
     }
     
     public static class MeshDebugData
