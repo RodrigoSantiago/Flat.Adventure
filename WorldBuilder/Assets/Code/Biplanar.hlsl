@@ -1,29 +1,36 @@
-static const float3 MatColors[4] =
-{
-    float3(1.0, 0.0, 0.0), // 0 - Vermelho
-    float3(0.0, 1.0, 0.0), // 1 - Verde
-    float3(0.0, 0.0, 1.0), // 2 - Azul
-    float3(1.0, 1.0, 0.0)  // 3 - Amarelo
-};
+float4 SampleTexture(UnityTexture2DArray unityTexture, const int matId, const float2 uv, const float2 dx, const float2 dy) {
+    return SAMPLE_TEXTURE2D_ARRAY_GRAD(unityTexture.tex, unityTexture.samplerstate, uv, matId, dx, dy);
+}
 
-/**float4 SampleTexture(UnityTexture2D Albedo, const int matId, const float2 uv, const float2 dx, const float2 dy) {
-    
-}*/
+float3 UnpackNormal(const float2 xy){
+    float3 normal;
+    normal.xy = xy * 2.0 - 1.0;
+    normal.z = sqrt(1.0 - saturate(dot(normal.xy, normal.xy)));
+    return normal;
+}
 
 void Biplanar_float(
-    UnityTexture2D Albedo,
-    UnityTexture2D Normal,
+    UnityTexture2DArray Albedo,
+    UnityTexture2DArray Normal,
     float3 Position,
     float3 NormalWS,
     float Scale,
     float4 PackUv0,
     float4 PackUv1,
     float4 PackUv2,
+    bool multiTexture,
     
     out float3 OutAlbedo,
-    out float3 OutNormal
+    out float3 OutNormal,
+    out float OutRoughness,
+    out float OutMetallic,
+    out float OutEmission
     )
 {
+    
+    // ============================================================
+    //          Bi-planar Projection
+    // ============================================================
     float3 n = normalize(NormalWS);
     float3 absN = abs(n);
 
@@ -41,13 +48,25 @@ void Biplanar_float(
     float2 w = float2(biWeights[ma.x], biWeights[ma.y]);
     w /= (w.x + w.y);
 
+    // ============================================================
+    //          Pre-Compute Sampling
+    // ============================================================
+    
     float2 uvX = Position.zy * Scale;
     float2 uvY = Position.xz * Scale;
     float2 uvZ = Position.xy * Scale;
+    if (n.x < 0)
+        uvX.x = -uvX.x;
 
-    float2 dxX = ddx(uvX), dyX = ddy(uvX);
-    float2 dxY = ddx(uvY), dyY = ddy(uvY);
-    float2 dxZ = ddx(uvZ), dyZ = ddy(uvZ);
+    if (n.y < 0)
+        uvY.x = -uvY.x;
+
+    if (n.z < 0)
+        uvZ.x = -uvZ.x;
+
+    const float2 dxX = ddx(uvX), dyX = ddy(uvX);
+    const float2 dxY = ddx(uvY), dyY = ddy(uvY);
+    const float2 dxZ = ddx(uvZ), dyZ = ddy(uvZ);
 
     float2 uv1, uv2;
     float2 dx1, dy1, dx2, dy2;
@@ -59,53 +78,87 @@ void Biplanar_float(
     if (ma.y == 0) { uv2 = uvX; dx2 = dxX; dy2 = dyX; }
     else if (ma.y == 1) { uv2 = uvY; dx2 = dxY; dy2 = dyY; }
     else { uv2 = uvZ; dx2 = dxZ; dy2 = dyZ; }
+    const int mat0 = (int)round(abs(PackUv1.x - PackUv1.y) < 0.01 ? min(PackUv0.x, PackUv0.y) : (PackUv1.x > PackUv1.y ? PackUv0.x : PackUv0.y));
+    const int mat1 = (int)round(abs(PackUv1.z - PackUv1.w) < 0.01 ? min(PackUv0.z, PackUv0.w) : (PackUv1.z > PackUv1.w ? PackUv0.z : PackUv0.w));
+    const int mat2 = (int)round(abs(PackUv2.z - PackUv2.w) < 0.01 ? min(PackUv2.x, PackUv2.y) : (PackUv2.z > PackUv2.w ? PackUv2.x : PackUv2.y));
+    
+    // ============================================================
+    //          Color[RGB] + Emission[A]
+    // ============================================================
+    
+    float4 colorA0 = SampleTexture(Albedo, mat0, uv1, dx1, dy1);
+    float4 colorB0 = SampleTexture(Albedo, mat0, uv2, dx2, dy2);
+    if (multiTexture) {
+        const float4 colorA1 = SampleTexture(Albedo, mat1, uv1, dx1, dy1);
+        const float4 colorB1 = SampleTexture(Albedo, mat1, uv2, dx2, dy2);
+        
+        const float4 colorA2 = SampleTexture(Albedo, mat2, uv1, dx1, dy1);
+        const float4 colorB2 = SampleTexture(Albedo, mat2, uv2, dx2, dy2);
+        
+        colorA0 = (PackUv1.x + PackUv1.y) * colorA0 +
+                  (PackUv1.z + PackUv1.w) * colorA1 +
+                  (PackUv2.z + PackUv2.w) * colorA2;
+        
+        colorB0 = (PackUv1.x + PackUv1.y) * colorB0 +
+                  (PackUv1.z + PackUv1.w) * colorB1 +
+                  (PackUv2.z + PackUv2.w) * colorB2;
+    }
+    OutAlbedo = colorA0.xyz * w.x + colorB0.xyz * w.y;
+    OutEmission = colorA0.w * w.x + colorB0.w * w.y;
 
-    // 3. Amostragem usando SAMPLE_TEXTURE2D_GRAD (Fix da linha de 1px)
-    float3 col1 = SAMPLE_TEXTURE2D_GRAD(Albedo.tex, Albedo.samplerstate, uv1, dx1, dy1).rgb;
-    float3 col2 = SAMPLE_TEXTURE2D_GRAD(Albedo.tex, Albedo.samplerstate, uv2, dx2, dy2).rgb;
-    OutAlbedo = col1 * w.x + col2 * w.y;
+    // ============================================================
+    //          Normals[RG] + Roughness[B] + Metallic[A]
+    // ============================================================
+    float4 extraA0 = SampleTexture(Normal, mat0, uv1, dx1, dy1);
+    float4 extraB0 = SampleTexture(Normal, mat0, uv2, dx2, dy2);
+    float3 normalA0 = UnpackNormal(extraA0.rg);
+    float3 normalB0 = UnpackNormal(extraB0.rg);
+    if (multiTexture) {
+        const float4 extraA1 = SampleTexture(Normal, mat1, uv1, dx1, dy1);
+        const float4 extraB1 = SampleTexture(Normal, mat1, uv2, dx2, dy2);
+        const float3 normalA1 = UnpackNormal(extraA1.rg);
+        const float3 normalB1 = UnpackNormal(extraB1.rg);
+        
+        const float4 extraA2 = SampleTexture(Normal, mat2, uv1, dx1, dy1);
+        const float4 extraB2 = SampleTexture(Normal, mat2, uv2, dx2, dy2);
+        const float3 normalA2 = UnpackNormal(extraA2.rg);
+        const float3 normalB2 = UnpackNormal(extraB2.rg);
+        
+        extraA0 = (PackUv1.x + PackUv1.y) * extraA0 +
+                  (PackUv1.z + PackUv1.w) * extraA1 +
+                  (PackUv2.z + PackUv2.w) * extraA2;
+        
+        extraB0 = (PackUv1.x + PackUv1.y) * extraB0 +
+                  (PackUv1.z + PackUv1.w) * extraB1 +
+                  (PackUv2.z + PackUv2.w) * extraB2;
+        
+        normalA0 = normalize(
+                    (PackUv1.x + PackUv1.y) * normalA0 +
+                    (PackUv1.z + PackUv1.w) * normalA1 +
+                    (PackUv2.z + PackUv2.w) * normalA2
+                   );
+        
+        normalB0 = normalize(
+                    (PackUv1.x + PackUv1.y) * normalB0 +
+                    (PackUv1.z + PackUv1.w) * normalB1 +
+                    (PackUv2.z + PackUv2.w) * normalB2
+                   );
+    }
+    OutRoughness = extraA0.z * w.x + extraB0.z * w.y;
+    OutMetallic = extraA0.w * w.x + extraB0.w * w.y;
 
-    // 4. Amostragem do Normal Map com Gradientes
-    float3 p1 = UnpackNormal(SAMPLE_TEXTURE2D_GRAD(Normal.tex, Normal.samplerstate, uv1, dx1, dy1));
-    float3 p2 = UnpackNormal(SAMPLE_TEXTURE2D_GRAD(Normal.tex, Normal.samplerstate, uv2, dx2, dy2));
-
-    // Reconstrução de Espaço Tangente
-    float3 T[3] = { float3(0,0,1), float3(1,0,0), float3(1,0,0) };
-    float3 B[3] = { float3(0,1,0), float3(0,0,1), float3(0,1,0) };
-    float3 Q[3] = { float3(1,0,0), float3(0,1,0), float3(0,0,1) };
+    // Tangent Space
+    const float3 T[3] = { float3(0, 0, 1), float3(1, 0, 0), float3(1, 0, 0) };
+    const float3 B[3] = { float3(0, 1, 0), float3(0, 0, 1), float3(0, 1, 0) };
+    const float3 Q[3] = { float3(1, 0, 0), float3(0, 1, 0), float3(0, 0, 1) };
 
     float3 t1 = T[ma.x] * sign(n[ma.x]), b1 = B[ma.x], q1 = Q[ma.x] * sign(n[ma.x]);
     float3 t2 = T[ma.y] * sign(n[ma.y]), b2 = B[ma.y], q2 = Q[ma.y] * sign(n[ma.y]);
 
-    float3 n1 = normalize(t1 * p1.x + b1 * p1.y + q1 * p1.z);
-    float3 n2 = normalize(t2 * p2.x + b2 * p2.y + q2 * p2.z);
+    float3 n1 = normalize(t1 * normalA0.x + b1 * normalA0.y + q1 * normalA0.z);
+    float3 n2 = normalize(t2 * normalB0.x + b2 * normalB0.y + q2 * normalB0.z);
 
     OutNormal = normalize(n1 * w.x + n2 * w.y);
-    
-
-    // ============================================================
-    // 7. MATERIAL — feito SOMENTE no final
-    // ============================================================
-
-    const float3 color0 = MatColors[(int)round(PackUv0.x)];
-    const float3 color1 = MatColors[(int)round(PackUv0.y)];
-    const float3 color2 = MatColors[(int)round(PackUv0.z)];
-    const float3 color3 = MatColors[(int)round(PackUv0.w)];
-    const float3 color4 = MatColors[(int)round(PackUv2.x)];
-    const float3 color5 = MatColors[(int)round(PackUv2.y)];
-
-    float3 c1 = (PackUv1.x + PackUv1.y) * (PackUv1.x > PackUv1.y ? color0 : color1);
-    float3 c2 = (PackUv1.z + PackUv1.w) * (PackUv1.z > PackUv1.w ? color2 : color3);
-    float3 c3 = (PackUv2.z + PackUv2.w) * (PackUv2.z > PackUv2.w ? color4 : color5);
-    OutAlbedo *= c1 + c2 + c3;
-    /*const float3 materialColor =
-        color0 * PackUv1.x +
-        color1 * PackUv1.y +
-        color2 * PackUv1.z +
-        color3 * PackUv1.w +
-        color4 * PackUv2.z +
-        color5 * PackUv2.w;
-    OutAlbedo *= materialColor;*/
 }
 /*void Triplanar_float(UnityTexture2D Albedo,UnityTexture2D Normal,float3 Position,float3 NormalWS,float Scale,out float3 OutAlbedo,out float3 OutNormal)
 {
