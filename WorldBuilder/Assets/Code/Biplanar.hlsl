@@ -6,14 +6,19 @@ static const float3 MatColors[4] =
     float3(1.0, 1.0, 0.0)  // 3 - Amarelo
 };
 
+/**float4 SampleTexture(UnityTexture2D Albedo, const int matId, const float2 uv, const float2 dx, const float2 dy) {
+    
+}*/
+
 void Biplanar_float(
     UnityTexture2D Albedo,
     UnityTexture2D Normal,
     float3 Position,
     float3 NormalWS,
     float Scale,
-    float4 MatIndex,
-    float4 TriangleIndex,
+    float4 PackUv0,
+    float4 PackUv1,
+    float4 PackUv2,
     
     out float3 OutAlbedo,
     out float3 OutNormal
@@ -22,15 +27,12 @@ void Biplanar_float(
     float3 n = normalize(NormalWS);
     float3 absN = abs(n);
 
-    // 1. Pesos contínuos
     float3 weights = pow(absN, 4.0);
     float minWeight = min(weights.x, min(weights.y, weights.z));
     float3 biWeights = max(weights - minWeight, 0.001);
 
-    // Seleção de eixos
     int3 ma = absN.x >= absN.y && absN.x >= absN.z ? int3(0,1,2) : (absN.y >= absN.z ? int3(1,2,0) : int3(2,0,1));
-    if (absN[ma.y] < absN[ma.z]) 
-    {
+    if (absN[ma.y] < absN[ma.z])  {
         int temp = ma.y;
         ma.y = ma.z;
         ma.z = temp;
@@ -39,17 +41,14 @@ void Biplanar_float(
     float2 w = float2(biWeights[ma.x], biWeights[ma.y]);
     w /= (w.x + w.y);
 
-    // 2. Cálculo dos 3 pares de UV e seus gradientes de tela (Derivadas explícitas)
     float2 uvX = Position.zy * Scale;
     float2 uvY = Position.xz * Scale;
     float2 uvZ = Position.xy * Scale;
 
-    // Gradientes que impedem a GPU de confundir as bordas com saltos de mipmap
     float2 dxX = ddx(uvX), dyX = ddy(uvX);
     float2 dxY = ddx(uvY), dyY = ddy(uvY);
     float2 dxZ = ddx(uvZ), dyZ = ddy(uvZ);
 
-    // Seleção manual de UVs e Derivadas para cada eixo escolhido
     float2 uv1, uv2;
     float2 dx1, dy1, dx2, dy2;
 
@@ -88,16 +87,25 @@ void Biplanar_float(
     // 7. MATERIAL — feito SOMENTE no final
     // ============================================================
 
-    float3 color0 = MatColors[(int)round(MatIndex.x)];
-    float3 color1 = MatColors[(int)round(MatIndex.y)];
-    float3 color2 = MatColors[(int)round(MatIndex.z)];
+    const float3 color0 = MatColors[(int)round(PackUv0.x)];
+    const float3 color1 = MatColors[(int)round(PackUv0.y)];
+    const float3 color2 = MatColors[(int)round(PackUv0.z)];
+    const float3 color3 = MatColors[(int)round(PackUv0.w)];
+    const float3 color4 = MatColors[(int)round(PackUv2.x)];
+    const float3 color5 = MatColors[(int)round(PackUv2.y)];
 
-    float3 materialColor =
-        color0 * TriangleIndex.x +
-        color1 * TriangleIndex.y +
-        color2 * TriangleIndex.z;
-
-    OutAlbedo *= materialColor;
+    float3 c1 = (PackUv1.x + PackUv1.y) * (PackUv1.x > PackUv1.y ? color0 : color1);
+    float3 c2 = (PackUv1.z + PackUv1.w) * (PackUv1.z > PackUv1.w ? color2 : color3);
+    float3 c3 = (PackUv2.z + PackUv2.w) * (PackUv2.z > PackUv2.w ? color4 : color5);
+    OutAlbedo *= c1 + c2 + c3;
+    /*const float3 materialColor =
+        color0 * PackUv1.x +
+        color1 * PackUv1.y +
+        color2 * PackUv1.z +
+        color3 * PackUv1.w +
+        color4 * PackUv2.z +
+        color5 * PackUv2.w;
+    OutAlbedo *= materialColor;*/
 }
 /*void Triplanar_float(UnityTexture2D Albedo,UnityTexture2D Normal,float3 Position,float3 NormalWS,float Scale,out float3 OutAlbedo,out float3 OutNormal)
 {

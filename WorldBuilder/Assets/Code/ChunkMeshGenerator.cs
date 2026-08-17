@@ -47,7 +47,7 @@ namespace Code {
 			chunkBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Structured, 6 * 6 * 6, sizeof(uint));
 
 			// 3 * 18 = Max Vertex per Voxel
-			vertexBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Structured, Chunk.SIZE_4 * (3 * 18), sizeof(float) * (3 + 3 + 4 + 4)); 
+			vertexBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Structured, Chunk.SIZE_4 * (3 * 18), sizeof(float) * (3 + 3 + 4 + 4 + 4 + 4)); 
 			extraCounter = new GraphicsBuffer(GraphicsBuffer.Target.Structured, 1, sizeof(int));
 			vertexCounter = new GraphicsBuffer(GraphicsBuffer.Target.Structured, 1, sizeof(int));
 			voxelsCounter = new GraphicsBuffer(GraphicsBuffer.Target.Structured, Chunk.SIZE_4, sizeof(int) * 2);
@@ -131,7 +131,8 @@ namespace Code {
 				new VertexAttributeDescriptor(VertexAttribute.Position, VertexAttributeFormat.Float16, 4),
 				new VertexAttributeDescriptor(VertexAttribute.Normal, VertexAttributeFormat.Float16, 4),
 				new VertexAttributeDescriptor(VertexAttribute.TexCoord0, VertexAttributeFormat.Float16, 4),
-				new VertexAttributeDescriptor(VertexAttribute.TexCoord1, VertexAttributeFormat.Float16, 4)
+				new VertexAttributeDescriptor(VertexAttribute.TexCoord1, VertexAttributeFormat.Float16, 4),
+				new VertexAttributeDescriptor(VertexAttribute.TexCoord2, VertexAttributeFormat.Float16, 4)
 			);
 			mesh.SetIndexBufferParams(vertexCount, IndexFormat.UInt32);
 			mesh.subMeshCount = 1;
@@ -164,6 +165,8 @@ namespace Code {
 		public Vector3 normal;
 		public Vector4 uv0;
 		public Vector4 uv1;
+		public Vector4 uv2;
+		public Vector4 uv3;
 
 		public override string ToString() {
 			return $"Pos=({position.x}, {position.y}, {position.z}) " +
@@ -185,6 +188,8 @@ namespace Code {
 	    public uint uv01;
 	    public uint uv10;
 	    public uint uv11;
+	    public uint uv20;
+	    public uint uv21;
 		
 	    private static float HalfToFloat(ushort value) {
 		    return Mathf.HalfToFloat(value);
