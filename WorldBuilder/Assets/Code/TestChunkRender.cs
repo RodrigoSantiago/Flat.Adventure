@@ -66,7 +66,7 @@ namespace Code {
                     }
                 }
             }
-            for (int y = 0; y < 16; y++) {
+            for (int y = 0; y < 8; y++) {
                 for (int z = 0; z < Chunk.SIZE_1; z++) {
                     for (int x = 0; x < Chunk.SIZE_1; x++) {
                         chunk.SetMaterial(x, y, z, 1);
