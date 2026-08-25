@@ -1,4 +1,5 @@
 using System;
+using Code.Data;
 using UnityEngine;
 
 namespace Code {
@@ -9,20 +10,20 @@ namespace Code {
         private ChunkMeshGenerator gen;
         
         private void Start() {
-            var chunk = new Chunk();
-            chunk.density = new uint[Chunk.SIZE_3 / 8];
-            chunk.material = new uint[Chunk.SIZE_3 / 4];
+            var chunk = new ChunkSoil();
+            chunk.density = new uint[ChunkSoil.Size3D / 8];
+            chunk.material = new uint[ChunkSoil.Size3D / 4];
             
-            float radius = Chunk.SIZE_1 * 0.4f;
+            float radius = ChunkSoil.Size1D * 0.4f;
             Vector3 center = new(
-                Chunk.SIZE_1 * 0.5f,
-                Chunk.SIZE_1 * 0.5f,
-                Chunk.SIZE_1 * 0.5f
+                ChunkSoil.Size1D * 0.5f,
+                ChunkSoil.Size1D * 0.5f,
+                ChunkSoil.Size1D * 0.5f
             );
             const float aa = 1.0f;
-            for (int y = 0; y < Chunk.SIZE_1; y++) {
-                for (int z = 0; z < Chunk.SIZE_1; z++) {
-                    for (int x = 0; x < Chunk.SIZE_1; x++) {
+            for (int y = 0; y < ChunkSoil.Size1D; y++) {
+                for (int z = 0; z < ChunkSoil.Size1D; z++) {
+                    for (int x = 0; x < ChunkSoil.Size1D; x++) {
 
                         Vector3 p = new(x, y, z);
 
@@ -40,9 +41,9 @@ namespace Code {
             const int baseMargin = 2;
             const int floorHeight = 5;
 
-            for (int y = 0; y < Chunk.SIZE_1; y++) {
-                for (int z = 0; z < Chunk.SIZE_1; z++) {
-                    for (int x = 0; x < Chunk.SIZE_1; x++) {
+            for (int y = 0; y < ChunkSoil.Size1D; y++) {
+                for (int z = 0; z < ChunkSoil.Size1D; z++) {
+                    for (int x = 0; x < ChunkSoil.Size1D; x++) {
 
                         float density = 0.0f;
 
@@ -54,9 +55,9 @@ namespace Code {
 
                             bool inside =
                                 x >= currentMargin &&
-                                x < Chunk.SIZE_1 - currentMargin &&
+                                x < ChunkSoil.Size1D - currentMargin &&
                                 z >= currentMargin &&
-                                z < Chunk.SIZE_1 - currentMargin;
+                                z < ChunkSoil.Size1D - currentMargin;
 
                             if (inside)
                                 density = 1.0f;
@@ -67,19 +68,19 @@ namespace Code {
                 }
             }
             for (int y = 0; y < 8; y++) {
-                for (int z = 0; z < Chunk.SIZE_1; z++) {
-                    for (int x = 0; x < Chunk.SIZE_1; x++) {
+                for (int z = 0; z < ChunkSoil.Size1D; z++) {
+                    for (int x = 0; x < ChunkSoil.Size1D; x++) {
                         chunk.SetMaterial(x, y, z, 1);
                     }
                 }
             }
             
-            var chunkSoil = new Chunk();
-            chunkSoil.density = new uint[Chunk.SIZE_3 / 8];
-            chunkSoil.material = new uint[Chunk.SIZE_3 / 4];
+            var chunkSoil = new ChunkSoil();
+            chunkSoil.density = new uint[ChunkSoil.Size3D / 8];
+            chunkSoil.material = new uint[ChunkSoil.Size3D / 4];
             for (int y = 0; y < 3; y++) {
-                for (int z = 0; z < Chunk.SIZE_1; z++) {
-                    for (int x = 0; x < Chunk.SIZE_1; x++) {
+                for (int z = 0; z < ChunkSoil.Size1D; z++) {
+                    for (int x = 0; x < ChunkSoil.Size1D; x++) {
                         chunkSoil.SetDensity(x, y, z, 15);
                         chunk.SetDensity(x, y, z, 15);
                     }

@@ -1,5 +1,6 @@
 using System;
 using System.Runtime.InteropServices;
+using Code.Data;
 using Unity.Collections;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -8,8 +9,8 @@ namespace Code {
 	public delegate void ChunkRemeshListener(Mesh mesh);
 
 	public class ChunkMeshGenerator {
-		private static uint[] emptyDensity = new uint[Chunk.SIZE_3 / 8];
-		private static uint[] emptyMaterial = new uint[Chunk.SIZE_3 / 4];
+		private static uint[] emptyDensity = new uint[ChunkSoil.Size3D / 8];
+		private static uint[] emptyMaterial = new uint[ChunkSoil.Size3D / 4];
 
 		// Source
 		private GraphicsBuffer voxelBuffer;
@@ -27,6 +28,19 @@ namespace Code {
 
 		private int buildVertex;
 		private int buildMesh;
+		
+		private static readonly int MeshVertexBuffer = Shader.PropertyToID("MeshVertexBuffer");
+		private static readonly int MeshIndexBuffer = Shader.PropertyToID("MeshIndexBuffer");
+		private static readonly int Table = Shader.PropertyToID("TriangleTable");
+		private static readonly int VoxelBuffer = Shader.PropertyToID("VoxelBuffer");
+		private static readonly int MaterialBuffer = Shader.PropertyToID("MaterialBuffer");
+		private static readonly int ChunkBuffer = Shader.PropertyToID("ChunkBuffer");
+		private static readonly int VertexBuffer = Shader.PropertyToID("VertexBuffer");
+		private static readonly int ExtraCounter = Shader.PropertyToID("ExtraCounter");
+		private static readonly int VertexCounter = Shader.PropertyToID("VertexCounter");
+		private static readonly int VoxelsCounter = Shader.PropertyToID("VoxelsCounter");
+		private static readonly int MeshInput = Shader.PropertyToID("MeshInput");
+		private static readonly int MeshCounter = Shader.PropertyToID("MeshCounter");
 
 		public ChunkMeshGenerator(ComputeShader shader) {
 			this.shader = shader;
@@ -43,37 +57,37 @@ namespace Code {
 			 *  LOD 2 - 6 * 6 * 6 (4 + 2) = 216
 			 * Each Voxel uses 4 bits (32bit / 8 = 4bit) - I used uint because it is GPU friendly
 			 */
-			voxelBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Structured, Chunk.SIZE_3 / 8 * (6 * 6 * 6),
+			voxelBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Structured, ChunkSoil.Size3D / 8 * (6 * 6 * 6),
 				sizeof(uint));
-			materialBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Structured, Chunk.SIZE_3 / 4 * (6 * 6 * 6),
+			materialBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Structured, ChunkSoil.Size3D / 4 * (6 * 6 * 6),
 				sizeof(uint));
 			chunkBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Structured, 6 * 6 * 6, sizeof(uint));
 
 			// 3 * 18 = Max Vertex per Voxel
-			vertexBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Structured, Chunk.SIZE_4 * (3 * 18),
+			vertexBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Structured, ChunkSoil.Size4D * (3 * 18),
 				sizeof(float) * (3 + 3 + 4 + 4));
 			extraCounter = new GraphicsBuffer(GraphicsBuffer.Target.Structured, 1, sizeof(int));
 			vertexCounter = new GraphicsBuffer(GraphicsBuffer.Target.Structured, 1, sizeof(int));
-			voxelsCounter = new GraphicsBuffer(GraphicsBuffer.Target.Structured, Chunk.SIZE_4, sizeof(int) * 2);
+			voxelsCounter = new GraphicsBuffer(GraphicsBuffer.Target.Structured, ChunkSoil.Size4D, sizeof(int) * 2);
 
 			triangleTable =
 				new GraphicsBuffer(GraphicsBuffer.Target.Structured, TriangleTable.Table.Length, sizeof(int));
 			triangleTable.SetData(TriangleTable.Table);
 
 			// Input
-			shader.SetBuffer(buildVertex, "TriangleTable", triangleTable);
-			shader.SetBuffer(buildVertex, "VoxelBuffer", voxelBuffer);
-			shader.SetBuffer(buildVertex, "MaterialBuffer", materialBuffer);
-			shader.SetBuffer(buildVertex, "ChunkBuffer", chunkBuffer);
+			shader.SetBuffer(buildVertex, Table, triangleTable);
+			shader.SetBuffer(buildVertex, VoxelBuffer, voxelBuffer);
+			shader.SetBuffer(buildVertex, MaterialBuffer, materialBuffer);
+			shader.SetBuffer(buildVertex, ChunkBuffer, chunkBuffer);
 
 			// Output
-			shader.SetBuffer(buildVertex, "VertexBuffer", vertexBuffer); // List<GeneratedVertex>
-			shader.SetBuffer(buildVertex, "ExtraCounter", extraCounter); // Vertex indices from padding
-			shader.SetBuffer(buildVertex, "VertexCounter", vertexCounter); // Vertex indices from content
-			shader.SetBuffer(buildVertex, "VoxelsCounter", voxelsCounter); // List<Start Index, Triangle Count>
+			shader.SetBuffer(buildVertex, VertexBuffer, vertexBuffer);		// List<GeneratedVertex>
+			shader.SetBuffer(buildVertex, ExtraCounter, extraCounter);		// Vertex indices from padding
+			shader.SetBuffer(buildVertex, VertexCounter, vertexCounter);	// Vertex indices from content
+			shader.SetBuffer(buildVertex, VoxelsCounter, voxelsCounter);	// List<Start Index, Triangle Count>
 
-			shader.SetBuffer(buildMesh, "MeshInput", vertexBuffer); // Input from buildVertex[VertexCounter]
-			shader.SetBuffer(buildMesh, "MeshCounter", voxelsCounter); // Input from buildVertex[VoxelsCounter]
+			shader.SetBuffer(buildMesh, MeshInput, vertexBuffer);			// Input from buildVertex[VertexCounter]
+			shader.SetBuffer(buildMesh, MeshCounter, voxelsCounter);		// Input from buildVertex[VoxelsCounter]
 
 			// The VoxelsCounter is a list of all voxels, indexed by position. It is useful to calculate normals
 
@@ -90,13 +104,13 @@ namespace Code {
 			extraCounter.Release();
 		}
 
-		public void Remesh(Chunk chunk, Chunk soil, ChunkRemeshListener onChunkRemesh) {
-			int sizeD = Chunk.SIZE_3 / 8;
+		public void Remesh(ChunkSoil chunk, ChunkSoil soil, ChunkRemeshListener onChunkRemesh) {
+			int sizeD = ChunkSoil.Size3D / 8;
 			voxelBuffer.SetData(emptyDensity);
 			voxelBuffer.SetData(chunk.density, 0, sizeD * 1, chunk.density.Length);
 			voxelBuffer.SetData(soil.density, 0, sizeD * 2, soil.density.Length);
 
-			int sizeM = Chunk.SIZE_3 / 4;
+			int sizeM = ChunkSoil.Size3D / 4;
 			materialBuffer.SetData(emptyMaterial);
 			materialBuffer.SetData(chunk.material, 0, sizeM * 1, chunk.material.Length);
 			materialBuffer.SetData(soil.material, 0, sizeM * 2, soil.material.Length);
@@ -113,7 +127,7 @@ namespace Code {
 
 			chunkBuffer.SetData(chunkIndex);
 			vertexCounter.SetData(new uint[] { 0 });
-			extraCounter.SetData(new uint[] { Chunk.SIZE_4 * (3 * 18) });
+			extraCounter.SetData(new uint[] { ChunkSoil.Size4D * (3 * 18) });
 
 			shader.SetInts("chunk_pos", 32, 32, 32, 0);
 			shader.Dispatch(buildVertex, 17, 17, 17);
@@ -130,7 +144,7 @@ namespace Code {
 		}
 
 		private void ComposeMesh(int vertexCount, ChunkRemeshListener onChunkRemesh) {
-			Mesh mesh = new Mesh();
+			var mesh = new Mesh();
 			mesh.indexFormat = IndexFormat.UInt32;
 			mesh.indexBufferTarget |= GraphicsBuffer.Target.Structured;
 			mesh.SetVertexBufferParams(vertexCount,
@@ -149,148 +163,108 @@ namespace Code {
 			var meshVertex = mesh.GetVertexBuffer(0);
 			var meshIndex = mesh.GetIndexBuffer();
 
-			shader.SetBuffer(buildMesh, "MeshVertexBuffer", meshVertex);
-			shader.SetBuffer(buildMesh, "MeshIndexBuffer", meshIndex);
+			shader.SetBuffer(buildMesh, MeshVertexBuffer, meshVertex);
+			shader.SetBuffer(buildMesh, MeshIndexBuffer, meshIndex);
 
 			shader.SetInts("vertex_count", vertexCount, 0, 0, 0);
 			shader.SetInts("chunk_pos", 0, 0, 0, 0);
 			shader.Dispatch(buildMesh, Mathf.CeilToInt(vertexCount / 64f), 1, 1);
 
+			onChunkRemesh?.Invoke(mesh);
+			
+			meshVertex.Dispose();
+			meshIndex.Dispose();
+		}
+
+		private void BuildCpuMesh(int vertexCount, GraphicsBuffer meshVertex) {
 			AsyncGPUReadback.Request(meshVertex, request => {
 				if (request.hasError) {
 					meshVertex.Dispose();
-					meshIndex.Dispose();
 					return;
 				}
 
 				var vertexUInts = request.GetData<uint>().ToArray();
 
-				AsyncGPUReadback.Request(meshIndex, indexRequest => {
-					if (indexRequest.hasError) {
-						meshIndex.Dispose();
-						return;
-					}
+				GeneratedVertexLow[] vertices =
+					new GeneratedVertexLow[vertexCount];
 
-					var indexData = indexRequest.GetData<uint>().ToArray();
+				for (int i = 0; i < vertexCount; i++) {
+					int offset = i * 8;
 
-					// =========================================================
-					// GPU -> CPU
-					// =========================================================
+					vertices[i].position0 = vertexUInts[offset + 0];
+					vertices[i].position1 = vertexUInts[offset + 1];
 
-					GeneratedVertexLow[] vertices =
-						new GeneratedVertexLow[vertexCount];
+					vertices[i].normal0 = vertexUInts[offset + 2];
+					vertices[i].normal1 = vertexUInts[offset + 3];
 
-					for (int i = 0; i < vertexCount; i++) {
-						int offset = i * 8;
+					vertices[i].uv00 = vertexUInts[offset + 4];
+					vertices[i].uv01 = vertexUInts[offset + 5];
 
-						vertices[i].position0 = vertexUInts[offset + 0];
-						vertices[i].position1 = vertexUInts[offset + 1];
+					vertices[i].uv10 = vertexUInts[offset + 6];
+					vertices[i].uv11 = vertexUInts[offset + 7];
+				}
 
-						vertices[i].normal0 = vertexUInts[offset + 2];
-						vertices[i].normal1 = vertexUInts[offset + 3];
+				var positions = new Vector3[vertexCount];
+				var normals = new Vector3[vertexCount];
+				var uv0 = new Vector4[vertexCount];
+				var uv1 = new Vector4[vertexCount];
 
-						vertices[i].uv00 = vertexUInts[offset + 4];
-						vertices[i].uv01 = vertexUInts[offset + 5];
+				for (int i = 0; i < vertexCount; i++) {
+					var vertex = vertices[i];
 
-						vertices[i].uv10 = vertexUInts[offset + 6];
-						vertices[i].uv11 = vertexUInts[offset + 7];
-					}
+					ushort px = (ushort)(vertex.position0 & 0xFFFF);
+					ushort py = (ushort)(vertex.position0 >> 16);
+					ushort pz = (ushort)(vertex.position1 & 0xFFFF);
 
-					// =========================================================
-					// Converter os dados compactados para dados normais de Mesh
-					// =========================================================
+					ushort nx = (ushort)(vertex.normal0 & 0xFFFF);
+					ushort ny = (ushort)(vertex.normal0 >> 16);
+					ushort nz = (ushort)(vertex.normal1 & 0xFFFF);
 
-					Vector3[] positions = new Vector3[vertexCount];
-					Vector3[] normals = new Vector3[vertexCount];
-					Vector4[] uv0 = new Vector4[vertexCount];
-					Vector4[] uv1 = new Vector4[vertexCount];
+					ushort u0 = (ushort)(vertex.uv00 & 0xFFFF);
+					ushort u1 = (ushort)(vertex.uv00 >> 16);
+					ushort u2 = (ushort)(vertex.uv01 & 0xFFFF);
+					ushort u3 = (ushort)(vertex.uv01 >> 16);
 
-					for (int i = 0; i < vertexCount; i++) {
-						GeneratedVertexLow vertex = vertices[i];
+					ushort u4 = (ushort)(vertex.uv10 & 0xFFFF);
+					ushort u5 = (ushort)(vertex.uv10 >> 16);
+					ushort u6 = (ushort)(vertex.uv11 & 0xFFFF);
+					ushort u7 = (ushort)(vertex.uv11 >> 16);
 
-						ushort px = (ushort)(vertex.position0 & 0xFFFF);
-						ushort py = (ushort)(vertex.position0 >> 16);
-						ushort pz = (ushort)(vertex.position1 & 0xFFFF);
+					positions[i] = new Vector3(Mathf.HalfToFloat(px), Mathf.HalfToFloat(py), Mathf.HalfToFloat(pz));
 
-						ushort nx = (ushort)(vertex.normal0 & 0xFFFF);
-						ushort ny = (ushort)(vertex.normal0 >> 16);
-						ushort nz = (ushort)(vertex.normal1 & 0xFFFF);
+					normals[i] = new Vector3(Mathf.HalfToFloat(nx), Mathf.HalfToFloat(ny), Mathf.HalfToFloat(nz));
 
-						ushort u0 = (ushort)(vertex.uv00 & 0xFFFF);
-						ushort u1 = (ushort)(vertex.uv00 >> 16);
-						ushort u2 = (ushort)(vertex.uv01 & 0xFFFF);
-						ushort u3 = (ushort)(vertex.uv01 >> 16);
+					uv0[i] = new Vector4(
+						Mathf.HalfToFloat(u0), Mathf.HalfToFloat(u1),
+						Mathf.HalfToFloat(u2), Mathf.HalfToFloat(u3)
+					);
 
-						ushort u4 = (ushort)(vertex.uv10 & 0xFFFF);
-						ushort u5 = (ushort)(vertex.uv10 >> 16);
-						ushort u6 = (ushort)(vertex.uv11 & 0xFFFF);
-						ushort u7 = (ushort)(vertex.uv11 >> 16);
+					uv1[i] = new Vector4(
+						Mathf.HalfToFloat(u4), Mathf.HalfToFloat(u5),
+						Mathf.HalfToFloat(u6), Mathf.HalfToFloat(u7)
+					);
+				}
 
-						positions[i] = new Vector3(
-							Mathf.HalfToFloat(px),
-							Mathf.HalfToFloat(py),
-							Mathf.HalfToFloat(pz)
-						);
+				int[] indices = new int[vertexCount];
+				for (int i = 0; i < vertexCount; i++) {
+					indices[i] = i;
+				}
 
-						normals[i] = new Vector3(
-							Mathf.HalfToFloat(nx),
-							Mathf.HalfToFloat(ny),
-							Mathf.HalfToFloat(nz)
-						);
+				var cpuMesh = new Mesh();
+				cpuMesh.name = "ChunkMesh_CPU";
+				cpuMesh.indexFormat = IndexFormat.UInt32;
 
-						uv0[i] = new Vector4(
-							Mathf.HalfToFloat(u0),
-							Mathf.HalfToFloat(u1),
-							Mathf.HalfToFloat(u2),
-							Mathf.HalfToFloat(u3)
-						);
+				cpuMesh.vertices = positions;
+				cpuMesh.normals = normals;
+				cpuMesh.SetUVs(0, uv0);
+				cpuMesh.SetUVs(1, uv1);
+				cpuMesh.SetTriangles(indices, 0, false);
+				cpuMesh.RecalculateBounds();
 
-						uv1[i] = new Vector4(
-							Mathf.HalfToFloat(u4),
-							Mathf.HalfToFloat(u5),
-							Mathf.HalfToFloat(u6),
-							Mathf.HalfToFloat(u7)
-						);
-					}
-
-					// =========================================================
-					// Índices
-					// =========================================================
-
-					int[] indices = new int[indexData.Length];
-
-					for (int i = 0; i < indexData.Length; i++) {
-						indices[i] = (int)indexData[i];
-					}
-
-					// =========================================================
-					// Criar Mesh usando exclusivamente os dados da GPU
-					// =========================================================
-
-					Mesh cpuMesh = new Mesh();
-					cpuMesh.name = "ChunkMesh_CPU";
-					cpuMesh.indexFormat = IndexFormat.UInt32;
-
-					cpuMesh.vertices = positions;
-					cpuMesh.normals = normals;
-					cpuMesh.SetUVs(0, uv0);
-					cpuMesh.SetUVs(1, uv1);
-					cpuMesh.SetTriangles(indices, 0, false);
-
-					cpuMesh.bounds = mesh.bounds;
-
-					// =========================================================
-					// Criar GameObject
-					// =========================================================
-
-					GameObject obj = new GameObject("ChunkMesh_CPU");
-
-					MeshFilter meshFilter = obj.AddComponent<MeshFilter>();
-					meshFilter.sharedMesh = cpuMesh;
-					obj.AddComponent<MeshRenderer>();
-
-					onChunkRemesh?.Invoke(mesh);
-				});
+				var obj = new GameObject("ChunkMesh_CPU");
+				var meshFilter = obj.AddComponent<MeshFilter>();
+				meshFilter.sharedMesh = cpuMesh;
+				obj.AddComponent<MeshRenderer>();
 			});
 		}
 	}
