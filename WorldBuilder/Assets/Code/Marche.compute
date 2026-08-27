@@ -21,11 +21,13 @@ struct GeneratedVertexLow {
 #define EXTRA_1 34
 #define EXTRA_2 1156
 
-#define CHUNKS_1 6
-#define CHUNKS_2 36
-#define CHUNKS_3 216
+#define CHUNKS_1 3 // 6
+#define CHUNKS_2 9 // 36
+#define CHUNKS_3 27 // 216
 
-#define BUFFER_SIZE 2122416
+#define DENSITY 16388
+#define MATERIAL 24580
+#define BUFFER_SIZE 1768680 // ChunkSoil.Size4D * (3 * 15)
 
 
 //
@@ -50,33 +52,6 @@ static const float lut[16] = {
     0.80, 0.85, 0.90, 0.95, 1.00, 0.00
 };
 
-void WriteVertex(const uint offset, const float3 p, const float3 n, const int3 id, const int uv, const float4 mat) {
-    
-    GeneratedVertex vertex;
-    vertex.position = (int3)round(p * 1024);
-    vertex.normal = n;
-    vertex.uv0 = int4(id, uv);
-    vertex.uv1 = mat;
-    VertexBuffer[offset] = vertex;
-}
-
-/*float2 ReadVoxel(const uint x, const uint y, const uint z) {
-    const uint index = (x & 31) + (z & 31) * SIZE_1 + (y & 31) * SIZE_2;
-    const uint offset = ChunkBuffer[(x >> 5) + (z >> 5) * CHUNKS_1 + (y >> 5) * CHUNKS_2];
-
-    const uint densityPacked = DensityBuffer[offset + (index >> 3)];
-    const uint densityShift = (index & 7) * 4;
-    const uint density = (densityPacked >> densityShift) & 0xF;
-
-    const uint materialPacked = MaterialBuffer[offset * 2 + (index >> 2)];
-    const uint materialShift = (index & 3) * 8;
-    const uint material = (materialPacked >> materialShift) & 0xFF;
-
-    return float2(lut[density], material);
-}*/
-
-#define DENSITY 16388
-#define MATERIAL 24580
 static const uint MaterialBits[5] = {0u, 1u, 2u, 4u, 6u};
 static const uint MaterialDataOffset[5] = { 1u, 4u, 6u, 18u, 1u};
 
@@ -192,8 +167,19 @@ uint2 EdgeVertexPair(const uint index) {
     return uint2(v1, v2);
 }
 
-[numthreads(2, 2, 2)]
+void WriteVertex(const uint offset, const float3 p, const float3 n, const int3 id, const int uv, const float4 mat) {
+    GeneratedVertex vertex;
+    vertex.position = (int3)round(p * 1024);
+    vertex.normal = n;
+    vertex.uv0 = int4(id, uv);
+    vertex.uv1 = mat;
+    VertexBuffer[offset] = vertex;
+}
+
+[numthreads(4, 4, 4)]
 void BuildVertex(uint3 id : SV_DispatchThreadID) {
+    if (id.x >= 35 || id.y >= 35 || id.z >= 35) return;
+    
     const uint3 vx = id + chunk_pos.xyz - uint3(1, 1, 1);
     
     uint selector = 0;
@@ -220,7 +206,7 @@ void BuildVertex(uint3 id : SV_DispatchThreadID) {
         vtx[i] = float4(lerp(vertex1, vertex2, param) - chunk_pos.xyz - uint3(1, 1, 1), m);
     }
 
-    const uint table_index = selector * 19;
+    const uint table_index = selector * 16;
     const uint max = TriangleTable[table_index];
     
     uint index;
@@ -234,7 +220,7 @@ void BuildVertex(uint3 id : SV_DispatchThreadID) {
     
     VoxelsCounter[id.x + (id.z * EXTRA_1) + (id.y * EXTRA_2)] = uint2(index, max);
     
-    for (i = 0; i < 18; i+= 3) {
+    for (i = 0; i < 15; i+= 3) {
         const int ti0 = TriangleTable[table_index + i + 1];
         const int ti1 = TriangleTable[table_index + i + 2];
         const int ti2 = TriangleTable[table_index + i + 3];
@@ -280,7 +266,7 @@ void BuildMesh(uint3 id : SV_DispatchThreadID) {
     for (int y = -1; y <= 1; y++)
     for (int z = -1; z <= 1; z++) {
         int2 counter = MeshCounter[x + ver.uv0.x + ((z + ver.uv0.z) * EXTRA_1) + ((y + ver.uv0.y) * EXTRA_2)];
-        for (int i = 0; i < 18; i++) {
+        for (int i = 0; i < 15; i++) {
             if (i == counter.y) break;
             const GeneratedVertex other = MeshInput[counter.x + i];
             if (other.position.x == ver.position.x &&

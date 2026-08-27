@@ -46,8 +46,8 @@ namespace Code {
 			this.shader = shader;
 		}
 		
-		private static readonly int MaxDen = ChunkSoilPacked.Mode.Packed4.DenArraySize;
-		private static readonly int MaxMat = ChunkSoilPacked.Mode.Packed6.MatArraySize;
+		private static readonly int MaxDen = ChunkSoilPacked.Mode.Packed4.DenArraySize; // 16388
+		private static readonly int MaxMat = ChunkSoilPacked.Mode.Packed6.MatArraySize; // 24580
 
 		public void Init() {
 			buildVertex = shader.FindKernel("BuildVertex");
@@ -59,19 +59,23 @@ namespace Code {
 			 *  LOD 1 - 4 * 4 * 4 (2 + 2) = 64
 			 *  LOD 2 - 6 * 6 * 6 (4 + 2) = 216
 			 */
-			densityBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Raw, MaxDen * (6 * 6 * 6) / 4, sizeof(uint));
-			materialBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Raw, MaxMat * (6 * 6 * 6) / 4, sizeof(uint));
-			chunkBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Structured, 6 * 6 * 6, sizeof(uint));
+			
+			var str = GraphicsBuffer.Target.Structured;
+			var raw = GraphicsBuffer.Target.Raw;
 
-			// 3 * 18 = Max Vertex per Voxel
-			vertexBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Structured, ChunkSoil.Size4D * (3 * 18),
-				sizeof(float) * (3 + 3 + 4 + 4));
-			extraCounter = new GraphicsBuffer(GraphicsBuffer.Target.Structured, 1, sizeof(int));
-			vertexCounter = new GraphicsBuffer(GraphicsBuffer.Target.Structured, 1, sizeof(int));
-			voxelsCounter = new GraphicsBuffer(GraphicsBuffer.Target.Structured, ChunkSoil.Size4D, sizeof(int) * 2);
+			int maxChunkCount = 27; // Only LOD 0 by now
+			
+			densityBuffer = new GraphicsBuffer(raw, MaxDen * maxChunkCount / 4, sizeof(uint));
+			materialBuffer = new GraphicsBuffer(raw, MaxMat * maxChunkCount / 4, sizeof(uint));
+			chunkBuffer = new GraphicsBuffer(str, maxChunkCount, sizeof(uint));
 
-			triangleTable =
-				new GraphicsBuffer(GraphicsBuffer.Target.Structured, TriangleTable.Table.Length, sizeof(int));
+			// 3 * 15 = Max Vertex per Voxel
+			vertexBuffer = new GraphicsBuffer(str, ChunkSoil.Size4D * (3 * 15), sizeof(float) * (3 + 3 + 4 + 4));
+			extraCounter = new GraphicsBuffer(str, 1, sizeof(int));
+			vertexCounter = new GraphicsBuffer(str, 1, sizeof(int));
+			voxelsCounter = new GraphicsBuffer(str, ChunkSoil.Size4D, sizeof(int) * 2);
+
+			triangleTable = new GraphicsBuffer(str, TriangleTable.Table.Length, sizeof(int));
 			triangleTable.SetData(TriangleTable.Table);
 
 			// Input
@@ -113,22 +117,22 @@ namespace Code {
 			materialBuffer.SetData(chunk.material, 0, MaxMat * 1, chunk.material.Length);
 			materialBuffer.SetData(soil.material, 0, MaxMat * 2, soil.material.Length);
 
-			uint[] chunkIndex = new uint[6 * 6 * 6];
+			uint[] chunkIndex = new uint[27];
 
 			for (int px = 0; px < 3; px++) {
 				for (int pz = 0; pz < 3; pz++) {
-					chunkIndex[px + 1 * 36 + pz * 6] = 0;
+					chunkIndex[px + 1 * 9 + pz * 3] = 0;
 				}
 			}
 
-			chunkIndex[1 + 36 + 6] = 1;
+			chunkIndex[1 + 9 + 3] = 1;
 
 			chunkBuffer.SetData(chunkIndex);
 			vertexCounter.SetData(new uint[] { 0 });
-			extraCounter.SetData(new uint[] { ChunkSoil.Size4D * (3 * 18) });
+			extraCounter.SetData(new uint[] { ChunkSoil.Size4D * (3 * 15) });
 
 			shader.SetInts("chunk_pos", 32, 32, 32, 0);
-			shader.Dispatch(buildVertex, 17, 17, 17);
+			shader.Dispatch(buildVertex, 9, 9, 9);
 
 			AsyncGPUReadback.Request(vertexCounter, (request) => {
 				var data = request.GetData<uint>();

@@ -78,8 +78,8 @@ namespace Code {
             for (int y = 0; y < 3; y++) {
                 for (int z = 0; z < ChunkSoil.Size1D; z++) {
                     for (int x = 0; x < ChunkSoil.Size1D; x++) {
-                        chunkSoil.SetDensity(x, y, z, 15);
-                        chunk.SetDensity(x, y, z, 15);
+                        chunkSoil.SetDensity(x, y, z, 1.0f);
+                        chunk.SetDensity(x, y, z, 1.0f);
                     }
                 }
             }
@@ -90,12 +90,7 @@ namespace Code {
             gen.Remesh(chunk, chunkSoil, (mesh) => {
                 filter.sharedMesh = mesh;
                 var period = DateTime.Now.Subtract(start);
-                start = DateTime.Now;
-                gen.Remesh(chunk, chunkSoil, (mesh2) => {
-                    filter.sharedMesh = mesh2;
-                    var period2 = DateTime.Now.Subtract(start);
-                    Debug.Log(period2);
-                });
+                Debug.Log(period);
             });
         }
     
