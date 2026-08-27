@@ -35,9 +35,9 @@ uint4 chunk_pos;
 
 StructuredBuffer<int> TriangleTable;
         
-StructuredBuffer<uint> VoxelBuffer;
+ByteAddressBuffer DensityBuffer;
+ByteAddressBuffer MaterialBuffer;
 StructuredBuffer<uint> ChunkBuffer;
-StructuredBuffer<uint> MaterialBuffer;
 
 RWStructuredBuffer<uint> ExtraCounter;
 RWStructuredBuffer<uint> VertexCounter;
@@ -45,9 +45,9 @@ RWStructuredBuffer<uint2> VoxelsCounter;
 RWStructuredBuffer<GeneratedVertex> VertexBuffer;
 
 static const float lut[16] = {
-    0.00, 0.10, 0.20, 0.30, 0.40, 0.45, 
+    0.00, 0.10, 0.20, 0.30, 0.40, 
     0.55, 0.60, 0.65, 0.70, 0.75,
-    0.80, 0.85, 0.90, 0.95, 1.00
+    0.80, 0.85, 0.90, 0.95, 1.00, 0.00
 };
 
 void WriteVertex(const uint offset, const float3 p, const float3 n, const int3 id, const int uv, const float4 mat) {
@@ -60,17 +60,111 @@ void WriteVertex(const uint offset, const float3 p, const float3 n, const int3 i
     VertexBuffer[offset] = vertex;
 }
 
-float2 ReadVoxel(const uint x, const uint y, const uint z) {
+/*float2 ReadVoxel(const uint x, const uint y, const uint z) {
     const uint index = (x & 31) + (z & 31) * SIZE_1 + (y & 31) * SIZE_2;
     const uint offset = ChunkBuffer[(x >> 5) + (z >> 5) * CHUNKS_1 + (y >> 5) * CHUNKS_2];
 
-    const uint densityPacked = VoxelBuffer[offset + (index >> 3)];
+    const uint densityPacked = DensityBuffer[offset + (index >> 3)];
     const uint densityShift = (index & 7) * 4;
     const uint density = (densityPacked >> densityShift) & 0xF;
 
     const uint materialPacked = MaterialBuffer[offset * 2 + (index >> 2)];
     const uint materialShift = (index & 3) * 8;
     const uint material = (materialPacked >> materialShift) & 0xFF;
+
+    return float2(lut[density], material);
+}*/
+
+#define DENSITY 16388
+#define MATERIAL 24580
+static const uint MaterialBits[5] = {0u, 1u, 2u, 4u, 6u};
+static const uint MaterialDataOffset[5] = { 1u, 4u, 6u, 18u, 1u};
+
+float2 ReadVoxel(const uint x, const uint y, const uint z) {
+    const uint index = (x & 31u) + (z & 31u) * 32u + (y & 31u) * 1024u;
+    const uint chunk = (x >> 5u) + (z >> 5u) * CHUNKS_1 + (y >> 5u) * CHUNKS_2;
+
+    const uint number = ChunkBuffer[chunk];
+
+    uint density;
+    uint material;
+
+    // ------------------------------------------------------------
+    // Density
+    // ------------------------------------------------------------
+
+    {
+        const uint offset = number * DENSITY;
+        const uint header = DensityBuffer.Load(offset);
+
+        const uint mode = header & 0xFFu;
+
+        if (mode == 0u) {       // Constant
+            density = (header >> 8u) & 0xFFu;
+            
+        } else {                // Packed4
+            const uint byteOffset = offset + 1u + (index >> 1u);
+            
+            const uint packed = DensityBuffer.Load(byteOffset & ~3u);
+
+            const uint shift = ((byteOffset & 3u) << 3u) + ((index & 1u) << 2u);
+
+            density = (packed >> shift) & 15u;
+        }
+    }
+
+    // ------------------------------------------------------------
+    // Material
+    // ------------------------------------------------------------
+
+    {
+        const uint offset = number * MATERIAL;
+        const uint header = MaterialBuffer.Load(offset);
+
+        const uint mode = header & 0xFFu;
+
+        if (mode == 0u) {           // Constant
+            material = (header >> 8u) & 0xFFu;
+            
+        } else if (mode == 4u) {    // Packed6
+            const uint bit = index * 6u;
+
+            const uint byteOffset = offset + 1u + (bit >> 3u);
+
+            const uint shift = (bit & 7u) + ((byteOffset & 3u) << 3u);
+
+            const uint word = MaterialBuffer.Load(byteOffset & ~3u);
+
+            uint packed = word;
+
+            if (shift > 26u) {
+                packed |= MaterialBuffer.Load((byteOffset & ~3u) + 4u) << (32u - shift);
+            }
+
+            material = (packed >> shift) & 63u;
+            
+        } else {                  // Packed1 / Packed2 / Packed4
+            const uint bits = MaterialBits[mode];
+            const uint dataOffset = MaterialDataOffset[mode];
+
+            const uint bit = index * bits;
+            const uint byteOffset = offset + dataOffset + (bit >> 3u);
+            
+            const uint packed = MaterialBuffer.Load(byteOffset & ~3u);
+            
+            const uint shift = ((byteOffset & 3u) << 3u) + (bit & 7u);
+            const uint mask = (1u << bits) - 1u;
+
+            const uint paletteIndex = (packed >> shift) & mask;
+
+            const uint paletteOffset = offset + 2u + paletteIndex;
+            const uint paletteWord = MaterialBuffer.Load(paletteOffset & ~3u);
+
+            const uint paletteShift = (paletteOffset & 3u) << 3u;
+
+            material = (paletteWord >> paletteShift) & 0xFFu;
+        }
+    }
 
     return float2(lut[density], material);
 }

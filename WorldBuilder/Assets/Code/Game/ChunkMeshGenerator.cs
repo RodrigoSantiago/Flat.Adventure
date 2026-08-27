@@ -1,6 +1,7 @@
 using System;
 using System.Runtime.InteropServices;
 using Code.Data;
+using Game.Data;
 using Unity.Collections;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -9,11 +10,10 @@ namespace Code {
 	public delegate void ChunkRemeshListener(Mesh mesh);
 
 	public class ChunkMeshGenerator {
-		private static uint[] emptyDensity = new uint[ChunkSoil.Size3D / 8];
-		private static uint[] emptyMaterial = new uint[ChunkSoil.Size3D / 4];
+		private static ChunkSoilPacked empty = new();
 
 		// Source
-		private GraphicsBuffer voxelBuffer;
+		private GraphicsBuffer densityBuffer;
 		private GraphicsBuffer chunkBuffer;
 		private GraphicsBuffer materialBuffer;
 		private GraphicsBuffer triangleTable;
@@ -32,7 +32,7 @@ namespace Code {
 		private static readonly int MeshVertexBuffer = Shader.PropertyToID("MeshVertexBuffer");
 		private static readonly int MeshIndexBuffer = Shader.PropertyToID("MeshIndexBuffer");
 		private static readonly int Table = Shader.PropertyToID("TriangleTable");
-		private static readonly int VoxelBuffer = Shader.PropertyToID("VoxelBuffer");
+		private static readonly int DensityBuffer = Shader.PropertyToID("DensityBuffer");
 		private static readonly int MaterialBuffer = Shader.PropertyToID("MaterialBuffer");
 		private static readonly int ChunkBuffer = Shader.PropertyToID("ChunkBuffer");
 		private static readonly int VertexBuffer = Shader.PropertyToID("VertexBuffer");
@@ -45,6 +45,9 @@ namespace Code {
 		public ChunkMeshGenerator(ComputeShader shader) {
 			this.shader = shader;
 		}
+		
+		private static readonly int MaxDen = ChunkSoilPacked.Mode.Packed4.DenArraySize;
+		private static readonly int MaxMat = ChunkSoilPacked.Mode.Packed6.MatArraySize;
 
 		public void Init() {
 			buildVertex = shader.FindKernel("BuildVertex");
@@ -55,12 +58,9 @@ namespace Code {
 			 *  LOD 0 - 3 * 3 * 3 (1 + 2) = 27
 			 *  LOD 1 - 4 * 4 * 4 (2 + 2) = 64
 			 *  LOD 2 - 6 * 6 * 6 (4 + 2) = 216
-			 * Each Voxel uses 4 bits (32bit / 8 = 4bit) - I used uint because it is GPU friendly
 			 */
-			voxelBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Structured, ChunkSoil.Size3D / 8 * (6 * 6 * 6),
-				sizeof(uint));
-			materialBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Structured, ChunkSoil.Size3D / 4 * (6 * 6 * 6),
-				sizeof(uint));
+			densityBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Raw, MaxDen * (6 * 6 * 6) / 4, sizeof(uint));
+			materialBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Raw, MaxMat * (6 * 6 * 6) / 4, sizeof(uint));
 			chunkBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Structured, 6 * 6 * 6, sizeof(uint));
 
 			// 3 * 18 = Max Vertex per Voxel
@@ -76,7 +76,7 @@ namespace Code {
 
 			// Input
 			shader.SetBuffer(buildVertex, Table, triangleTable);
-			shader.SetBuffer(buildVertex, VoxelBuffer, voxelBuffer);
+			shader.SetBuffer(buildVertex, DensityBuffer, densityBuffer);
 			shader.SetBuffer(buildVertex, MaterialBuffer, materialBuffer);
 			shader.SetBuffer(buildVertex, ChunkBuffer, chunkBuffer);
 
@@ -95,7 +95,7 @@ namespace Code {
 
 		public void Release() {
 			triangleTable.Release();
-			voxelBuffer.Release();
+			densityBuffer.Release();
 			vertexBuffer.Release();
 			materialBuffer.Release();
 			vertexCounter.Release();
@@ -104,16 +104,14 @@ namespace Code {
 			extraCounter.Release();
 		}
 
-		public void Remesh(ChunkSoil chunk, ChunkSoil soil, ChunkRemeshListener onChunkRemesh) {
-			int sizeD = ChunkSoil.Size3D / 8;
-			voxelBuffer.SetData(emptyDensity);
-			voxelBuffer.SetData(chunk.density, 0, sizeD * 1, chunk.density.Length);
-			voxelBuffer.SetData(soil.density, 0, sizeD * 2, soil.density.Length);
+		public void Remesh(ChunkSoilPacked chunk, ChunkSoilPacked soil, ChunkRemeshListener onChunkRemesh) {
+			densityBuffer.SetData(empty.density, 0, 0, empty.density.Length);
+			densityBuffer.SetData(chunk.density, 0, MaxDen * 1, chunk.density.Length);
+			densityBuffer.SetData(soil.density, 0, MaxDen * 2, soil.density.Length);
 
-			int sizeM = ChunkSoil.Size3D / 4;
-			materialBuffer.SetData(emptyMaterial);
-			materialBuffer.SetData(chunk.material, 0, sizeM * 1, chunk.material.Length);
-			materialBuffer.SetData(soil.material, 0, sizeM * 2, soil.material.Length);
+			materialBuffer.SetData(empty.material, 0, 0, empty.material.Length);
+			materialBuffer.SetData(chunk.material, 0, MaxMat * 1, chunk.material.Length);
+			materialBuffer.SetData(soil.material, 0, MaxMat * 2, soil.material.Length);
 
 			uint[] chunkIndex = new uint[6 * 6 * 6];
 
@@ -123,7 +121,7 @@ namespace Code {
 				}
 			}
 
-			chunkIndex[1 + 36 + 6] = (uint)sizeD;
+			chunkIndex[1 + 36 + 6] = 1;
 
 			chunkBuffer.SetData(chunkIndex);
 			vertexCounter.SetData(new uint[] { 0 });

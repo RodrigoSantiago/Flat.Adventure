@@ -1,6 +1,6 @@
 using System;
 
-namespace Code.Data {
+namespace Game.Data {
     public class ChunkSoil {
         public const int Size1D = 32;
         public const int Size2D = 32 * 32;

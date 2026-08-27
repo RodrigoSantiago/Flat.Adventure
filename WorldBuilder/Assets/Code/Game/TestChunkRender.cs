@@ -1,5 +1,6 @@
 using System;
 using Code.Data;
+using Game.Data;
 using UnityEngine;
 
 namespace Code {
@@ -10,9 +11,7 @@ namespace Code {
         private ChunkMeshGenerator gen;
         
         private void Start() {
-            var chunk = new ChunkSoil();
-            chunk.density = new uint[ChunkSoil.Size3D / 8];
-            chunk.material = new uint[ChunkSoil.Size3D / 4];
+            var chunk = new ChunkSoilPacked();
             
             float radius = ChunkSoil.Size1D * 0.4f;
             Vector3 center = new(
@@ -75,9 +74,7 @@ namespace Code {
                 }
             }
             
-            var chunkSoil = new ChunkSoil();
-            chunkSoil.density = new uint[ChunkSoil.Size3D / 8];
-            chunkSoil.material = new uint[ChunkSoil.Size3D / 4];
+            var chunkSoil = new ChunkSoilPacked();
             for (int y = 0; y < 3; y++) {
                 for (int z = 0; z < ChunkSoil.Size1D; z++) {
                     for (int x = 0; x < ChunkSoil.Size1D; x++) {
@@ -93,7 +90,12 @@ namespace Code {
             gen.Remesh(chunk, chunkSoil, (mesh) => {
                 filter.sharedMesh = mesh;
                 var period = DateTime.Now.Subtract(start);
-                Debug.Log(period);
+                start = DateTime.Now;
+                gen.Remesh(chunk, chunkSoil, (mesh2) => {
+                    filter.sharedMesh = mesh2;
+                    var period2 = DateTime.Now.Subtract(start);
+                    Debug.Log(period2);
+                });
             });
         }
     
