@@ -234,12 +234,11 @@ void BuildVertex(uint3 id : SV_DispatchThreadID) {
         );
         
         // Material List
-        const float mult = !(vtx[ti0].w == vtx[ti1].w && vtx[ti0].w == vtx[ti2].w);
-        const float4 mat = float4(vtx[ti0].w, vtx[ti1].w, vtx[ti2].w, mult);
+        const float3 mat = float3(vtx[ti0].w, vtx[ti1].w, vtx[ti2].w);
         
-        WriteVertex(index + i    , vtx[ti0].xyz, normal, id, 0.0, mat);
-        WriteVertex(index + i + 1, vtx[ti1].xyz, normal, id, 1.0, mat);
-        WriteVertex(index + i + 2, vtx[ti2].xyz, normal, id, 2.0, mat);
+        WriteVertex(index + i    , vtx[ti0].xyz, normal, id, 0.0, float4(mat, ti0));
+        WriteVertex(index + i + 1, vtx[ti1].xyz, normal, id, 1.0, float4(mat, ti1));
+        WriteVertex(index + i + 2, vtx[ti2].xyz, normal, id, 2.0, float4(mat, ti2));
     }
 }
 
@@ -254,6 +253,21 @@ StructuredBuffer<GeneratedVertex> MeshInput;
 RWStructuredBuffer<GeneratedVertexLow> MeshVertexBuffer;
 RWStructuredBuffer<uint> MeshIndexBuffer;
 
+static const int3 EdgeNeighbors[12][3] = {
+    { int3(0, -1,  0), int3(0,  0, -1), int3(0, -1, -1) }, // Edge 0
+    { int3(1,  0,  0), int3(0,  0, -1), int3(1,  0, -1) }, // Edge 1
+    { int3(0,  1,  0), int3(0,  0, -1), int3(0,  1, -1) }, // Edge 2
+    { int3(-1, 0,  0), int3(0,  0, -1), int3(-1, 0, -1) }, // Edge 3
+    { int3(0, -1,  0), int3(0,  0,  1), int3(0, -1,  1) }, // Edge 4
+    { int3(1,  0,  0), int3(0,  0,  1), int3(1,  0,  1) }, // Edge 5
+    { int3(0,  1,  0), int3(0,  0,  1), int3(0,  1,  1) }, // Edge 6
+    { int3(-1, 0,  0), int3(0,  0,  1), int3(-1, 0,  1) }, // Edge 7
+    { int3(-1, 0,  0), int3(0, -1,  0), int3(-1, -1, 0) }, // Edge 8
+    { int3(1,  0,  0), int3(0, -1,  0), int3(1, -1,  0) }, // Edge 9
+    { int3(1,  0,  0), int3(0,  1,  0), int3(1,  1,  0) }, // Edge 10
+    { int3(-1, 0,  0), int3(0,  1,  0), int3(-1, 1,  0) }  // Edge 11
+};
+
 [numthreads(64, 1, 1)]
 void BuildMesh(uint3 id : SV_DispatchThreadID) {
     const uint index = id.x;
@@ -261,21 +275,33 @@ void BuildMesh(uint3 id : SV_DispatchThreadID) {
     
     GeneratedVertex ver = MeshInput[index];
     
+    int edgeAxis = (int)ver.uv1.w;
+
     float3 normal = float3(0.0, 0.0, 0.0);
-    for (int x = -1; x <= 1; x++)
-    for (int y = -1; y <= 1; y++)
-    for (int z = -1; z <= 1; z++) {
-        int2 counter = MeshCounter[x + ver.uv0.x + ((z + ver.uv0.z) * EXTRA_1) + ((y + ver.uv0.y) * EXTRA_2)];
-        for (int i = 0; i < 15; i++) {
-            if (i == counter.y) break;
-            const GeneratedVertex other = MeshInput[counter.x + i];
-            if (other.position.x == ver.position.x &&
-                other.position.y == ver.position.y &&
-                other.position.z == ver.position.z) {
+
+    int3 cellPos = ver.uv0.xyz;
+    int2 counter = MeshCounter[cellPos.x + (cellPos.z * EXTRA_1) + (cellPos.y * EXTRA_2)];
+    
+    for (int i = 0; i < counter.y; i++) {
+        const GeneratedVertex other = MeshInput[counter.x + i];
+        if (all(other.position == ver.position)) {
+            normal += other.normal;
+        }
+    }
+
+    [unroll]
+    for (int n = 0; n < 3; n++) {
+        int3 nCell = cellPos + EdgeNeighbors[edgeAxis][n];
+        int2 neighborCounter = MeshCounter[nCell.x + (nCell.z * EXTRA_1) + (nCell.y * EXTRA_2)];
+        
+        for (int j = 0; j < neighborCounter.y; j++) {
+            const GeneratedVertex other = MeshInput[neighborCounter.x + j];
+            if (all(other.position == ver.position)) {
                 normal += other.normal;
             }
         }
     }
+
     normal = normalize(normal);
     
     GeneratedVertexLow low;
@@ -284,7 +310,7 @@ void BuildMesh(uint3 id : SV_DispatchThreadID) {
     low.normal.x = f32tof16(normal.x) | (f32tof16(normal.y) << 16);
     low.normal.y = f32tof16(normal.z) | (f32tof16(1.0) << 16);
     low.uv0.x = f32tof16(ver.uv1.x) | (f32tof16(ver.uv1.y) << 16);
-    low.uv0.y = f32tof16(ver.uv1.z) | (f32tof16(ver.uv1.w) << 16);
+    low.uv0.y = f32tof16(ver.uv1.z) | (f32tof16(ver.uv1.x == ver.uv1.y && ver.uv1.x == ver.uv1.z ? 0.0 : 1.0) << 16);
     low.uv1.x = f32tof16(ver.uv0.w == 0 ? 1.0 : 0.0) | (f32tof16(ver.uv0.w == 1 ? 1.0 : 0.0) << 16);
     low.uv1.y = f32tof16(ver.uv0.w == 2 ? 1.0 : 0.0) | (f32tof16(0.0) << 16);
     MeshVertexBuffer[index] = low;

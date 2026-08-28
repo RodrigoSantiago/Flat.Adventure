@@ -1787,8 +1787,7 @@ MonoBehaviour:
     m_ShowAllHits: 0
     m_SkipHidden: 0
     m_SearchArea: 1
-    m_Folders:
-    - Assets/Code/Game
+    m_Folders: []
     m_Globs: []
     m_ProductIds: 
     m_AnyWithAssetOrigin: 0
@@ -1810,6 +1809,9 @@ MonoBehaviour:
       m_Data: 0
     m_ExpandedIDs:
     - m_Data: 0
+    - m_Data: 48406
+    - m_Data: 48408
+    - m_Data: 48410
     - m_Data: 48412
     - m_Data: 48414
     - m_Data: 48416
@@ -1818,9 +1820,6 @@ MonoBehaviour:
     - m_Data: 48422
     - m_Data: 48424
     - m_Data: 48426
-    - m_Data: 48428
-    - m_Data: 48430
-    - m_Data: 48432
     m_RenameOverlay:
       m_UserAcceptedRename: 0
       m_Name: 
@@ -1854,6 +1853,9 @@ MonoBehaviour:
       m_Data: 0
     m_ExpandedIDs:
     - m_Data: 0
+    - m_Data: 48406
+    - m_Data: 48408
+    - m_Data: 48410
     - m_Data: 48412
     - m_Data: 48414
     - m_Data: 48416
@@ -1862,9 +1864,6 @@ MonoBehaviour:
     - m_Data: 48422
     - m_Data: 48424
     - m_Data: 48426
-    - m_Data: 48428
-    - m_Data: 48430
-    - m_Data: 48432
     m_RenameOverlay:
       m_UserAcceptedRename: 0
       m_Name: 
@@ -1972,21 +1971,13 @@ MonoBehaviour:
       m_LastClickedID:
         m_Data: 0
       m_ExpandedIDs:
-      - m_Data: -16884
-      - m_Data: -15956
-      - m_Data: -13452
-      - m_Data: -12722
-      - m_Data: -11548
-      - m_Data: -10800
-      - m_Data: -9280
-      - m_Data: -8118
-      - m_Data: -7394
-      - m_Data: -6658
-      - m_Data: -5904
-      - m_Data: -5144
-      - m_Data: -3594
-      - m_Data: -2826
-      - m_Data: -1322
+      - m_Data: -52024
+      - m_Data: -50880
+      - m_Data: -49644
+      - m_Data: -48642
+      - m_Data: -47224
+      - m_Data: -46288
+      - m_Data: -1334
       m_RenameOverlay:
         m_UserAcceptedRename: 0
         m_Name: 
@@ -2636,9 +2627,9 @@ MonoBehaviour:
   m_AudioPlay: 0
   m_DebugDrawModesUseInteractiveLightBakingData: 0
   m_Position:
-    m_Target: {x: 12.10372, y: 11.289571, z: 20.161346}
+    m_Target: {x: 19.705215, y: -1.2166746, z: 42.709198}
     speed: 2
-    m_Value: {x: 12.10372, y: 11.289571, z: 20.161346}
+    m_Value: {x: 19.705215, y: -1.2166746, z: 42.709198}
   m_RenderMode: 0
   m_CameraMode:
     drawMode: 2
@@ -2685,13 +2676,13 @@ MonoBehaviour:
     m_gridOpacity: 0.5
     m_NearestPlaneToHandleMode: 0
   m_Rotation:
-    m_Target: {x: 0.13794681, y: 0.0845738, z: -0.011825932, w: 0.9867586}
+    m_Target: {x: -0.27018812, y: 0.045942064, z: -0.012855652, w: -0.96165234}
     speed: 2
-    m_Value: {x: -0.13794681, y: -0.084573805, z: 0.011825933, w: -0.98675865}
+    m_Value: {x: -0.27018812, y: 0.045942068, z: -0.012855653, w: -0.9616524}
   m_Size:
-    m_Target: 12.962179
+    m_Target: 26.94234
     speed: 2
-    m_Value: 12.962179
+    m_Value: 26.94234
   m_Ortho:
     m_Target: 0
     speed: 2

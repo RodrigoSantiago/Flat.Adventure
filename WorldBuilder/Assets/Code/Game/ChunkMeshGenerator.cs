@@ -10,7 +10,7 @@ namespace Code {
 	public delegate void ChunkRemeshListener(Mesh mesh);
 
 	public class ChunkMeshGenerator {
-		private static ChunkSoilPacked empty = new();
+		private static ChunkSoil empty = new();
 
 		// Source
 		private GraphicsBuffer densityBuffer;
@@ -46,8 +46,8 @@ namespace Code {
 			this.shader = shader;
 		}
 		
-		private static readonly int MaxDen = ChunkSoilPacked.Mode.Packed4.DenArraySize; // 16388
-		private static readonly int MaxMat = ChunkSoilPacked.Mode.Packed6.MatArraySize; // 24580
+		private static readonly int MaxDen = ChunkSoil.Mode.Packed4.DenArraySize; // 16388
+		private static readonly int MaxMat = ChunkSoil.Mode.Packed6.MatArraySize; // 24580
 
 		public void Init() {
 			buildVertex = shader.FindKernel("BuildVertex");
@@ -108,7 +108,7 @@ namespace Code {
 			extraCounter.Release();
 		}
 
-		public void Remesh(ChunkSoilPacked chunk, ChunkSoilPacked soil, ChunkRemeshListener onChunkRemesh) {
+		public void Remesh(ChunkSoil chunk, ChunkSoil soil, ChunkRemeshListener onChunkRemesh) {
 			densityBuffer.SetData(empty.density, 0, 0, empty.density.Length);
 			densityBuffer.SetData(chunk.density, 0, MaxDen * 1, chunk.density.Length);
 			densityBuffer.SetData(soil.density, 0, MaxDen * 2, soil.density.Length);

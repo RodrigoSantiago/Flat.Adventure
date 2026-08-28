@@ -2,7 +2,7 @@ using System;
 using System.Runtime.CompilerServices;
 
 namespace Game.Data {
-    public sealed class ChunkSoilPacked {
+    public sealed class ChunkSoil {
         public const int Size1D = 32;
         public const int Size2D = 32 * 32;
         public const int Size3D = 32 * 32 * 32;
@@ -21,17 +21,17 @@ namespace Game.Data {
         private const int PaletteIndex = 1;
 
         public readonly struct Mode {
-            public const byte ConstantId = 0;
-            public const byte Packed1Id = 1;
-            public const byte Packed2Id = 2;
-            public const byte Packed4Id = 3;
-            public const byte Packed6Id = 4;
+            private const byte ConstantId = 0;
+            private const byte Packed1Id = 1;
+            private const byte Packed2Id = 2;
+            private const byte Packed4Id = 3;
+            private const byte Packed6Id = 4;
 
-            public static readonly Mode Constant = new Mode(ConstantId, 0);
-            public static readonly Mode Packed1 = new Mode(Packed1Id, 1);
-            public static readonly Mode Packed2 = new Mode(Packed2Id, 2);
-            public static readonly Mode Packed4 = new Mode(Packed4Id, 4);
-            public static readonly Mode Packed6 = new Mode(Packed6Id, 6);
+            public static readonly Mode Constant = new (ConstantId,  0,     0,  1);
+            public static readonly Mode Packed1  = new (Packed1Id ,  2,  4096,  4);
+            public static readonly Mode Packed2  = new (Packed2Id ,  4,  8192,  6);
+            public static readonly Mode Packed4  = new (Packed4Id , 16, 16384, 18);
+            public static readonly Mode Packed6  = new (Packed6Id ,  0, 24576,  1);
 
             private static readonly Mode[] Packs = { Constant, Packed1, Packed2, Packed4, Packed6 };
 
@@ -41,14 +41,13 @@ namespace Game.Data {
             public readonly int header;
 
             public int MatArraySize => (header + dataSize + 3) & ~3;
-            public int DenArraySize => id == 0 ? 4 : dataSize + 4;
+            public int DenArraySize => dataSize + 4;
 
-            private Mode(byte id, int bitSize) {
+            public Mode(byte id, int paletteCapacity, int dataSize, int header) {
                 this.id = id;
-                
-                paletteCapacity = 1 << bitSize;
-                header = id == 0 || id == 4 ? 1 : 2 + paletteCapacity;
-                dataSize = id == 0 ? 1 : (Size3D * bitSize + 7) >> 3;
+                this.paletteCapacity = paletteCapacity;
+                this.dataSize = dataSize;
+                this.header = header;
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -61,46 +60,57 @@ namespace Game.Data {
                 switch (id) {
                     case ConstantId:
                         return data[offset];
-
-                    case Packed1Id: {
-                        int byteIndex = offset + (index >> 3);
-                        int shift = index & 7;
-
-                        return (data[byteIndex] >> shift) & 1;
-                    }
-
-                    case Packed2Id: {
-                        int bit = index << 1;
-                        int byteIndex = offset + (bit >> 3);
-                        int shift = bit & 7;
-
-                        return (data[byteIndex] >> shift) & 3;
-                    }
-
-                    case Packed4Id: {
-                        int bit = index << 2;
-                        int byteIndex = offset + (bit >> 3);
-                        int shift = bit & 7;
-
-                        return (data[byteIndex] >> shift) & 15;
-                    }
-
-                    case Packed6Id: {
-                        int bit = index * 6;
-                        int byteIndex = offset + (bit >> 3);
-                        int shift = bit & 7;
-
-                        uint value = data[byteIndex];
-
-                        if (shift > 2)
-                            value |= (uint)data[byteIndex + 1] << 8;
-
-                        return (int)((value >> shift) & 63);
-                    }
-
-                    default:
-                        throw new InvalidOperationException();
+                    case Packed1Id:
+                        return ReadBits1(data, offset, index);
+                    case Packed2Id:
+                        return ReadBits2(data, offset, index);
+                    case Packed4Id:
+                        return ReadBits4(data, offset, index);
+                    case Packed6Id:
+                        return ReadBits6(data, offset, index);
                 }
+
+                return 0;
+            }
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public int ReadBits1(byte[] data, int offset, int index) {
+                int byteIndex = offset + (index >> 3);
+                int shift = index & 7;
+
+                return (data[byteIndex] >> shift) & 1;
+            }
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public int ReadBits2(byte[] data, int offset, int index) {
+                int bit = index << 1;
+                int byteIndex = offset + (bit >> 3);
+                int shift = bit & 7;
+
+                return (data[byteIndex] >> shift) & 3;
+            }
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public int ReadBits4(byte[] data, int offset, int index) {
+                int bit = index << 2;
+                int byteIndex = offset + (bit >> 3);
+                int shift = bit & 7;
+
+                return (data[byteIndex] >> shift) & 15;
+            }
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public int ReadBits6(byte[] data, int offset, int index) {
+                int bit = index * 6;
+                int byteIndex = offset + (bit >> 3);
+                int shift = bit & 7;
+
+                uint value = data[byteIndex];
+
+                if (shift > 2)
+                    value |= (uint)data[byteIndex + 1] << 8;
+
+                return (int)((value >> shift) & 63);
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -109,63 +119,75 @@ namespace Game.Data {
                     case ConstantId:
                         data[offset] = (byte)value;
                         break;
-
-                    case Packed1Id: {
-                        int byteIndex = offset + (index >> 3);
-                        int shift = index & 7;
-
-                        byte mask = (byte)(1 << shift);
-
-                        if ((value & 1) != 0)
-                            data[byteIndex] |= mask;
-                        else
-                            data[byteIndex] &= (byte)~mask;
+                    case Packed1Id: 
+                        WriteBits1(data, offset, index, value);
                         break;
-                    }
-
-                    case Packed2Id: {
-                        int bit = index << 1;
-                        int byteIndex = offset + (bit >> 3);
-                        int shift = bit & 7;
-
-                        byte mask = (byte)(3 << shift);
-
-                        data[byteIndex] = (byte)((data[byteIndex] & ~mask) | ((value & 3) << shift));
+                    case Packed2Id: 
+                        WriteBits2(data, offset, index, value);
                         break;
-                    }
-
-                    case Packed4Id: {
-                        int bit = index << 2;
-                        int byteIndex = offset + (bit >> 3);
-                        int shift = bit & 7;
-
-                        byte mask = (byte)(15 << shift);
-
-                        data[byteIndex] = (byte)((data[byteIndex] & ~mask) | ((value & 15) << shift));
+                    case Packed4Id: 
+                        WriteBits4(data, offset, index, value);
                         break;
-                    }
-
-                    case Packed6Id: {
-                        int bit = index * 6;
-                        int byteIndex = offset + (bit >> 3);
-                        int shift = bit & 7;
-
-                        uint current = data[byteIndex];
-
-                        if (shift > 2)
-                            current |= (uint)data[byteIndex + 1] << 8;
-
-                        uint mask = 63u << shift;
-
-                        current = (current & ~mask) | ((uint)(value & 63) << shift);
-
-                        data[byteIndex] = (byte)current;
-
-                        if (shift > 2)
-                            data[byteIndex + 1] = (byte)(current >> 8);
+                    case Packed6Id: 
+                        WriteBits6(data, offset, index, value);
                         break;
-                    }
                 }
+            }
+            
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public void WriteBits1(byte[] data, int offset, int index, int value) {
+                int byteIndex = offset + (index >> 3);
+                int shift = index & 7;
+
+                byte mask = (byte)(1 << shift);
+
+                if ((value & 1) != 0)
+                    data[byteIndex] |= mask;
+                else
+                    data[byteIndex] &= (byte)~mask;
+            }
+            
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public void WriteBits2(byte[] data, int offset, int index, int value) {
+                int bit = index << 1;
+                int byteIndex = offset + (bit >> 3);
+                int shift = bit & 7;
+
+                byte mask = (byte)(3 << shift);
+
+                data[byteIndex] = (byte)((data[byteIndex] & ~mask) | ((value & 3) << shift));
+            }
+            
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public void WriteBits4(byte[] data, int offset, int index, int value) {
+                int bit = index << 2;
+                int byteIndex = offset + (bit >> 3);
+                int shift = bit & 7;
+
+                byte mask = (byte)(15 << shift);
+
+                data[byteIndex] = (byte)((data[byteIndex] & ~mask) | ((value & 15) << shift));
+            }
+            
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public void WriteBits6(byte[] data, int offset, int index, int value) {
+                int bit = index * 6;
+                int byteIndex = offset + (bit >> 3);
+                int shift = bit & 7;
+
+                uint current = data[byteIndex];
+
+                if (shift > 2)
+                    current |= (uint)data[byteIndex + 1] << 8;
+
+                uint mask = 63u << shift;
+
+                current = (current & ~mask) | ((uint)(value & 63) << shift);
+
+                data[byteIndex] = (byte)current;
+
+                if (shift > 2)
+                    data[byteIndex + 1] = (byte)(current >> 8);
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -228,17 +250,9 @@ namespace Game.Data {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public int GetMaterialValue(byte[] data, int index) {
                 if (id == ConstantId) return data[1];
-                if (id == Packed6Id) return ReadBits(data, 1, index);
+                if (id == Packed6Id) return ReadBits6(data, 1, index);
 
                 return data[2 + ReadBits(data, 2 + paletteCapacity, index)];
-            }
-
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public int GetPaletteValue(byte[] data, int index) {
-                if (id == ConstantId) return data[1];
-                if (id == Packed6Id) return ReadBits(data, 1, index);
-
-                return ReadBits(data, 2 + paletteCapacity, index);
             }
 
             public static bool operator ==(Mode left, Mode right) => left.id == right.id;
@@ -256,12 +270,12 @@ namespace Game.Data {
             }
         }
 
-        public ChunkSoilPacked() {
+        public ChunkSoil() {
             density = CreateDensity(Mode.Constant);
             material = CreateMaterial(Mode.Constant);
         }
 
-        public ChunkSoilPacked(byte[] density, byte[] material) {
+        public ChunkSoil(byte[] density, byte[] material) {
             this.density = density ?? throw new ArgumentNullException(nameof(density));
             this.material = material ?? throw new ArgumentNullException(nameof(material));
             Validate();
@@ -310,7 +324,9 @@ namespace Game.Data {
             var targetMode = Mode.Packed4;
             
             int value = currentMode.GetDensityValue(source, 0);
-            targetMode.SetAll(target, 1, value);
+            if (value != 0) {
+                targetMode.SetAll(target, 1, value);
+            }
 
             density = target;
         }
@@ -358,6 +374,7 @@ namespace Game.Data {
             }
 
             int headerSize = targetMode.header;
+            int cHeaderSize = currentMode.header;
             if (currentMode == Mode.Constant) {
                 if (targetMode == Mode.Packed6) {
                     int value = currentMode.GetMaterialValue(source, 0);
@@ -369,19 +386,30 @@ namespace Game.Data {
                 if (currentMode == Mode.Packed1 && targetMode == Mode.Packed2) {
                     ExpandMaterialPacked1To2(source, target, currentMode, targetMode);
                     
+                } else if (currentMode == Mode.Packed1 && targetMode == Mode.Packed4) {
+                    ExpandMaterialPacked1To4(source, target, currentMode, targetMode);
+                    
+                } else if (currentMode == Mode.Packed1 && targetMode == Mode.Packed6) {
+                    for (int i = 0; i < Size3D; i++) {
+                        int value = currentMode.ReadBits1(source, cHeaderSize, i);
+                        targetMode.WriteBits6(target, headerSize, i, source[PaletteIndex + 1 + value]);
+                    }
+                    
                 } else if (currentMode == Mode.Packed2 && targetMode == Mode.Packed4) {
                     ExpandMaterialPacked2To4(source, target, currentMode, targetMode);
                     
-                } else if (targetMode == Mode.Packed6) {
+                } else if (currentMode == Mode.Packed2 && targetMode == Mode.Packed6) {
                     for (int i = 0; i < Size3D; i++) {
-                        int value = currentMode.GetMaterialValue(source, i);
-                        targetMode.WriteBits(target, headerSize, i, value);
+                        int value = currentMode.ReadBits2(source, cHeaderSize, i);
+                        targetMode.WriteBits6(target, headerSize, i, source[PaletteIndex + 1 + value]);
                     }
-                } else {
+                    
+                } else if (currentMode == Mode.Packed4 && targetMode == Mode.Packed6) {
                     for (int i = 0; i < Size3D; i++) {
-                        int paletteIndex = currentMode.GetPaletteValue(source, i);
-                        targetMode.WriteBits(target, headerSize, i, paletteIndex);
+                        int value = currentMode.ReadBits4(source, cHeaderSize, i);
+                        targetMode.WriteBits6(target, headerSize, i, source[PaletteIndex + 1 + value]);
                     }
+                    
                 }
             }
 
@@ -462,9 +490,37 @@ namespace Game.Data {
             }
             
             int headerSize = targetMode.header;
-            for (int i = 0; i < Size3D; i++) {
-                int value = currentMode.GetMaterialValue(source, i);
-                targetMode.WriteBits(target, headerSize, i, paletteLookup[value]);
+            int cHeaderSize = currentMode.header;
+            if (currentMode == Mode.Packed2 && targetMode == Mode.Packed1) {
+                for (int i = 0; i < Size3D; i++) {
+                    int value = source[PaletteIndex + 1 + currentMode.ReadBits2(source, cHeaderSize, i)];
+                    targetMode.WriteBits1(target, headerSize, i, paletteLookup[value]);
+                }
+            } else if (currentMode == Mode.Packed4 && targetMode == Mode.Packed1) {
+                for (int i = 0; i < Size3D; i++) {
+                    int value = source[PaletteIndex + 1 + currentMode.ReadBits4(source, cHeaderSize, i)];
+                    targetMode.WriteBits1(target, headerSize, i, paletteLookup[value]);
+                }
+            } else if (currentMode == Mode.Packed4 && targetMode == Mode.Packed2) {
+                for (int i = 0; i < Size3D; i++) {
+                    int value = source[PaletteIndex + 1 + currentMode.ReadBits4(source, cHeaderSize, i)];
+                    targetMode.WriteBits2(target, headerSize, i, paletteLookup[value]);
+                }
+            } else if (currentMode == Mode.Packed6 && targetMode == Mode.Packed1) {
+                for (int i = 0; i < Size3D; i++) {
+                    int value = currentMode.ReadBits6(source, cHeaderSize, i);
+                    targetMode.WriteBits1(target, headerSize, i, paletteLookup[value]);
+                }
+            } else if (currentMode == Mode.Packed6 && targetMode == Mode.Packed2) {
+                for (int i = 0; i < Size3D; i++) {
+                    int value = currentMode.ReadBits6(source, cHeaderSize, i);
+                    targetMode.WriteBits2(target, headerSize, i, paletteLookup[value]);
+                }
+            } else if (currentMode == Mode.Packed6 && targetMode == Mode.Packed4) {
+                for (int i = 0; i < Size3D; i++) {
+                    int value = currentMode.ReadBits6(source, cHeaderSize, i);
+                    targetMode.WriteBits4(target, headerSize, i, paletteLookup[value]);
+                }
             }
 
             material = target;
@@ -541,14 +597,14 @@ namespace Game.Data {
         }
 
         private static int UnsafeIndex(int x, int y, int z) {
-            return x + z * Size1D + y * Size2D;
+            return x + (z << 5) + (y << 10);
         }
 
         private static int Index(int x, int y, int z) {
             if ((uint)x >= Size1D || (uint)y >= Size1D || (uint)z >= Size1D)
                 throw new ArgumentOutOfRangeException();
 
-            return x + z * Size1D + y * Size2D;
+            return x + (z << 5) + (y << 10);
         }
         
         private static int QuantizeDensity(float value) {
@@ -620,6 +676,28 @@ namespace Game.Data {
 
                 dst[dstOffset++] = (byte)((value & 0b00110000) >> 4 |
                                           (value & 0b11000000) >> 2);
+            }
+        }
+        
+        private static void ExpandMaterialPacked1To4(byte[] src, byte[] dst, Mode srcMode, Mode dstMode) {
+            int srcOffset = srcMode.header;
+            int dstOffset = dstMode.header;
+            
+            int size = Size3D / 8;
+            for (int i = 0; i < size; i++) {
+                byte value = src[srcOffset + i];
+
+                dst[dstOffset++] = (byte)((value & 0b00000001) |
+                                          (value & 0b00000010) << 3);
+
+                dst[dstOffset++] = (byte)((value & 0b00000100) >> 2 |
+                                          (value & 0b00001000) << 1);
+                
+                dst[dstOffset++] = (byte)((value & 0b00010000) >> 4 |
+                                          (value & 0b00100000) >> 1);
+                
+                dst[dstOffset++] = (byte)((value & 0b01000000) >> 6 |
+                                          (value & 0b10000000) >> 3);
             }
         }
     }

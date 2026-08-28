@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Code.Data;
 using Game.Data;
 using UnityEngine;
@@ -9,9 +10,12 @@ namespace Code {
         public MeshFilter filter;
 
         private ChunkMeshGenerator gen;
+
+        ChunkSoil chunk;
+        ChunkSoil chunkSoil;
         
         private void Start() {
-            var chunk = new ChunkSoilPacked();
+            chunk = new ChunkSoil();
             
             float radius = ChunkSoil.Size1D * 0.4f;
             Vector3 center = new(
@@ -74,7 +78,7 @@ namespace Code {
                 }
             }
             
-            var chunkSoil = new ChunkSoilPacked();
+            chunkSoil = new ChunkSoil();
             for (int y = 0; y < 3; y++) {
                 for (int z = 0; z < ChunkSoil.Size1D; z++) {
                     for (int x = 0; x < ChunkSoil.Size1D; x++) {
@@ -90,6 +94,24 @@ namespace Code {
             gen.Remesh(chunk, chunkSoil, (mesh) => {
                 filter.sharedMesh = mesh;
                 var period = DateTime.Now.Subtract(start);
+                Debug.Log(period);
+                Stress();
+            });
+        }
+
+        public List<Mesh> meshes = new();
+        public void Stress() {
+            DateTime start = DateTime.Now;
+            for (int i = 0; i < 99; i++) {
+                gen.Remesh(chunk, chunkSoil, (mesh) => {
+                    meshes.Add(mesh);
+                });
+            }
+            gen.Remesh(chunk, chunkSoil, (mesh) => {
+                filter.sharedMesh = mesh;
+                meshes.Add(mesh);
+                var period = DateTime.Now.Subtract(start);
+                Debug.Log("Last");
                 Debug.Log(period);
             });
         }

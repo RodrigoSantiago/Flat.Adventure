@@ -8,7 +8,7 @@ namespace Code.Worlds.Storage {
 
     public class RegionSerialize {
 
-        private static readonly int EntryOffset = sizeof(int) * 6;
+        private static readonly int EntryOffset = sizeof(int) * 7;
         private static readonly int HeaderOffset = sizeof(int) + EntryOffset * Region.TotalChunks;
         private static readonly float ExtraPadding = 1.10f;
         private static readonly float MaxSpaceWaste = 1.50f;
@@ -31,7 +31,8 @@ namespace Code.Worlds.Storage {
             public int offset;
             public int length;
             public int version;
-            public int soilLength;
+            public int soilDenLength;
+            public int soilMatLength;
             public int meshLength;
             public int listLength;
         }
@@ -63,7 +64,7 @@ namespace Code.Worlds.Storage {
                 FileAccess.ReadWrite,
                 FileShare.None,
                 bufferSize: 64 * 1024,
-                options: FileOptions.SequentialScan);
+                options: FileOptions.WriteThrough);
         }
 
         public ChunkCacheUpdate[] Load(string filePath, int requiredLods) {
@@ -92,7 +93,6 @@ namespace Code.Worlds.Storage {
 
             var originalHeader = header.Clone();
 
-            // Early Release to reduce FindFreeSpace fragmentation 
             foreach (var chunk in updateChunks) {
                 var entry = header.entries[chunk.chunkEntryId];
                 if (chunk.TotalLength > entry.length) {
@@ -108,7 +108,8 @@ namespace Code.Worlds.Storage {
                 if (chunk.TotalLength == 0) {
                     entry.offset = 0;
                     entry.length = 0;
-                    entry.soilLength = 0;
+                    entry.soilDenLength = 0;
+                    entry.soilMatLength = 0;
                     entry.meshLength = 0;
                     entry.listLength = 0;
                 } else {
@@ -116,7 +117,8 @@ namespace Code.Worlds.Storage {
                         int extraLength = (int)(chunk.TotalLength * ExtraPadding);
                         entry.length = FindFreeSpace(header, chunk.TotalLength, extraLength, out entry.offset);
                     }
-                    entry.soilLength = chunk.soilData?.Length ?? 0;
+                    entry.soilDenLength = chunk.soilDenData?.Length ?? 0;
+                    entry.soilMatLength = chunk.soilMatData?.Length ?? 0;
                     entry.meshLength = chunk.meshData?.Length ?? 0;
                     entry.listLength = chunk.listData?.Length ?? 0;
                 }
@@ -124,10 +126,10 @@ namespace Code.Worlds.Storage {
                 header.entries[chunk.chunkEntryId] = entry;
             }
 
-            int totalRequired = 0;
-            int totalUsed = 0;
+            long totalRequired = 0;
+            long totalUsed = 0;
             foreach (var entry in header.entries) {
-                totalRequired += entry.soilLength + entry.meshLength + entry.listLength;
+                totalRequired += entry.soilDenLength + entry.soilMatLength + entry.meshLength + entry.listLength;
                 totalUsed += entry.length;
             }
 
@@ -136,7 +138,8 @@ namespace Code.Worlds.Storage {
                 var allChunks = ReadChunkUpdate(stream, originalHeader, -1);
                 foreach (var chunk in updateChunks) {
                     allChunks[chunk.chunkEntryId].version = chunk.version;
-                    allChunks[chunk.chunkEntryId].soilData = chunk.soilData;
+                    allChunks[chunk.chunkEntryId].soilDenData = chunk.soilDenData;
+                    allChunks[chunk.chunkEntryId].soilMatData = chunk.soilMatData;
                     allChunks[chunk.chunkEntryId].meshData = chunk.meshData;
                     allChunks[chunk.chunkEntryId].listData = chunk.listData;
                 }
@@ -148,12 +151,14 @@ namespace Code.Worlds.Storage {
                     entry.length = (int)(chunk.TotalLength * ExtraPadding);
                     if (entry.length == 0) {
                         entry.offset = 0;
-                        entry.soilLength = 0;
+                        entry.soilDenLength = 0;
+                        entry.soilMatLength = 0;
                         entry.meshLength = 0;
                         entry.listLength = 0;
                     } else {
                         entry.offset = lastOffset;
-                        entry.soilLength = chunk.soilData?.Length ?? 0;
+                        entry.soilDenLength = chunk.soilDenData?.Length ?? 0;
+                        entry.soilMatLength = chunk.soilMatData?.Length ?? 0;
                         entry.meshLength = chunk.meshData?.Length ?? 0;
                         entry.listLength = chunk.listData?.Length ?? 0;
 
@@ -162,29 +167,34 @@ namespace Code.Worlds.Storage {
 
                     header.entries[chunk.chunkEntryId] = entry;
                 }
+            
+                WriteDead(stream);
                 foreach (var chunk in allChunks) {
                     var entry = header.entries[chunk.chunkEntryId];
                     if (chunk.TotalLength > 0) {
                         stream.Seek(entry.offset, SeekOrigin.Begin);
-                        if (chunk.soilData != null) WriteData(stream, chunk.soilData, 0, chunk.soilData.Length);
+                        if (chunk.soilDenData != null) WriteData(stream, chunk.soilDenData, 0, chunk.soilDenData.Length);
+                        if (chunk.soilMatData != null) WriteData(stream, chunk.soilMatData, 0, chunk.soilMatData.Length);
                         if (chunk.meshData != null) WriteData(stream, chunk.meshData, 0, chunk.meshData.Length);
                         if (chunk.listData != null) WriteData(stream, chunk.listData, 0, chunk.listData.Length);
                     }
                 }
 
             } else {
+            
+                WriteDead(stream);
                 foreach (var chunk in updateChunks) {
                     var entry = header.entries[chunk.chunkEntryId];
                     if (chunk.TotalLength > 0) {
                         stream.Seek(entry.offset, SeekOrigin.Begin);
-                        if (chunk.soilData != null) WriteData(stream, chunk.soilData, 0, chunk.soilData.Length);
+                        if (chunk.soilDenData != null) WriteData(stream, chunk.soilDenData, 0, chunk.soilDenData.Length);
+                        if (chunk.soilMatData != null) WriteData(stream, chunk.soilMatData, 0, chunk.soilMatData.Length);
                         if (chunk.meshData != null) WriteData(stream, chunk.meshData, 0, chunk.meshData.Length);
                         if (chunk.listData != null) WriteData(stream, chunk.listData, 0, chunk.listData.Length);
                     }
                 }
             }
             
-            stream.Seek(0, SeekOrigin.Begin);
             WriteHeader(stream, header);
 
             if (stream is FileStream fileStream) {
@@ -242,16 +252,18 @@ namespace Code.Worlds.Storage {
                         offset = ReadInt(headerBuffer, ref cursor),
                         length = ReadInt(headerBuffer, ref cursor),
                         version = ReadInt(headerBuffer, ref cursor),
-                        soilLength = ReadInt(headerBuffer, ref cursor),
+                        soilDenLength = ReadInt(headerBuffer, ref cursor),
+                        soilMatLength = ReadInt(headerBuffer, ref cursor),
                         meshLength = ReadInt(headerBuffer, ref cursor),
                         listLength = ReadInt(headerBuffer, ref cursor)
                     };
 
-                    long dataLength = (long)entry.soilLength + entry.meshLength + entry.listLength;
+                    long dataLength = (long)entry.soilDenLength + entry.soilMatLength + entry.meshLength + entry.listLength;
 
                     if (entry.offset < 0
                         || entry.length < 0
-                        || entry.soilLength < 0
+                        || entry.soilDenLength < 0
+                        || entry.soilMatLength < 0
                         || entry.meshLength < 0
                         || entry.listLength < 0
                         || (entry.offset > 0 && entry.offset < HeaderOffset)
@@ -270,6 +282,12 @@ namespace Code.Worlds.Storage {
             }
         }
 
+        private void WriteDead(Stream stream) {
+            stream.Seek(0, SeekOrigin.Begin);
+            int cursor = 0;
+            WriteInt(headerBuffer, ref cursor, 0xDEAD);
+        }
+
         private void WriteHeader(Stream stream, RegionHeader header) {
             int cursor = 0;
 
@@ -279,7 +297,8 @@ namespace Code.Worlds.Storage {
                 WriteInt(headerBuffer, ref cursor, entry.offset);
                 WriteInt(headerBuffer, ref cursor, entry.length);
                 WriteInt(headerBuffer, ref cursor, entry.version);
-                WriteInt(headerBuffer, ref cursor, entry.soilLength);
+                WriteInt(headerBuffer, ref cursor, entry.soilDenLength);
+                WriteInt(headerBuffer, ref cursor, entry.soilMatLength);
                 WriteInt(headerBuffer, ref cursor, entry.meshLength);
                 WriteInt(headerBuffer, ref cursor, entry.listLength);
             }
@@ -318,26 +337,35 @@ namespace Code.Worlds.Storage {
                     chunkEntryId = i,
                     version = entry.version
                 };
-
-                if (entry.soilLength > 0) {
+                
+                if (entry.soilDenLength > 0 || 
+                    entry.soilMatLength > 0 || 
+                    entry.meshLength > 0 ||
+                    entry.listLength > 0) {
                     stream.Seek(entry.offset, SeekOrigin.Begin);
-                    cache.soilData = new byte[entry.soilLength];
-                    ReadData(stream, cache.soilData, 0, cache.soilData.Length);
+                }
+
+                if (entry.soilDenLength > 0) {
+                    cache.soilDenData = new byte[entry.soilDenLength];
+                    ReadData(stream, cache.soilDenData, 0, cache.soilDenData.Length);
+                }
+
+                if (entry.soilMatLength > 0) {
+                    cache.soilMatData = new byte[entry.soilMatLength];
+                    ReadData(stream, cache.soilMatData, 0, cache.soilMatData.Length);
                 }
 
                 if (entry.meshLength > 0) {
-                    stream.Seek(entry.offset + entry.soilLength, SeekOrigin.Begin);
                     cache.meshData = new byte[entry.meshLength];
                     ReadData(stream, cache.meshData, 0, cache.meshData.Length);
                 }
                 
                 if (entry.listLength > 0) {
-                    stream.Seek(entry.offset + entry.soilLength + entry.meshLength, SeekOrigin.Begin);
                     cache.listData = new byte[entry.listLength];
                     ReadData(stream, cache.listData, 0, cache.listData.Length);
                 }
 
-                caches[i] = cache;
+                caches.Add(cache);
             }
             return caches.ToArray();
         }

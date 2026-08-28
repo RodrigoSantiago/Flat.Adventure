@@ -6,7 +6,7 @@ using Game.Data;
 namespace Game.Tests.Data {
     [TestFixture]
     public class ChunkSoilPackedTests {
-        private const int Size3D = ChunkSoilPacked.Size3D;
+        private const int Size3D = ChunkSoil.Size3D;
 
         // ============================================================
         // Construction
@@ -14,7 +14,7 @@ namespace Game.Tests.Data {
 
         [Test]
         public void Constructor_Default_CreatesConstantDensityAndMaterial() {
-            var chunk = new ChunkSoilPacked();
+            var chunk = new ChunkSoil();
 
             Assert.That(chunk.GetDensity(0, 0, 0), Is.EqualTo(0.0f));
             Assert.That(chunk.GetMaterial(0, 0, 0), Is.EqualTo(0));
@@ -22,69 +22,69 @@ namespace Game.Tests.Data {
 
         [Test]
         public void Constructor_NullDensity_Throws() {
-            Assert.Throws<ArgumentNullException>(() => new ChunkSoilPacked(null, CreateConstantMaterial(0)));
+            Assert.Throws<ArgumentNullException>(() => new ChunkSoil(null, CreateConstantMaterial(0)));
         }
 
         [Test]
         public void Constructor_NullMaterial_Throws() {
-            Assert.Throws<ArgumentNullException>(() => new ChunkSoilPacked(CreateConstantDensity(0), null));
+            Assert.Throws<ArgumentNullException>(() => new ChunkSoil(CreateConstantDensity(0), null));
         }
 
         [Test]
         public void Constructor_TooShortDensity_Throws() {
-            Assert.Throws<ArgumentException>(() => new ChunkSoilPacked(new byte[] { 0 }, CreateConstantMaterial(0)));
+            Assert.Throws<ArgumentException>(() => new ChunkSoil(new byte[] { 0 }, CreateConstantMaterial(0)));
         }
 
         [Test]
         public void Constructor_TooShortMaterial_Throws() {
-            Assert.Throws<ArgumentException>(() => new ChunkSoilPacked(CreateConstantDensity(0), new byte[] { 0 }));
+            Assert.Throws<ArgumentException>(() => new ChunkSoil(CreateConstantDensity(0), new byte[] { 0 }));
         }
 
         [Test]
         public void Constructor_InvalidDensityMode_Throws() {
             var density = new byte[] { 5, 0 };
-            Assert.Throws<ArgumentException>(() => new ChunkSoilPacked(density, CreateConstantMaterial(0)));
+            Assert.Throws<ArgumentException>(() => new ChunkSoil(density, CreateConstantMaterial(0)));
         }
 
         [Test]
         public void Constructor_InvalidMaterialMode_Throws() {
             var material = new byte[] { 5, 0 };
-            Assert.Throws<ArgumentException>(() => new ChunkSoilPacked(CreateConstantDensity(0), material));
+            Assert.Throws<ArgumentException>(() => new ChunkSoil(CreateConstantDensity(0), material));
         }
 
         [Test]
         public void Constructor_DensityPacked1_IsRejected() {
-            var density = CreatePackedDensity(ChunkSoilPacked.Mode.Packed1);
+            var density = CreatePackedDensity(ChunkSoil.Mode.Packed1);
 
-            Assert.Throws<ArgumentException>(() => new ChunkSoilPacked(density, CreateConstantMaterial(0)));
+            Assert.Throws<ArgumentException>(() => new ChunkSoil(density, CreateConstantMaterial(0)));
         }
 
         [Test]
         public void Constructor_DensityPacked2_IsRejected() {
-            var density = CreatePackedDensity(ChunkSoilPacked.Mode.Packed2);
+            var density = CreatePackedDensity(ChunkSoil.Mode.Packed2);
 
-            Assert.Throws<ArgumentException>(() => new ChunkSoilPacked(density, CreateConstantMaterial(0)));
+            Assert.Throws<ArgumentException>(() => new ChunkSoil(density, CreateConstantMaterial(0)));
         }
 
         [Test]
         public void Constructor_DensityPacked6_IsRejected() {
-            var density = CreatePackedDensity(ChunkSoilPacked.Mode.Packed6);
+            var density = CreatePackedDensity(ChunkSoil.Mode.Packed6);
 
-            Assert.Throws<ArgumentException>(() => new ChunkSoilPacked(density, CreateConstantMaterial(0)));
+            Assert.Throws<ArgumentException>(() => new ChunkSoil(density, CreateConstantMaterial(0)));
         }
 
         [Test]
         public void Constructor_MaterialPaletteLargerThanCapacity_Throws() {
-            var material = CreatePackedMaterial(ChunkSoilPacked.Mode.Packed1);
+            var material = CreatePackedMaterial(ChunkSoil.Mode.Packed1);
             material[1] = 3;
 
-            Assert.Throws<ArgumentException>(() => new ChunkSoilPacked(CreateConstantDensity(0), material));
+            Assert.Throws<ArgumentException>(() => new ChunkSoil(CreateConstantDensity(0), material));
         }
 
         [Test]
         public void Constructor_ValidPacked4Density_IsAccepted() {
-            var density = CreatePackedDensity(ChunkSoilPacked.Mode.Packed4);
-            var chunk = new ChunkSoilPacked(density, CreateConstantMaterial(0));
+            var density = CreatePackedDensity(ChunkSoil.Mode.Packed4);
+            var chunk = new ChunkSoil(density, CreateConstantMaterial(0));
 
             Assert.That(chunk.GetDensity(0, 0, 0), Is.EqualTo(0.0f));
         }
@@ -102,7 +102,7 @@ namespace Game.Tests.Data {
         [TestCase(int.MinValue, 0, 0)]
         [TestCase(int.MaxValue, 0, 0)]
         public void GetDensity_InvalidCoordinates_Throws(int x, int y, int z) {
-            var chunk = new ChunkSoilPacked();
+            var chunk = new ChunkSoil();
 
             Assert.Throws<ArgumentOutOfRangeException>(() => chunk.GetDensity(x, y, z));
         }
@@ -114,14 +114,14 @@ namespace Game.Tests.Data {
         [TestCase(0, 0, -1)]
         [TestCase(0, 0, 32)]
         public void GetMaterial_InvalidCoordinates_Throws(int x, int y, int z) {
-            var chunk = new ChunkSoilPacked();
+            var chunk = new ChunkSoil();
 
             Assert.Throws<ArgumentOutOfRangeException>(() => chunk.GetMaterial(x, y, z));
         }
 
         [Test]
         public void AllEightChunkCorners_AreAccessible() {
-            var chunk = new ChunkSoilPacked();
+            var chunk = new ChunkSoil();
 
             var coordinates = new[] {
                 (0, 0, 0),
@@ -149,7 +149,7 @@ namespace Game.Tests.Data {
         [TestCase(int.MinValue)]
         [TestCase(int.MaxValue)]
         public void SetMaterial_OutOfRange_Throws(int value) {
-            var chunk = new ChunkSoilPacked();
+            var chunk = new ChunkSoil();
 
             Assert.Throws<ArgumentOutOfRangeException>(() => chunk.SetMaterial(0, 0, 0, value));
         }
@@ -161,7 +161,7 @@ namespace Game.Tests.Data {
         [TestCase(62)]
         [TestCase(63)]
         public void SetMaterial_AllValidValues_RoundTrip(int value) {
-            var chunk = new ChunkSoilPacked();
+            var chunk = new ChunkSoil();
 
             chunk.SetMaterial(0, 0, 0, value);
 
@@ -189,7 +189,7 @@ namespace Game.Tests.Data {
         [TestCase(1.00f, 1.00f)]
         [TestCase(2.00f, 2.00f)]
         public void SetDensity_CubeDensityValues_RoundTrip(float input, float expected) {
-            var chunk = new ChunkSoilPacked();
+            var chunk = new ChunkSoil();
 
             chunk.SetDensity(0, 0, 0, input);
             Assert.That(chunk.GetDensity(0, 0, 0), Is.EqualTo(expected));
@@ -197,43 +197,46 @@ namespace Game.Tests.Data {
 
         [Test]
         public void SetDensity_ChangesConstantChunkToPacked4() {
-            var chunk = new ChunkSoilPacked();
+            var chunk = new ChunkSoil();
+            Assert.That(chunk.DensityBitSize, Is.EqualTo(ChunkSoil.Mode.Constant));
 
             chunk.SetDensity(0, 0, 0, 0.55f);
+            Assert.That(chunk.DensityBitSize, Is.EqualTo(ChunkSoil.Mode.Packed4));
             
             Assert.That(chunk.GetDensity(0, 0, 0), Is.EqualTo(0.55f));
-
-            // A second coordinate must still contain the original
-            // constant value after expansion.
             Assert.That(chunk.GetDensity(1, 0, 0), Is.EqualTo(0.0f));
         }
 
         [Test]
         public void SetDensity_SameValue_DoesNotNeedExpansion() {
-            var chunk = new ChunkSoilPacked();
+            var chunk = new ChunkSoil();
+            Assert.That(chunk.DensityBitSize, Is.EqualTo(ChunkSoil.Mode.Constant));
 
             chunk.SetDensity(0, 0, 0, 0.0f);
             chunk.SetDensity(0, 0, 0, 0.0f);
+            Assert.That(chunk.DensityBitSize, Is.EqualTo(ChunkSoil.Mode.Constant));
 
             Assert.That(chunk.GetDensity(0, 0, 0), Is.EqualTo(0.0f));
         }
 
         [Test]
         public void SetDensity_AllSixteenDensityValues() {
-            var chunk = new ChunkSoilPacked();
+            var chunk = new ChunkSoil();
+            Assert.That(chunk.DensityBitSize, Is.EqualTo(ChunkSoil.Mode.Constant));
 
-            for (int i = 0; i < ChunkSoilPacked.CubeDensity.Length; i++) {
+            for (int i = 0; i < ChunkSoil.CubeDensity.Length; i++) {
                 int x = i % 16;
                 int z = i / 16;
 
-                chunk.SetDensity(x, 0, z, ChunkSoilPacked.CubeDensity[i]);
+                chunk.SetDensity(x, 0, z, ChunkSoil.CubeDensity[i]);
             }
+            Assert.That(chunk.DensityBitSize, Is.EqualTo(ChunkSoil.Mode.Packed4));
 
-            for (int i = 0; i < ChunkSoilPacked.CubeDensity.Length; i++) {
+            for (int i = 0; i < ChunkSoil.CubeDensity.Length; i++) {
                 int x = i % 16;
                 int z = i / 16;
 
-                Assert.That(chunk.GetDensity(x, 0, z), Is.EqualTo(ChunkSoilPacked.CubeDensity[i]));
+                Assert.That(chunk.GetDensity(x, 0, z), Is.EqualTo(ChunkSoil.CubeDensity[i]));
             }
         }
 
@@ -243,76 +246,76 @@ namespace Game.Tests.Data {
 
         [Test]
         public void ExpandDensity_ConstantValue_IsReplicatedToEveryVoxel() {
-            var chunk = new ChunkSoilPacked();
+            var chunk = new ChunkSoil();
 
             chunk.SetDensity(0, 0, 0, 0.75f);
 
-            var source = new ChunkSoilPacked(CreateConstantDensity(9), CreateConstantMaterial(0));
-            Assert.That(source.DensityBitSize, Is.EqualTo(ChunkSoilPacked.Mode.Constant));
+            var source = new ChunkSoil(CreateConstantDensity(9), CreateConstantMaterial(0));
+            Assert.That(source.DensityBitSize, Is.EqualTo(ChunkSoil.Mode.Constant));
 
             source.ExpandDensity();
-            Assert.That(source.DensityBitSize, Is.EqualTo(ChunkSoilPacked.Mode.Packed4));
+            Assert.That(source.DensityBitSize, Is.EqualTo(ChunkSoil.Mode.Packed4));
 
             for (int i = 0; i < Size3D; i++) {
                 Coordinates(i, out int x, out int y, out int z);
 
-                Assert.That(source.GetDensity(x, y, z), Is.EqualTo(ChunkSoilPacked.CubeDensity[9]));
+                Assert.That(source.GetDensity(x, y, z), Is.EqualTo(ChunkSoil.CubeDensity[9]));
             }
         }
 
         [Test]
         public void ExpandDensity_WhenAlreadyPacked4_DoesNothing() {
-            var density = CreatePackedDensity(ChunkSoilPacked.Mode.Packed4);
+            var density = CreatePackedDensity(ChunkSoil.Mode.Packed4);
 
-            var chunk = new ChunkSoilPacked(density, CreateConstantMaterial(0));
-            Assert.That(chunk.DensityBitSize, Is.EqualTo(ChunkSoilPacked.Mode.Packed4));
+            var chunk = new ChunkSoil(density, CreateConstantMaterial(0));
+            Assert.That(chunk.DensityBitSize, Is.EqualTo(ChunkSoil.Mode.Packed4));
 
             chunk.SetDensity(31, 31, 31, 1.0f);
-            Assert.That(chunk.DensityBitSize, Is.EqualTo(ChunkSoilPacked.Mode.Packed4));
+            Assert.That(chunk.DensityBitSize, Is.EqualTo(ChunkSoil.Mode.Packed4));
             
             float valueBefore = chunk.GetDensity(31, 31, 31);
 
             chunk.ExpandDensity();
-            Assert.That(chunk.DensityBitSize, Is.EqualTo(ChunkSoilPacked.Mode.Packed4));
+            Assert.That(chunk.DensityBitSize, Is.EqualTo(ChunkSoil.Mode.Packed4));
 
             Assert.That(chunk.GetDensity(31, 31, 31), Is.EqualTo(valueBefore));
         }
 
         [Test]
         public void CompactDensity_ConstantPackedData_BecomesConstant() {
-            var density = CreatePackedDensity(ChunkSoilPacked.Mode.Packed4);
+            var density = CreatePackedDensity(ChunkSoil.Mode.Packed4);
 
-            var chunk = new ChunkSoilPacked(density, CreateConstantMaterial(0));
-            Assert.That(chunk.DensityBitSize, Is.EqualTo(ChunkSoilPacked.Mode.Packed4));
+            var chunk = new ChunkSoil(density, CreateConstantMaterial(0));
+            Assert.That(chunk.DensityBitSize, Is.EqualTo(ChunkSoil.Mode.Packed4));
 
             for (int i = 0; i < Size3D; i++) {
-                WriteBits(density, 1, ChunkSoilPacked.Mode.Packed4, i, 7);
+                WriteBits(density, 1, ChunkSoil.Mode.Packed4, i, 7);
             }
-            Assert.That(chunk.DensityBitSize, Is.EqualTo(ChunkSoilPacked.Mode.Packed4));
+            Assert.That(chunk.DensityBitSize, Is.EqualTo(ChunkSoil.Mode.Packed4));
 
             chunk.CompactDensity();
-            Assert.That(chunk.DensityBitSize, Is.EqualTo(ChunkSoilPacked.Mode.Constant));
+            Assert.That(chunk.DensityBitSize, Is.EqualTo(ChunkSoil.Mode.Constant));
 
             for (int i = 0; i < Size3D; i++) {
                 Coordinates(i, out int x, out int y, out int z);
 
-                Assert.That(chunk.GetDensity(x, y, z), Is.EqualTo(ChunkSoilPacked.CubeDensity[7]));
+                Assert.That(chunk.GetDensity(x, y, z), Is.EqualTo(ChunkSoil.CubeDensity[7]));
             }
         }
 
         [Test]
         public void CompactDensity_NonConstantData_RemainsReadable() {
-            var density = CreatePackedDensity(ChunkSoilPacked.Mode.Packed4);
+            var density = CreatePackedDensity(ChunkSoil.Mode.Packed4);
 
-            var chunk = new ChunkSoilPacked(density, CreateConstantMaterial(0));
-            Assert.That(chunk.DensityBitSize, Is.EqualTo(ChunkSoilPacked.Mode.Packed4));
+            var chunk = new ChunkSoil(density, CreateConstantMaterial(0));
+            Assert.That(chunk.DensityBitSize, Is.EqualTo(ChunkSoil.Mode.Packed4));
 
             chunk.SetDensity(0, 0, 0, 0.0f);
             chunk.SetDensity(1, 0, 0, 1.0f);
-            Assert.That(chunk.DensityBitSize, Is.EqualTo(ChunkSoilPacked.Mode.Packed4));
+            Assert.That(chunk.DensityBitSize, Is.EqualTo(ChunkSoil.Mode.Packed4));
 
             chunk.CompactDensity();
-            Assert.That(chunk.DensityBitSize, Is.EqualTo(ChunkSoilPacked.Mode.Packed4));
+            Assert.That(chunk.DensityBitSize, Is.EqualTo(ChunkSoil.Mode.Packed4));
 
             Assert.That(chunk.GetDensity(0, 0, 0), Is.EqualTo(0.0f));
             Assert.That(chunk.GetDensity(1, 0, 0), Is.EqualTo(1.0f));
@@ -324,11 +327,11 @@ namespace Game.Tests.Data {
 
         [Test]
         public void ExpandMaterial_ConstantToPacked1_PreservesValue() {
-            var chunk = new ChunkSoilPacked(CreateConstantDensity(0), CreateConstantMaterial(42));
-            Assert.That(chunk.MaterialBitSize, Is.EqualTo(ChunkSoilPacked.Mode.Constant));
+            var chunk = new ChunkSoil(CreateConstantDensity(0), CreateConstantMaterial(42));
+            Assert.That(chunk.MaterialBitSize, Is.EqualTo(ChunkSoil.Mode.Constant));
 
             chunk.ExpandMaterial();
-            Assert.That(chunk.MaterialBitSize, Is.EqualTo(ChunkSoilPacked.Mode.Packed1));
+            Assert.That(chunk.MaterialBitSize, Is.EqualTo(ChunkSoil.Mode.Packed1));
 
             Assert.That(chunk.GetMaterial(0, 0, 0), Is.EqualTo(42));
             Assert.That(chunk.GetMaterial(31, 31, 31), Is.EqualTo(42));
@@ -336,11 +339,11 @@ namespace Game.Tests.Data {
 
         [Test]
         public void ExpandMaterial_ConstantToPacked2_PreservesValue() {
-            var chunk = new ChunkSoilPacked(CreateConstantDensity(0), CreateConstantMaterial(42));
-            Assert.That(chunk.MaterialBitSize, Is.EqualTo(ChunkSoilPacked.Mode.Constant));
+            var chunk = new ChunkSoil(CreateConstantDensity(0), CreateConstantMaterial(42));
+            Assert.That(chunk.MaterialBitSize, Is.EqualTo(ChunkSoil.Mode.Constant));
 
             chunk.ExpandMaterial(3);
-            Assert.That(chunk.MaterialBitSize, Is.EqualTo(ChunkSoilPacked.Mode.Packed2));
+            Assert.That(chunk.MaterialBitSize, Is.EqualTo(ChunkSoil.Mode.Packed2));
 
             Assert.That(chunk.GetMaterial(0, 0, 0), Is.EqualTo(42));
             Assert.That(chunk.GetMaterial(31, 31, 31), Is.EqualTo(42));
@@ -348,11 +351,11 @@ namespace Game.Tests.Data {
 
         [Test]
         public void ExpandMaterial_ConstantToPacked4_PreservesValue() {
-            var chunk = new ChunkSoilPacked(CreateConstantDensity(0), CreateConstantMaterial(42));
-            Assert.That(chunk.MaterialBitSize, Is.EqualTo(ChunkSoilPacked.Mode.Constant));
+            var chunk = new ChunkSoil(CreateConstantDensity(0), CreateConstantMaterial(42));
+            Assert.That(chunk.MaterialBitSize, Is.EqualTo(ChunkSoil.Mode.Constant));
 
             chunk.ExpandMaterial(10);
-            Assert.That(chunk.MaterialBitSize, Is.EqualTo(ChunkSoilPacked.Mode.Packed4));
+            Assert.That(chunk.MaterialBitSize, Is.EqualTo(ChunkSoil.Mode.Packed4));
 
             Assert.That(chunk.GetMaterial(0, 0, 0), Is.EqualTo(42));
             Assert.That(chunk.GetMaterial(31, 31, 31), Is.EqualTo(42));
@@ -360,11 +363,11 @@ namespace Game.Tests.Data {
 
         [Test]
         public void ExpandMaterial_ConstantToPacked6_PreservesValue() {
-            var chunk = new ChunkSoilPacked(CreateConstantDensity(0), CreateConstantMaterial(42));
-            Assert.That(chunk.MaterialBitSize, Is.EqualTo(ChunkSoilPacked.Mode.Constant));
+            var chunk = new ChunkSoil(CreateConstantDensity(0), CreateConstantMaterial(42));
+            Assert.That(chunk.MaterialBitSize, Is.EqualTo(ChunkSoil.Mode.Constant));
 
             chunk.ExpandMaterial(17);
-            Assert.That(chunk.MaterialBitSize, Is.EqualTo(ChunkSoilPacked.Mode.Packed6));
+            Assert.That(chunk.MaterialBitSize, Is.EqualTo(ChunkSoil.Mode.Packed6));
 
             Assert.That(chunk.GetMaterial(0, 0, 0), Is.EqualTo(42));
             Assert.That(chunk.GetMaterial(31, 31, 31), Is.EqualTo(42));
@@ -372,19 +375,19 @@ namespace Game.Tests.Data {
 
         [Test]
         public void ExpandMaterial_AlreadyPacked6_DoesNothing() {
-            var material = CreatePackedMaterial(ChunkSoilPacked.Mode.Packed6);
+            var material = CreatePackedMaterial(ChunkSoil.Mode.Packed6);
 
             for (int i = 0; i < Size3D; i++) {
-                WriteBits(material, 1, ChunkSoilPacked.Mode.Packed6, i, i % 64);
+                WriteBits(material, 1, ChunkSoil.Mode.Packed6, i, i % 64);
             }
 
-            var chunk = new ChunkSoilPacked(CreateConstantDensity(0), material);
-            Assert.That(chunk.MaterialBitSize, Is.EqualTo(ChunkSoilPacked.Mode.Packed6));
+            var chunk = new ChunkSoil(CreateConstantDensity(0), material);
+            Assert.That(chunk.MaterialBitSize, Is.EqualTo(ChunkSoil.Mode.Packed6));
 
             chunk.ExpandMaterial();
-            Assert.That(chunk.MaterialBitSize, Is.EqualTo(ChunkSoilPacked.Mode.Packed6));
+            Assert.That(chunk.MaterialBitSize, Is.EqualTo(ChunkSoil.Mode.Packed6));
 
-            for (int i = 0; i < Size3D; i += 137) {
+            for (int i = 0; i < Size3D; i ++) {
                 Coordinates(i, out int x, out int y, out int z);
 
                 Assert.That(chunk.GetMaterial(x, y, z), Is.EqualTo(i % 64));
@@ -393,14 +396,14 @@ namespace Game.Tests.Data {
 
         [Test]
         public void ExpandMaterial_FromPacked1ToPacked2_PreservesValues() {
-            var chunk = new ChunkSoilPacked();
-            Assert.That(chunk.MaterialBitSize, Is.EqualTo(ChunkSoilPacked.Mode.Constant));
+            var chunk = new ChunkSoil();
+            Assert.That(chunk.MaterialBitSize, Is.EqualTo(ChunkSoil.Mode.Constant));
 
             chunk.SetMaterial(1, 0, 0, 20);
-            Assert.That(chunk.MaterialBitSize, Is.EqualTo(ChunkSoilPacked.Mode.Packed1));
+            Assert.That(chunk.MaterialBitSize, Is.EqualTo(ChunkSoil.Mode.Packed1));
 
             chunk.ExpandMaterial(3);
-            Assert.That(chunk.MaterialBitSize, Is.EqualTo(ChunkSoilPacked.Mode.Packed2));
+            Assert.That(chunk.MaterialBitSize, Is.EqualTo(ChunkSoil.Mode.Packed2));
 
             Assert.That(chunk.GetMaterial(0, 0, 0), Is.EqualTo(0));
             Assert.That(chunk.GetMaterial(1, 0, 0), Is.EqualTo(20));
@@ -408,16 +411,16 @@ namespace Game.Tests.Data {
 
         [Test]
         public void ExpandMaterial_FromPacked2ToPacked4_PreservesValues() {
-            var chunk = new ChunkSoilPacked();
-            Assert.That(chunk.MaterialBitSize, Is.EqualTo(ChunkSoilPacked.Mode.Constant));
+            var chunk = new ChunkSoil();
+            Assert.That(chunk.MaterialBitSize, Is.EqualTo(ChunkSoil.Mode.Constant));
 
             chunk.SetMaterial(0, 0, 0, 10);
             chunk.SetMaterial(1, 0, 0, 20);
             chunk.SetMaterial(2, 0, 0, 30);
-            Assert.That(chunk.MaterialBitSize, Is.EqualTo(ChunkSoilPacked.Mode.Packed2));
+            Assert.That(chunk.MaterialBitSize, Is.EqualTo(ChunkSoil.Mode.Packed2));
 
             chunk.ExpandMaterial(5);
-            Assert.That(chunk.MaterialBitSize, Is.EqualTo(ChunkSoilPacked.Mode.Packed4));
+            Assert.That(chunk.MaterialBitSize, Is.EqualTo(ChunkSoil.Mode.Packed4));
 
             Assert.That(chunk.GetMaterial(0, 0, 0), Is.EqualTo(10));
             Assert.That(chunk.GetMaterial(1, 0, 0), Is.EqualTo(20));
@@ -426,21 +429,21 @@ namespace Game.Tests.Data {
 
         [Test]
         public void ExpandMaterial_FromPacked4ToPacked6_PreservesValues() {
-            var chunk = new ChunkSoilPacked();
+            var chunk = new ChunkSoil();
 
-            for (int i = 0; i < 16; i++) {
+            for (int i = 0; i < Size3D; i++) {
                 Coordinates(i, out int x, out int y, out int z);
-                chunk.SetMaterial(x, y, z, i);
+                chunk.SetMaterial(x, y, z, i % 16);
             }
-            Assert.That(chunk.MaterialBitSize, Is.EqualTo(ChunkSoilPacked.Mode.Packed4));
+            Assert.That(chunk.MaterialBitSize, Is.EqualTo(ChunkSoil.Mode.Packed4));
 
             chunk.ExpandMaterial(17);
-            Assert.That(chunk.MaterialBitSize, Is.EqualTo(ChunkSoilPacked.Mode.Packed6));
+            Assert.That(chunk.MaterialBitSize, Is.EqualTo(ChunkSoil.Mode.Packed6));
             
-            for (int i = 0; i < 16; i++) {
+            for (int i = 0; i < Size3D; i++) {
                 Coordinates(i, out int x, out int y, out int z);
 
-                Assert.That(chunk.GetMaterial(x, y, z), Is.EqualTo(i));
+                Assert.That(chunk.GetMaterial(x, y, z), Is.EqualTo(i % 16));
             }
         }
 
@@ -450,10 +453,10 @@ namespace Game.Tests.Data {
 
         [Test]
         public void SetMaterial_TwoValues_UsesPacked1Semantics() {
-            var chunk = new ChunkSoilPacked();
+            var chunk = new ChunkSoil();
 
             chunk.SetMaterial(1, 0, 0, 20);
-            Assert.That(chunk.MaterialBitSize, Is.EqualTo(ChunkSoilPacked.Mode.Packed1));
+            Assert.That(chunk.MaterialBitSize, Is.EqualTo(ChunkSoil.Mode.Packed1));
 
             Assert.That(chunk.GetMaterial(0, 0, 0), Is.EqualTo(0));
             Assert.That(chunk.GetMaterial(1, 0, 0), Is.EqualTo(20));
@@ -461,12 +464,12 @@ namespace Game.Tests.Data {
 
         [Test]
         public void SetMaterial_ThreeValues_ExpandsAndPreservesExistingValues() {
-            var chunk = new ChunkSoilPacked();
+            var chunk = new ChunkSoil();
 
             chunk.SetMaterial(0, 0, 0, 10);
             chunk.SetMaterial(1, 0, 0, 20);
             chunk.SetMaterial(2, 0, 0, 30);
-            Assert.That(chunk.MaterialBitSize, Is.EqualTo(ChunkSoilPacked.Mode.Packed2));
+            Assert.That(chunk.MaterialBitSize, Is.EqualTo(ChunkSoil.Mode.Packed2));
 
             Assert.That(chunk.GetMaterial(0, 0, 0), Is.EqualTo(10));
             Assert.That(chunk.GetMaterial(1, 0, 0), Is.EqualTo(20));
@@ -475,49 +478,49 @@ namespace Game.Tests.Data {
 
         [Test]
         public void SetMaterial_FiveValues_ExpandsToPacked4Semantics() {
-            var chunk = new ChunkSoilPacked();
+            var chunk = new ChunkSoil();
 
-            for (int i = 0; i < 5; i++) {
+            for (int i = 0; i < Size3D; i++) {
                 Coordinates(i, out int x, out int y, out int z);
-                chunk.SetMaterial(x, y, z, i);
+                chunk.SetMaterial(x, y, z, i % 5);
             }
-            Assert.That(chunk.MaterialBitSize, Is.EqualTo(ChunkSoilPacked.Mode.Packed4));
+            Assert.That(chunk.MaterialBitSize, Is.EqualTo(ChunkSoil.Mode.Packed4));
 
-            for (int i = 0; i < 5; i++) {
+            for (int i = 0; i < Size3D; i++) {
                 Coordinates(i, out int x, out int y, out int z);
-                Assert.That(chunk.GetMaterial(x, y, z), Is.EqualTo(i));
+                Assert.That(chunk.GetMaterial(x, y, z), Is.EqualTo(i % 5));
             }
         }
 
         [Test]
         public void SetMaterial_SeventeenUniqueValues_ExpandsToPacked6() {
-            var chunk = new ChunkSoilPacked();
+            var chunk = new ChunkSoil();
 
-            for (int i = 0; i < 17; i++) {
+            for (int i = 0; i < Size3D; i++) {
                 Coordinates(i, out int x, out int y, out int z);
-                chunk.SetMaterial(x, y, z, i);
+                chunk.SetMaterial(x, y, z, i % 17);
             }
-            Assert.That(chunk.MaterialBitSize, Is.EqualTo(ChunkSoilPacked.Mode.Packed6));
+            Assert.That(chunk.MaterialBitSize, Is.EqualTo(ChunkSoil.Mode.Packed6));
 
-            for (int i = 0; i < 17; i++) {
+            for (int i = 0; i < Size3D; i++) {
                 Coordinates(i, out int x, out int y, out int z);
-                Assert.That(chunk.GetMaterial(x, y, z), Is.EqualTo(i));
+                Assert.That(chunk.GetMaterial(x, y, z), Is.EqualTo(i % 17));
             }
         }
 
         [Test]
         public void SetMaterial_All64Values_RoundTrip() {
-            var chunk = new ChunkSoilPacked();
+            var chunk = new ChunkSoil();
 
-            for (int i = 0; i < 64; i++) {
+            for (int i = 0; i < Size3D; i++) {
                 Coordinates(i, out int x, out int y, out int z);
-                chunk.SetMaterial(x, y, z, i);
+                chunk.SetMaterial(x, y, z, i % 64);
             }
-            Assert.That(chunk.MaterialBitSize, Is.EqualTo(ChunkSoilPacked.Mode.Packed6));
+            Assert.That(chunk.MaterialBitSize, Is.EqualTo(ChunkSoil.Mode.Packed6));
 
-            for (int i = 0; i < 64; i++) {
+            for (int i = 0; i < Size3D; i++) {
                 Coordinates(i, out int x, out int y, out int z);
-                Assert.That(chunk.GetMaterial(x, y, z), Is.EqualTo(i));
+                Assert.That(chunk.GetMaterial(x, y, z), Is.EqualTo(i % 64));
             }
         }
 
@@ -528,12 +531,12 @@ namespace Game.Tests.Data {
         [Test]
         public void CompactMaterial_OneValue_BecomesConstant() {
             var chunk = CreatePacked6ChunkWithPattern(1);
-            Assert.That(chunk.MaterialBitSize, Is.EqualTo(ChunkSoilPacked.Mode.Packed6));
+            Assert.That(chunk.MaterialBitSize, Is.EqualTo(ChunkSoil.Mode.Packed6));
 
             chunk.CompactMaterial();
-            Assert.That(chunk.MaterialBitSize, Is.EqualTo(ChunkSoilPacked.Mode.Constant));
+            Assert.That(chunk.MaterialBitSize, Is.EqualTo(ChunkSoil.Mode.Constant));
 
-            for (int i = 0; i < Size3D; i += 101) {
+            for (int i = 0; i < Size3D; i++) {
                 Coordinates(i, out int x, out int y, out int z);
 
                 Assert.That(chunk.GetMaterial(x, y, z), Is.EqualTo(7));
@@ -543,28 +546,34 @@ namespace Game.Tests.Data {
         [Test]
         public void CompactMaterial_TwoValues_BecomesPacked1() {
             var chunk = CreatePacked6ChunkWithPattern(2);
-            Assert.That(chunk.MaterialBitSize, Is.EqualTo(ChunkSoilPacked.Mode.Packed6));
+            Assert.That(chunk.MaterialBitSize, Is.EqualTo(ChunkSoil.Mode.Packed6));
 
             chunk.CompactMaterial();
-            Assert.That(chunk.MaterialBitSize, Is.EqualTo(ChunkSoilPacked.Mode.Packed1));
+            Assert.That(chunk.MaterialBitSize, Is.EqualTo(ChunkSoil.Mode.Packed1));
 
             Assert.That(chunk.GetMaterial(0, 0, 0), Is.EqualTo(10));
             Assert.That(chunk.GetMaterial(1, 0, 0), Is.EqualTo(11));
+
+            for (int i = 0; i < Size3D; i++) {
+                Coordinates(i, out int x, out int y, out int z);
+
+                Assert.That(chunk.GetMaterial(x, y, z), Is.EqualTo(10 + i % 2));
+            }
         }
 
         [TestCase(3)]
         [TestCase(4)]
         public void CompactMaterial_Values_BecomesPacked2(int values) {
             var chunk = CreatePacked6ChunkWithPattern(values);
-            Assert.That(chunk.MaterialBitSize, Is.EqualTo(ChunkSoilPacked.Mode.Packed6));
+            Assert.That(chunk.MaterialBitSize, Is.EqualTo(ChunkSoil.Mode.Packed6));
 
             chunk.CompactMaterial();
-            Assert.That(chunk.MaterialBitSize, Is.EqualTo(ChunkSoilPacked.Mode.Packed2));
+            Assert.That(chunk.MaterialBitSize, Is.EqualTo(ChunkSoil.Mode.Packed2));
 
-            for (int i = 0; i < values; i++) {
+            for (int i = 0; i < Size3D; i++) {
                 Coordinates(i, out int x, out int y, out int z);
 
-                Assert.That(chunk.GetMaterial(x, y, z), Is.EqualTo(10 + i));
+                Assert.That(chunk.GetMaterial(x, y, z), Is.EqualTo(10 + i % values));
             }
         }
 
@@ -574,75 +583,75 @@ namespace Game.Tests.Data {
         [TestCase(16)]
         public void CompactMaterial_Values_BecomesPacked4(int values) {
             var chunk = CreatePacked6ChunkWithPattern(values);
-            Assert.That(chunk.MaterialBitSize, Is.EqualTo(ChunkSoilPacked.Mode.Packed6));
+            Assert.That(chunk.MaterialBitSize, Is.EqualTo(ChunkSoil.Mode.Packed6));
 
-            for (int i = 0; i < values; i++) {
+            for (int i = 0; i < Size3D; i++) {
                 Coordinates(i, out int x, out int y, out int z);
 
-                Assert.That(chunk.GetMaterial(x, y, z), Is.EqualTo(10 + i));
+                Assert.That(chunk.GetMaterial(x, y, z), Is.EqualTo(10 + i % values));
             }
 
             chunk.CompactMaterial();
-            Assert.That(chunk.MaterialBitSize, Is.EqualTo(ChunkSoilPacked.Mode.Packed4));
+            Assert.That(chunk.MaterialBitSize, Is.EqualTo(ChunkSoil.Mode.Packed4));
 
-            for (int i = 0; i < values; i++) {
+            for (int i = 0; i < Size3D; i++) {
                 Coordinates(i, out int x, out int y, out int z);
 
-                Assert.That(chunk.GetMaterial(x, y, z), Is.EqualTo(10 + i));
+                Assert.That(chunk.GetMaterial(x, y, z), Is.EqualTo(10 + i % values));
             }
         }
 
         [Test]
         public void CompactMaterial_SeventeenValues_DoesNotCompactToPacked4() {
             var chunk = CreatePacked6ChunkWithPattern(17);
-            Assert.That(chunk.MaterialBitSize, Is.EqualTo(ChunkSoilPacked.Mode.Packed6));
+            Assert.That(chunk.MaterialBitSize, Is.EqualTo(ChunkSoil.Mode.Packed6));
 
             chunk.CompactMaterial();
-            Assert.That(chunk.MaterialBitSize, Is.EqualTo(ChunkSoilPacked.Mode.Packed6));
+            Assert.That(chunk.MaterialBitSize, Is.EqualTo(ChunkSoil.Mode.Packed6));
 
-            for (int i = 0; i < 9; i++) {
+            for (int i = 0; i < Size3D; i++) {
                 Coordinates(i, out int x, out int y, out int z);
 
-                Assert.That(chunk.GetMaterial(x, y, z), Is.EqualTo(10 + i));
+                Assert.That(chunk.GetMaterial(x, y, z), Is.EqualTo(10 + i % 17));
             }
         }
 
         [Test]
         public void CompactMaterial_ThirtyTwoValues_DoesNotCompactToPacked4() {
             var chunk = CreatePacked6ChunkWithPattern(32);
-            Assert.That(chunk.MaterialBitSize, Is.EqualTo(ChunkSoilPacked.Mode.Packed6));
+            Assert.That(chunk.MaterialBitSize, Is.EqualTo(ChunkSoil.Mode.Packed6));
 
             chunk.CompactMaterial();
-            Assert.That(chunk.MaterialBitSize, Is.EqualTo(ChunkSoilPacked.Mode.Packed6));
+            Assert.That(chunk.MaterialBitSize, Is.EqualTo(ChunkSoil.Mode.Packed6));
 
-            for (int i = 0; i < 32; i++) {
+            for (int i = 0; i < Size3D; i++) {
                 Coordinates(i, out int x, out int y, out int z);
 
-                Assert.That(chunk.GetMaterial(x, y, z), Is.EqualTo(10 + i));
+                Assert.That(chunk.GetMaterial(x, y, z), Is.EqualTo(10 + i % 32));
             }
         }
 
         [Test]
         public void CompactMaterial_Packed4WithEightValues_RemainsReadable() {
-            var chunk = new ChunkSoilPacked();
-            Assert.That(chunk.MaterialBitSize, Is.EqualTo(ChunkSoilPacked.Mode.Constant));
+            var chunk = new ChunkSoil();
+            Assert.That(chunk.MaterialBitSize, Is.EqualTo(ChunkSoil.Mode.Constant));
 
-            for (int i = 0; i < 8; i++) {
+            for (int i = 0; i < Size3D; i++) {
                 Coordinates(i, out int x, out int y, out int z);
-                chunk.SetMaterial(x, y, z, i);
+                chunk.SetMaterial(x, y, z, i % 8);
             }
-            Assert.That(chunk.MaterialBitSize, Is.EqualTo(ChunkSoilPacked.Mode.Packed4));
+            Assert.That(chunk.MaterialBitSize, Is.EqualTo(ChunkSoil.Mode.Packed4));
 
             chunk.ExpandMaterial(17);
-            Assert.That(chunk.MaterialBitSize, Is.EqualTo(ChunkSoilPacked.Mode.Packed6));
+            Assert.That(chunk.MaterialBitSize, Is.EqualTo(ChunkSoil.Mode.Packed6));
             
             chunk.CompactMaterial();
-            Assert.That(chunk.MaterialBitSize, Is.EqualTo(ChunkSoilPacked.Mode.Packed4));
+            Assert.That(chunk.MaterialBitSize, Is.EqualTo(ChunkSoil.Mode.Packed4));
 
-            for (int i = 0; i < 8; i++) {
+            for (int i = 0; i < Size3D; i++) {
                 Coordinates(i, out int x, out int y, out int z);
 
-                Assert.That(chunk.GetMaterial(x, y, z), Is.EqualTo(i));
+                Assert.That(chunk.GetMaterial(x, y, z), Is.EqualTo(i % 8));
             }
         }
 
@@ -652,8 +661,8 @@ namespace Game.Tests.Data {
 
         [Test]
         public void Mode_Packed1_ReadWrite_AllBitPositions() {
-            var data = new byte[ChunkSoilPacked.Mode.Packed1.dataSize + 4];
-            var mode = ChunkSoilPacked.Mode.Packed1;
+            var data = new byte[ChunkSoil.Mode.Packed1.dataSize + 4];
+            var mode = ChunkSoil.Mode.Packed1;
 
             for (int i = 0; i < Size3D; i++) {
                 mode.WriteBits(data, 1, i, i & 1);
@@ -666,8 +675,8 @@ namespace Game.Tests.Data {
 
         [Test]
         public void Mode_Packed2_ReadWrite_AllValues() {
-            var data = new byte[ChunkSoilPacked.Mode.Packed2.dataSize + 4];
-            var mode = ChunkSoilPacked.Mode.Packed2;
+            var data = new byte[ChunkSoil.Mode.Packed2.dataSize + 4];
+            var mode = ChunkSoil.Mode.Packed2;
 
             for (int i = 0; i < Size3D; i++) {
                 mode.WriteBits(data, 1, i, i & 3);
@@ -680,8 +689,8 @@ namespace Game.Tests.Data {
 
         [Test]
         public void Mode_Packed4_ReadWrite_AllValues() {
-            var data = new byte[ChunkSoilPacked.Mode.Packed4.dataSize + 4];
-            var mode = ChunkSoilPacked.Mode.Packed4;
+            var data = new byte[ChunkSoil.Mode.Packed4.dataSize + 4];
+            var mode = ChunkSoil.Mode.Packed4;
 
             for (int i = 0; i < Size3D; i++) {
                 mode.WriteBits(data, 1, i, i & 15);
@@ -694,8 +703,8 @@ namespace Game.Tests.Data {
 
         [Test]
         public void Mode_Packed6_ReadWrite_AllValues() {
-            var data = new byte[ChunkSoilPacked.Mode.Packed6.dataSize + 4];
-            var mode = ChunkSoilPacked.Mode.Packed6;
+            var data = new byte[ChunkSoil.Mode.Packed6.dataSize + 4];
+            var mode = ChunkSoil.Mode.Packed6;
 
             for (int i = 0; i < Size3D; i++) {
                 mode.WriteBits(data, 1, i, i & 63);
@@ -708,8 +717,8 @@ namespace Game.Tests.Data {
 
         [Test]
         public void Mode_Packed6_ReadWrite_CrossByteBoundaries() {
-            var data = new byte[ChunkSoilPacked.Mode.Packed6.dataSize + 4];
-            var mode = ChunkSoilPacked.Mode.Packed6;
+            var data = new byte[ChunkSoil.Mode.Packed6.dataSize + 4];
+            var mode = ChunkSoil.Mode.Packed6;
 
             int[] indices = {
                 0, 1, 2, 3, 4, 5,
@@ -734,8 +743,8 @@ namespace Game.Tests.Data {
 
         [Test]
         public void Mode_WriteBits_OverwritesExistingPacked4Value() {
-            var data = new byte[ChunkSoilPacked.Mode.Packed4.dataSize + 4];
-            var mode = ChunkSoilPacked.Mode.Packed4;
+            var data = new byte[ChunkSoil.Mode.Packed4.dataSize + 4];
+            var mode = ChunkSoil.Mode.Packed4;
 
             mode.WriteBits(data, 1, 0, 15);
             mode.WriteBits(data, 1, 0, 3);
@@ -745,8 +754,8 @@ namespace Game.Tests.Data {
 
         [Test]
         public void Mode_WriteBits_OverwritesExistingPacked6Value() {
-            var data = new byte[ChunkSoilPacked.Mode.Packed6.dataSize + 4];
-            var mode = ChunkSoilPacked.Mode.Packed6;
+            var data = new byte[ChunkSoil.Mode.Packed6.dataSize + 4];
+            var mode = ChunkSoil.Mode.Packed6;
 
             mode.WriteBits(data, 1, 1, 63);
             mode.WriteBits(data, 1, 1, 4);
@@ -756,8 +765,8 @@ namespace Game.Tests.Data {
 
         [Test]
         public void Mode_WriteBits_ValueOutsideCapacity_IsMasked() {
-            var data = new byte[ChunkSoilPacked.Mode.Packed4.dataSize + 4];
-            var mode = ChunkSoilPacked.Mode.Packed4;
+            var data = new byte[ChunkSoil.Mode.Packed4.dataSize + 4];
+            var mode = ChunkSoil.Mode.Packed4;
 
             mode.WriteBits(data, 1, 0, 0xFF);
 
@@ -770,15 +779,15 @@ namespace Game.Tests.Data {
 
         [Test]
         public void Mode_DataSizes_AreCorrect() {
-            Assert.That(ChunkSoilPacked.Mode.Constant.dataSize, Is.EqualTo(1));
+            Assert.That(ChunkSoil.Mode.Constant.dataSize, Is.EqualTo(1));
 
-            Assert.That(ChunkSoilPacked.Mode.Packed1.dataSize, Is.EqualTo(4096));
+            Assert.That(ChunkSoil.Mode.Packed1.dataSize, Is.EqualTo(4096));
 
-            Assert.That(ChunkSoilPacked.Mode.Packed2.dataSize, Is.EqualTo(8192));
+            Assert.That(ChunkSoil.Mode.Packed2.dataSize, Is.EqualTo(8192));
 
-            Assert.That(ChunkSoilPacked.Mode.Packed4.dataSize, Is.EqualTo(16384));
+            Assert.That(ChunkSoil.Mode.Packed4.dataSize, Is.EqualTo(16384));
 
-            Assert.That(ChunkSoilPacked.Mode.Packed6.dataSize, Is.EqualTo(24576));
+            Assert.That(ChunkSoil.Mode.Packed6.dataSize, Is.EqualTo(24576));
         }
 
         // ============================================================
@@ -787,7 +796,7 @@ namespace Game.Tests.Data {
 
         [Test]
         public void UnsafeGetDensity_ValidCoordinates_MatchesSafeAccess() {
-            var chunk = new ChunkSoilPacked();
+            var chunk = new ChunkSoil();
 
             chunk.SetDensity(3, 7, 11, 0.85f);
 
@@ -800,7 +809,7 @@ namespace Game.Tests.Data {
 
         [Test]
         public void SetDensity_ValueAboveOne_MapsToSpecialDensity() {
-            var chunk = new ChunkSoilPacked();
+            var chunk = new ChunkSoil();
 
             chunk.SetDensity(0, 0, 0, 1.01f);
 
@@ -809,7 +818,7 @@ namespace Game.Tests.Data {
 
         [Test]
         public void SetDensity_Two_MapsToSpecialDensity() {
-            var chunk = new ChunkSoilPacked();
+            var chunk = new ChunkSoil();
 
             chunk.SetDensity(0, 0, 0, 2.0f);
 
@@ -818,7 +827,7 @@ namespace Game.Tests.Data {
 
         [Test]
         public void SetDensity_LargePositiveValue_MapsToSpecialDensity() {
-            var chunk = new ChunkSoilPacked();
+            var chunk = new ChunkSoil();
 
             chunk.SetDensity(0, 0, 0, float.MaxValue);
 
@@ -827,7 +836,7 @@ namespace Game.Tests.Data {
 
         [Test]
         public void SetDensity_NaN_CurrentImplementationMapsToSpecialDensity() {
-            var chunk = new ChunkSoilPacked();
+            var chunk = new ChunkSoil();
 
             chunk.SetDensity(0, 0, 0, float.NaN);
 
@@ -836,7 +845,7 @@ namespace Game.Tests.Data {
 
         [Test]
         public void SetDensity_NegativeValue_CurrentImplementationDoesNotClamp() {
-            var chunk = new ChunkSoilPacked();
+            var chunk = new ChunkSoil();
 
             chunk.SetDensity(0, 0, 0, -1.0f);
 
@@ -849,14 +858,14 @@ namespace Game.Tests.Data {
 
         [Test]
         public void FullChunk_DensityPattern_RoundTrips() {
-            var chunk = new ChunkSoilPacked();
+            var chunk = new ChunkSoil();
 
             for (int i = 0; i < Size3D; i++) {
                 Coordinates(i, out int x, out int y, out int z);
 
                 int densityIndex = i & 15;
 
-                chunk.SetDensity(x, y, z, ChunkSoilPacked.CubeDensity[densityIndex]);
+                chunk.SetDensity(x, y, z, ChunkSoil.CubeDensity[densityIndex]);
             }
 
             for (int i = 0; i < Size3D; i++) {
@@ -865,13 +874,13 @@ namespace Game.Tests.Data {
                 int expected = i & 15;
 
                 Assert.That(chunk.GetDensity(x, y, z),
-                    Is.EqualTo(ChunkSoilPacked.CubeDensity[expected]), $"Density mismatch at voxel {i}");
+                    Is.EqualTo(ChunkSoil.CubeDensity[expected]), $"Density mismatch at voxel {i}");
             }
         }
 
         [Test]
         public void FullChunk_MaterialPattern_RoundTrips() {
-            var chunk = new ChunkSoilPacked();
+            var chunk = new ChunkSoil();
 
             for (int i = 0; i < Size3D; i++) {
                 Coordinates(i, out int x, out int y, out int z);
@@ -889,7 +898,7 @@ namespace Game.Tests.Data {
 
         [Test]
         public void FullChunk_MaterialExpandThenCompact_PreservesData() {
-            var chunk = new ChunkSoilPacked();
+            var chunk = new ChunkSoil();
 
             // Eight materials are enough to force Packed4,
             // while still allowing compaction back to Packed4.
@@ -926,17 +935,17 @@ namespace Game.Tests.Data {
             return data;
         }
 
-        private static byte[] CreatePackedDensity(ChunkSoilPacked.Mode mode) {
+        private static byte[] CreatePackedDensity(ChunkSoil.Mode mode) {
             var data = new byte[mode.DenArraySize];
             data[0] = mode.id;
             return data;
         }
 
-        private static byte[] CreatePackedMaterial(ChunkSoilPacked.Mode mode) {
+        private static byte[] CreatePackedMaterial(ChunkSoil.Mode mode) {
             byte[] data;
-            if (mode == ChunkSoilPacked.Mode.Constant) {
+            if (mode == ChunkSoil.Mode.Constant) {
                 data = new byte[mode.MatArraySize];
-            } else if (mode == ChunkSoilPacked.Mode.Packed6) {
+            } else if (mode == ChunkSoil.Mode.Packed6) {
                 data = new byte[mode.MatArraySize];
             } else {
                 data = new byte[mode.MatArraySize];
@@ -947,12 +956,12 @@ namespace Game.Tests.Data {
             return data;
         }
 
-        private static void WriteBits(byte[] data, int offset, ChunkSoilPacked.Mode mode, int index, int value) {
+        private static void WriteBits(byte[] data, int offset, ChunkSoil.Mode mode, int index, int value) {
             mode.WriteBits(data, offset, index, value);
         }
 
-        private static ChunkSoilPacked CreatePacked6ChunkWithPattern(int distinctValues) {
-            var material = CreatePackedMaterial(ChunkSoilPacked.Mode.Packed6);
+        private static ChunkSoil CreatePacked6ChunkWithPattern(int distinctValues) {
+            var material = CreatePackedMaterial(ChunkSoil.Mode.Packed6);
 
             for (int i = 0; i < Size3D; i++) {
                 int value;
@@ -963,19 +972,19 @@ namespace Game.Tests.Data {
                     value = 10 + (i % distinctValues);
                 }
 
-                WriteBits(material, 1, ChunkSoilPacked.Mode.Packed6, i, value);
+                WriteBits(material, 1, ChunkSoil.Mode.Packed6, i, value);
             }
 
-            return new ChunkSoilPacked(CreateConstantDensity(0), material);
+            return new ChunkSoil(CreateConstantDensity(0), material);
         }
 
         private static void Coordinates(int index, out int x, out int y, out int z) {
-            x = index % ChunkSoilPacked.Size1D;
+            x = index % ChunkSoil.Size1D;
 
-            int yz = index / ChunkSoilPacked.Size1D;
+            int yz = index / ChunkSoil.Size1D;
 
-            z = yz % ChunkSoilPacked.Size1D;
-            y = yz / ChunkSoilPacked.Size1D;
+            z = yz % ChunkSoil.Size1D;
+            y = yz / ChunkSoil.Size1D;
         }
     }
 }
