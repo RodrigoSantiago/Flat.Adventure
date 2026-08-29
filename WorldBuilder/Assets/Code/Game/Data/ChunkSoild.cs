@@ -416,11 +416,27 @@ namespace Game.Data {
             material = target;
         }
 
+        public byte[] ExportDensity() {
+            var compacted = LocalCompactDensity();
+            if (compacted != null) {
+                return compacted;
+            }
+
+            return (byte[])density.Clone();
+        }
+
         public void CompactDensity() {
+            var compacted = LocalCompactDensity();
+            if (compacted != null) {
+                density = compacted;
+            }
+        }
+
+        private byte[] LocalCompactDensity() {
             byte[] source = density;
             var currentMode = Mode.Parse(source[ModeIndex]);
             
-            if (currentMode == Mode.Constant) return;
+            if (currentMode == Mode.Constant) return null;
             
             int first = currentMode.GetDensityValue(source, 0);
             bool constant = true;
@@ -433,20 +449,38 @@ namespace Game.Data {
             }
 
             if (constant) {
-                density = CreateDensity(Mode.Constant);
-                density[1] = (byte)first;
+                source = CreateDensity(Mode.Constant);
+                source[1] = (byte)first;
+                return source;
             }
+            return null;
+        }
+
+        public byte[] ExportMaterial() {
+            var compacted = LocalCompactMaterial();
+            if (compacted != null) {
+                return compacted;
+            }
+
+            return (byte[])material.Clone();
         }
 
         public void CompactMaterial() {
+            var compacted = LocalCompactMaterial();
+            if (compacted != null) {
+                material = compacted;
+            }
+        }
+
+        private byte[] LocalCompactMaterial() {
             byte[] source = material;
             var currentMode = Mode.Parse(source[ModeIndex]);
             
-            if (currentMode == Mode.Constant) return;
+            if (currentMode == Mode.Constant) return null;
             
             ulong used = 0;
 
-            int countLimit = currentMode.paletteCapacity >> 1;
+            int countLimit = Mode.Parse(currentMode.id - 1).paletteCapacity;
             int count = 0;
             
             Span<byte> palette = stackalloc byte[16];
@@ -455,11 +489,11 @@ namespace Game.Data {
                 ulong flag = 1UL << value;
                 if ((used & flag) == 0) {
                     if (count == 16) {
-                        return;
+                        return null;
                     }
                     palette[count++] = (byte)value;
                     if (count > countLimit) {
-                        return;
+                        return null;
                     }
                 }
                 used |= flag;
@@ -469,12 +503,12 @@ namespace Game.Data {
                              count <= 2 ? Mode.Packed1 : 
                              count <= 4 ? Mode.Packed2 : Mode.Packed4;
 
-            if (targetMode.id >= currentMode.id) return;
+            if (targetMode.id >= currentMode.id) return null;
 
             if (count == 1) {
-                material = CreateMaterial(Mode.Constant);
-                material[1] = palette[0];
-                return;
+                var mat = CreateMaterial(Mode.Constant);
+                mat[1] = palette[0];
+                return mat;
             }
             
             var target = CreateMaterial(targetMode);
@@ -523,7 +557,7 @@ namespace Game.Data {
                 }
             }
 
-            material = target;
+            return target;
         }
 
         private void SetDensityValue(int index, int value) {

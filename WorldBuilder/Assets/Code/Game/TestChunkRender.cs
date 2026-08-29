@@ -91,6 +91,10 @@ namespace Code {
             DateTime start = DateTime.Now;
             gen = new ChunkMeshGenerator(shader);
             gen.Init();
+            // chunk.CompactMaterial();
+            // chunkSoil.CompactMaterial();
+            Debug.Log(chunk.MaterialBitSize);
+            Debug.Log(chunkSoil.MaterialBitSize);
             gen.Remesh(chunk, chunkSoil, (mesh) => {
                 filter.sharedMesh = mesh;
                 var period = DateTime.Now.Subtract(start);

@@ -11,6 +11,30 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 12004, guid: 0000000000000000e000000000000000, type: 0}
   m_Name: 
+  m_EditorClassIdentifier: UnityEditor.dll::UnityEditor.ContainerWindow
+  m_PixelRect:
+    serializedVersion: 2
+    x: 878
+    y: 134
+    width: 746
+    height: 829
+  m_ShowMode: 0
+  m_Title: Test Runner
+  m_RootView: {fileID: 4}
+  m_MinSize: {x: 50, y: 76}
+  m_MaxSize: {x: 4000, y: 4026}
+  m_Maximized: 0
+--- !u!114 &2
+MonoBehaviour:
+  m_ObjectHideFlags: 52
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 12004, guid: 0000000000000000e000000000000000, type: 0}
+  m_Name: 
   m_EditorClassIdentifier: 
   m_PixelRect:
     serializedVersion: 2
@@ -19,12 +43,63 @@ MonoBehaviour:
     width: 1920
     height: 997
   m_ShowMode: 4
-  m_Title: Scene
-  m_RootView: {fileID: 2}
+  m_Title: Console
+  m_RootView: {fileID: 5}
   m_MinSize: {x: 875, y: 300}
   m_MaxSize: {x: 10000, y: 10000}
   m_Maximized: 1
---- !u!114 &2
+--- !u!114 &3
+MonoBehaviour:
+  m_ObjectHideFlags: 52
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 12006, guid: 0000000000000000e000000000000000, type: 0}
+  m_Name: TestRunnerWindow
+  m_EditorClassIdentifier: UnityEditor.dll::UnityEditor.DockArea
+  m_Children: []
+  m_Position:
+    serializedVersion: 2
+    x: 0
+    y: 0
+    width: 746
+    height: 829
+  m_MinSize: {x: 50, y: 76}
+  m_MaxSize: {x: 4000, y: 4026}
+  m_ActualView: {fileID: 16}
+  m_Panes:
+  - {fileID: 16}
+  m_Selected: 0
+  m_LastSelected: 0
+--- !u!114 &4
+MonoBehaviour:
+  m_ObjectHideFlags: 52
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 12010, guid: 0000000000000000e000000000000000, type: 0}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEditor.dll::UnityEditor.SplitView
+  m_Children:
+  - {fileID: 3}
+  m_Position:
+    serializedVersion: 2
+    x: 0
+    y: 0
+    width: 746
+    height: 829
+  m_MinSize: {x: 50, y: 76}
+  m_MaxSize: {x: 4000, y: 4026}
+  vertical: 0
+  controlID: 15
+  draggingID: 0
+--- !u!114 &5
 MonoBehaviour:
   m_ObjectHideFlags: 52
   m_CorrespondingSourceObject: {fileID: 0}
@@ -37,9 +112,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Children:
-  - {fileID: 3}
-  - {fileID: 5}
-  - {fileID: 4}
+  - {fileID: 6}
+  - {fileID: 8}
+  - {fileID: 7}
   m_Position:
     serializedVersion: 2
     x: 0
@@ -52,7 +127,7 @@ MonoBehaviour:
   m_TopViewHeight: 36
   m_UseBottomView: 1
   m_BottomViewHeight: 20
---- !u!114 &3
+--- !u!114 &6
 MonoBehaviour:
   m_ObjectHideFlags: 52
   m_CorrespondingSourceObject: {fileID: 0}
@@ -73,8 +148,8 @@ MonoBehaviour:
     height: 36
   m_MinSize: {x: 50, y: 50}
   m_MaxSize: {x: 4000, y: 4000}
-  m_ActualView: {fileID: 15}
---- !u!114 &4
+  m_ActualView: {fileID: 19}
+--- !u!114 &7
 MonoBehaviour:
   m_ObjectHideFlags: 52
   m_CorrespondingSourceObject: {fileID: 0}
@@ -95,7 +170,7 @@ MonoBehaviour:
     height: 20
   m_MinSize: {x: 0, y: 0}
   m_MaxSize: {x: 0, y: 0}
---- !u!114 &5
+--- !u!114 &8
 MonoBehaviour:
   m_ObjectHideFlags: 52
   m_CorrespondingSourceObject: {fileID: 0}
@@ -108,9 +183,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Children:
-  - {fileID: 6}
-  - {fileID: 7}
-  - {fileID: 12}
+  - {fileID: 9}
+  - {fileID: 10}
+  - {fileID: 15}
   m_Position:
     serializedVersion: 2
     x: 0
@@ -120,9 +195,9 @@ MonoBehaviour:
   m_MinSize: {x: 400, y: 112}
   m_MaxSize: {x: 32384, y: 16192}
   vertical: 0
-  controlID: 86
+  controlID: 115
   draggingID: 0
---- !u!114 &6
+--- !u!114 &9
 MonoBehaviour:
   m_ObjectHideFlags: 52
   m_CorrespondingSourceObject: {fileID: 0}
@@ -143,12 +218,12 @@ MonoBehaviour:
     height: 941
   m_MinSize: {x: 231, y: 276}
   m_MaxSize: {x: 10001, y: 10026}
-  m_ActualView: {fileID: 17}
+  m_ActualView: {fileID: 21}
   m_Panes:
-  - {fileID: 17}
+  - {fileID: 21}
   m_Selected: 0
   m_LastSelected: 0
---- !u!114 &7
+--- !u!114 &10
 MonoBehaviour:
   m_ObjectHideFlags: 52
   m_CorrespondingSourceObject: {fileID: 0}
@@ -161,8 +236,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Children:
-  - {fileID: 8}
   - {fileID: 11}
+  - {fileID: 14}
   m_Position:
     serializedVersion: 2
     x: 325
@@ -172,9 +247,9 @@ MonoBehaviour:
   m_MinSize: {x: 200, y: 112}
   m_MaxSize: {x: 16192, y: 16192}
   vertical: 1
-  controlID: 87
+  controlID: 116
   draggingID: 0
---- !u!114 &8
+--- !u!114 &11
 MonoBehaviour:
   m_ObjectHideFlags: 52
   m_CorrespondingSourceObject: {fileID: 0}
@@ -187,8 +262,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Children:
-  - {fileID: 9}
-  - {fileID: 10}
+  - {fileID: 12}
+  - {fileID: 13}
   m_Position:
     serializedVersion: 2
     x: 0
@@ -198,9 +273,9 @@ MonoBehaviour:
   m_MinSize: {x: 200, y: 56}
   m_MaxSize: {x: 16192, y: 8096}
   vertical: 0
-  controlID: 88
+  controlID: 117
   draggingID: 0
---- !u!114 &9
+--- !u!114 &12
 MonoBehaviour:
   m_ObjectHideFlags: 52
   m_CorrespondingSourceObject: {fileID: 0}
@@ -221,12 +296,12 @@ MonoBehaviour:
     height: 554
   m_MinSize: {x: 202, y: 226}
   m_MaxSize: {x: 4002, y: 4026}
-  m_ActualView: {fileID: 18}
+  m_ActualView: {fileID: 22}
   m_Panes:
-  - {fileID: 18}
+  - {fileID: 22}
   m_Selected: 0
   m_LastSelected: 0
---- !u!114 &10
+--- !u!114 &13
 MonoBehaviour:
   m_ObjectHideFlags: 52
   m_CorrespondingSourceObject: {fileID: 0}
@@ -247,16 +322,16 @@ MonoBehaviour:
     height: 554
   m_MinSize: {x: 202, y: 226}
   m_MaxSize: {x: 4002, y: 4026}
-  m_ActualView: {fileID: 19}
+  m_ActualView: {fileID: 23}
   m_Panes:
-  - {fileID: 19}
-  - {fileID: 16}
+  - {fileID: 23}
   - {fileID: 20}
-  - {fileID: 14}
-  - {fileID: 13}
+  - {fileID: 24}
+  - {fileID: 18}
+  - {fileID: 17}
   m_Selected: 0
   m_LastSelected: 1
---- !u!114 &11
+--- !u!114 &14
 MonoBehaviour:
   m_ObjectHideFlags: 52
   m_CorrespondingSourceObject: {fileID: 0}
@@ -277,12 +352,12 @@ MonoBehaviour:
     height: 387
   m_MinSize: {x: 102, y: 126}
   m_MaxSize: {x: 4002, y: 4026}
-  m_ActualView: {fileID: 21}
+  m_ActualView: {fileID: 25}
   m_Panes:
-  - {fileID: 21}
+  - {fileID: 25}
   m_Selected: 0
   m_LastSelected: 0
---- !u!114 &12
+--- !u!114 &15
 MonoBehaviour:
   m_ObjectHideFlags: 52
   m_CorrespondingSourceObject: {fileID: 0}
@@ -303,13 +378,3025 @@ MonoBehaviour:
     height: 941
   m_MinSize: {x: 276, y: 76}
   m_MaxSize: {x: 4001, y: 4026}
-  m_ActualView: {fileID: 22}
+  m_ActualView: {fileID: 26}
   m_Panes:
-  - {fileID: 22}
-  - {fileID: 23}
+  - {fileID: 26}
+  - {fileID: 27}
   m_Selected: 0
   m_LastSelected: 1
---- !u!114 &13
+--- !u!114 &16
+MonoBehaviour:
+  m_ObjectHideFlags: 52
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 13401, guid: 0000000000000000e000000000000000, type: 0}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEditor.TestRunner.dll::UnityEditor.TestTools.TestRunner.TestRunnerWindow
+  m_MinSize: {x: 50, y: 50}
+  m_MaxSize: {x: 4000, y: 4000}
+  m_TitleContent:
+    m_Text: Test Runner
+    m_Image: {fileID: 0}
+    m_Tooltip: Test framework for running Edit mode and Play mode tests in Unity.
+      Part of the com.unity.test-framework package.
+    m_TextWithWhitespace: "Test Runner\u200B"
+  m_Pos:
+    serializedVersion: 2
+    x: 0
+    y: 26
+    width: 746
+    height: 803
+  m_SerializedDataModeController:
+    m_DataMode: 0
+    m_PreferredDataMode: 0
+    m_SupportedDataModes: 
+    isAutomatic: 1
+  m_ViewDataDictionary: {fileID: 0}
+  m_OverlayCanvas:
+    m_LastAppliedPresetName: Default
+    m_SaveData: []
+    m_ContainerData: []
+    m_DynamicPanelContainerData: []
+    m_OverlaysVisible: 1
+    m_DynamicPanelBehavior: 0
+  m_Spl:
+    ID: 163
+    splitterInitialOffset: 0
+    currentActiveSplitter: -1
+    realSizes:
+    - 550
+    - 183
+    relativeSizes:
+    - 0.75
+    - 0.25
+    minSizes:
+    - 32
+    - 32
+    maxSizes:
+    - 0
+    - 0
+    lastTotalSize: 733
+    splitSize: 6
+    xOffset: 0
+    m_Version: 1
+    oldRealSizes: 
+    oldMinSizes: 
+    oldMaxSizes: 
+    oldSplitSize: 0
+  m_TestTypeToolbarIndex: 0
+  m_TestListGUIs:
+  - m_Window: {fileID: 16}
+    runProgress:
+      RunGuid: ad27872a-05a5-42e6-a8a0-57e6f7ca7036
+      ExecutionSettings:
+        m_TargetPlatform: 0
+        m_HasTargetPlatform: 0
+        filter:
+          testMode: 0
+          testNames: []
+          groupNames: []
+          categoryNames: []
+          assemblyNames: []
+        filters:
+        - testMode: 1
+          testNames:
+          - RegionSerializeTests.UpdatingChunk_WithLargerData_PreservesOtherChunks
+          groupNames: []
+          categoryNames: []
+          assemblyNames: []
+        runSynchronously: 0
+        playerHeartbeatTimeout: 600
+        orderedTestNames: []
+        ignoreTests: []
+        featureFlags:
+          fileCleanUpCheck: 0
+          requiresSplashScreen: 0
+          strictDomainReload: 0
+          disableNestedEnumeratorBugfix: 0
+        randomOrderSeed: 0
+      HasFinished: 1
+      Progress: 0.9999999
+      CurrentStepName: Unlock Reload Assemblies
+      CurrentStageName: 
+    m_NewResultList:
+    - id: 1158
+      uniqueId: '[WorldBuilder][suite]'
+      name: WorldBuilder
+      fullName: WorldBuilder
+      resultStatus: 2
+      duration: 156.84181
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 1
+      categories: []
+      parentId: 
+      parentUniqueId: 
+    - id: 1145
+      uniqueId: '[Tests.dll][suite]'
+      name: Tests.dll
+      fullName: D:/Github/Flat.Adventure/WorldBuilder/Library/ScriptAssemblies/Tests.dll
+      resultStatus: 2
+      duration: 156.84181
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 1
+      categories: []
+      parentId: 1163
+      parentUniqueId: '[WorldBuilder][suite]'
+    - id: 1149
+      uniqueId: 'Tests.dll/[Tests][Code][suite]'
+      name: Code
+      fullName: Code
+      resultStatus: 1
+      duration: 0.0120341
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 1
+      categories: []
+      parentId: 1145
+      parentUniqueId: '[Tests.dll][suite]'
+    - id: 1143
+      uniqueId: 'Tests.dll/Code/[Tests][Code.BaseTest][suite]'
+      name: BaseTest
+      fullName: Code.BaseTest
+      resultStatus: 1
+      duration: 0.0120341
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 1
+      categories: []
+      parentId: 1149
+      parentUniqueId: 'Tests.dll/[Tests][Code][suite]'
+    - id: 1144
+      uniqueId: 'Tests.dll/Code/BaseTest/[Tests][Code.BaseTest.HappyDay]'
+      name: HappyDay
+      fullName: Code.BaseTest.HappyDay
+      resultStatus: 1
+      duration: 0.0120341
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1143
+      parentUniqueId: 'Tests.dll/Code/[Tests][Code.BaseTest][suite]'
+    - id: 1146
+      uniqueId: 'Tests.dll/[Game][suite]'
+      name: Game
+      fullName: Game
+      resultStatus: 1
+      duration: 2.2458036
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 1
+      categories: []
+      parentId: 1145
+      parentUniqueId: '[Tests.dll][suite]'
+    - id: 1147
+      uniqueId: 'Tests.dll/Game/[Tests][suite]'
+      name: Tests
+      fullName: Game.Tests
+      resultStatus: 1
+      duration: 2.2458036
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 1
+      categories: []
+      parentId: 1146
+      parentUniqueId: 'Tests.dll/[Game][suite]'
+    - id: 1148
+      uniqueId: 'Tests.dll/Game/Tests/[Tests][Game.Tests.Data][suite]'
+      name: Data
+      fullName: Game.Tests.Data
+      resultStatus: 1
+      duration: 2.2458036
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 1
+      categories: []
+      parentId: 1147
+      parentUniqueId: 'Tests.dll/Game/[Tests][suite]'
+    - id: 1033
+      uniqueId: 'Tests.dll/Game/Tests/Data/[Tests][Game.Tests.Data.ChunkSoilPackedTests][suite]'
+      name: ChunkSoilPackedTests
+      fullName: Game.Tests.Data.ChunkSoilPackedTests
+      resultStatus: 1
+      duration: 2.2458036
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 1
+      categories: []
+      parentId: 1148
+      parentUniqueId: 'Tests.dll/Game/Tests/[Tests][Game.Tests.Data][suite]'
+    - id: 1062
+      uniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/[Tests][Game.Tests.Data.ChunkSoilPackedTests.AllEightChunkCorners_AreAccessible]'
+      name: AllEightChunkCorners_AreAccessible
+      fullName: Game.Tests.Data.ChunkSoilPackedTests.AllEightChunkCorners_AreAccessible
+      resultStatus: 1
+      duration: 0.0180221
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1033
+      parentUniqueId: 'Tests.dll/Game/Tests/Data/[Tests][Game.Tests.Data.ChunkSoilPackedTests][suite]'
+    - id: 1097
+      uniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/[Tests][Game.Tests.Data.ChunkSoilPackedTests.CompactDensity_ConstantPackedData_BecomesConstant]'
+      name: CompactDensity_ConstantPackedData_BecomesConstant
+      fullName: Game.Tests.Data.ChunkSoilPackedTests.CompactDensity_ConstantPackedData_BecomesConstant
+      resultStatus: 1
+      duration: 0.0664961
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1033
+      parentUniqueId: 'Tests.dll/Game/Tests/Data/[Tests][Game.Tests.Data.ChunkSoilPackedTests][suite]'
+    - id: 1098
+      uniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/[Tests][Game.Tests.Data.ChunkSoilPackedTests.CompactDensity_NonConstantData_RemainsReadable]'
+      name: CompactDensity_NonConstantData_RemainsReadable
+      fullName: Game.Tests.Data.ChunkSoilPackedTests.CompactDensity_NonConstantData_RemainsReadable
+      resultStatus: 1
+      duration: 0.0014626
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1033
+      parentUniqueId: 'Tests.dll/Game/Tests/Data/[Tests][Game.Tests.Data.ChunkSoilPackedTests][suite]'
+    - id: 1112
+      uniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/[Tests][Game.Tests.Data.ChunkSoilPackedTests.CompactMaterial_OneValue_BecomesConstant]'
+      name: CompactMaterial_OneValue_BecomesConstant
+      fullName: Game.Tests.Data.ChunkSoilPackedTests.CompactMaterial_OneValue_BecomesConstant
+      resultStatus: 1
+      duration: 0.0639312
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1033
+      parentUniqueId: 'Tests.dll/Game/Tests/Data/[Tests][Game.Tests.Data.ChunkSoilPackedTests][suite]'
+    - id: 1124
+      uniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/[Tests][Game.Tests.Data.ChunkSoilPackedTests.CompactMaterial_Packed4WithEightValues_RemainsReadable]'
+      name: CompactMaterial_Packed4WithEightValues_RemainsReadable
+      fullName: Game.Tests.Data.ChunkSoilPackedTests.CompactMaterial_Packed4WithEightValues_RemainsReadable
+      resultStatus: 1
+      duration: 0.0740712
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1033
+      parentUniqueId: 'Tests.dll/Game/Tests/Data/[Tests][Game.Tests.Data.ChunkSoilPackedTests][suite]'
+    - id: 1122
+      uniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/[Tests][Game.Tests.Data.ChunkSoilPackedTests.CompactMaterial_SeventeenValues_DoesNotCompactToPacked4]'
+      name: CompactMaterial_SeventeenValues_DoesNotCompactToPacked4
+      fullName: Game.Tests.Data.ChunkSoilPackedTests.CompactMaterial_SeventeenValues_DoesNotCompactToPacked4
+      resultStatus: 1
+      duration: 0.0630299
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1033
+      parentUniqueId: 'Tests.dll/Game/Tests/Data/[Tests][Game.Tests.Data.ChunkSoilPackedTests][suite]'
+    - id: 1123
+      uniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/[Tests][Game.Tests.Data.ChunkSoilPackedTests.CompactMaterial_ThirtyTwoValues_DoesNotCompactToPacked4]'
+      name: CompactMaterial_ThirtyTwoValues_DoesNotCompactToPacked4
+      fullName: Game.Tests.Data.ChunkSoilPackedTests.CompactMaterial_ThirtyTwoValues_DoesNotCompactToPacked4
+      resultStatus: 1
+      duration: 0.0639366
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1033
+      parentUniqueId: 'Tests.dll/Game/Tests/Data/[Tests][Game.Tests.Data.ChunkSoilPackedTests][suite]'
+    - id: 1113
+      uniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/[Tests][Game.Tests.Data.ChunkSoilPackedTests.CompactMaterial_TwoValues_BecomesPacked1]'
+      name: CompactMaterial_TwoValues_BecomesPacked1
+      fullName: Game.Tests.Data.ChunkSoilPackedTests.CompactMaterial_TwoValues_BecomesPacked1
+      resultStatus: 1
+      duration: 0.0778446
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1033
+      parentUniqueId: 'Tests.dll/Game/Tests/Data/[Tests][Game.Tests.Data.ChunkSoilPackedTests][suite]'
+    - id: 1116
+      uniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/[Tests][Game.Tests.Data.ChunkSoilPackedTests.CompactMaterial_Values_BecomesPacked2][suite]'
+      name: CompactMaterial_Values_BecomesPacked2
+      fullName: Game.Tests.Data.ChunkSoilPackedTests.CompactMaterial_Values_BecomesPacked2
+      resultStatus: 1
+      duration: 0.17694429
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 1
+      categories: []
+      parentId: 1033
+      parentUniqueId: 'Tests.dll/Game/Tests/Data/[Tests][Game.Tests.Data.ChunkSoilPackedTests][suite]'
+    - id: 1114
+      uniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/CompactMaterial_Values_BecomesPacked2/[Tests][Game.Tests.Data.ChunkSoilPackedTests.CompactMaterial_Values_BecomesPacked2(3)]'
+      name: CompactMaterial_Values_BecomesPacked2(3)
+      fullName: Game.Tests.Data.ChunkSoilPackedTests.CompactMaterial_Values_BecomesPacked2(3)
+      resultStatus: 1
+      duration: 0.1115834
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1116
+      parentUniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/[Tests][Game.Tests.Data.ChunkSoilPackedTests.CompactMaterial_Values_BecomesPacked2][suite]'
+    - id: 1115
+      uniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/CompactMaterial_Values_BecomesPacked2/[Tests][Game.Tests.Data.ChunkSoilPackedTests.CompactMaterial_Values_BecomesPacked2(4)]'
+      name: CompactMaterial_Values_BecomesPacked2(4)
+      fullName: Game.Tests.Data.ChunkSoilPackedTests.CompactMaterial_Values_BecomesPacked2(4)
+      resultStatus: 1
+      duration: 0.0653609
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1116
+      parentUniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/[Tests][Game.Tests.Data.ChunkSoilPackedTests.CompactMaterial_Values_BecomesPacked2][suite]'
+    - id: 1121
+      uniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/[Tests][Game.Tests.Data.ChunkSoilPackedTests.CompactMaterial_Values_BecomesPacked4][suite]'
+      name: CompactMaterial_Values_BecomesPacked4
+      fullName: Game.Tests.Data.ChunkSoilPackedTests.CompactMaterial_Values_BecomesPacked4
+      resultStatus: 1
+      duration: 0.56137943
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 1
+      categories: []
+      parentId: 1033
+      parentUniqueId: 'Tests.dll/Game/Tests/Data/[Tests][Game.Tests.Data.ChunkSoilPackedTests][suite]'
+    - id: 1117
+      uniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/CompactMaterial_Values_BecomesPacked4/[Tests][Game.Tests.Data.ChunkSoilPackedTests.CompactMaterial_Values_BecomesPacked4(5)]'
+      name: CompactMaterial_Values_BecomesPacked4(5)
+      fullName: Game.Tests.Data.ChunkSoilPackedTests.CompactMaterial_Values_BecomesPacked4(5)
+      resultStatus: 1
+      duration: 0.1310589
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1121
+      parentUniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/[Tests][Game.Tests.Data.ChunkSoilPackedTests.CompactMaterial_Values_BecomesPacked4][suite]'
+    - id: 1118
+      uniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/CompactMaterial_Values_BecomesPacked4/[Tests][Game.Tests.Data.ChunkSoilPackedTests.CompactMaterial_Values_BecomesPacked4(6)]'
+      name: CompactMaterial_Values_BecomesPacked4(6)
+      fullName: Game.Tests.Data.ChunkSoilPackedTests.CompactMaterial_Values_BecomesPacked4(6)
+      resultStatus: 1
+      duration: 0.1246123
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1121
+      parentUniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/[Tests][Game.Tests.Data.ChunkSoilPackedTests.CompactMaterial_Values_BecomesPacked4][suite]'
+    - id: 1119
+      uniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/CompactMaterial_Values_BecomesPacked4/[Tests][Game.Tests.Data.ChunkSoilPackedTests.CompactMaterial_Values_BecomesPacked4(10)]'
+      name: CompactMaterial_Values_BecomesPacked4(10)
+      fullName: Game.Tests.Data.ChunkSoilPackedTests.CompactMaterial_Values_BecomesPacked4(10)
+      resultStatus: 1
+      duration: 0.1803112
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1121
+      parentUniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/[Tests][Game.Tests.Data.ChunkSoilPackedTests.CompactMaterial_Values_BecomesPacked4][suite]'
+    - id: 1120
+      uniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/CompactMaterial_Values_BecomesPacked4/[Tests][Game.Tests.Data.ChunkSoilPackedTests.CompactMaterial_Values_BecomesPacked4(16)]'
+      name: CompactMaterial_Values_BecomesPacked4(16)
+      fullName: Game.Tests.Data.ChunkSoilPackedTests.CompactMaterial_Values_BecomesPacked4(16)
+      resultStatus: 1
+      duration: 0.125397
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1121
+      parentUniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/[Tests][Game.Tests.Data.ChunkSoilPackedTests.CompactMaterial_Values_BecomesPacked4][suite]'
+    - id: 1034
+      uniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/[Tests][Game.Tests.Data.ChunkSoilPackedTests.Constructor_Default_CreatesConstantDensityAndMaterial]'
+      name: Constructor_Default_CreatesConstantDensityAndMaterial
+      fullName: Game.Tests.Data.ChunkSoilPackedTests.Constructor_Default_CreatesConstantDensityAndMaterial
+      resultStatus: 1
+      duration: 0.0002919
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1033
+      parentUniqueId: 'Tests.dll/Game/Tests/Data/[Tests][Game.Tests.Data.ChunkSoilPackedTests][suite]'
+    - id: 1041
+      uniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/[Tests][Game.Tests.Data.ChunkSoilPackedTests.Constructor_DensityPacked1_IsRejected]'
+      name: Constructor_DensityPacked1_IsRejected
+      fullName: Game.Tests.Data.ChunkSoilPackedTests.Constructor_DensityPacked1_IsRejected
+      resultStatus: 1
+      duration: 0.0047105
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1033
+      parentUniqueId: 'Tests.dll/Game/Tests/Data/[Tests][Game.Tests.Data.ChunkSoilPackedTests][suite]'
+    - id: 1042
+      uniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/[Tests][Game.Tests.Data.ChunkSoilPackedTests.Constructor_DensityPacked2_IsRejected]'
+      name: Constructor_DensityPacked2_IsRejected
+      fullName: Game.Tests.Data.ChunkSoilPackedTests.Constructor_DensityPacked2_IsRejected
+      resultStatus: 1
+      duration: 0.001887
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1033
+      parentUniqueId: 'Tests.dll/Game/Tests/Data/[Tests][Game.Tests.Data.ChunkSoilPackedTests][suite]'
+    - id: 1043
+      uniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/[Tests][Game.Tests.Data.ChunkSoilPackedTests.Constructor_DensityPacked6_IsRejected]'
+      name: Constructor_DensityPacked6_IsRejected
+      fullName: Game.Tests.Data.ChunkSoilPackedTests.Constructor_DensityPacked6_IsRejected
+      resultStatus: 1
+      duration: 0.0013843
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1033
+      parentUniqueId: 'Tests.dll/Game/Tests/Data/[Tests][Game.Tests.Data.ChunkSoilPackedTests][suite]'
+    - id: 1039
+      uniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/[Tests][Game.Tests.Data.ChunkSoilPackedTests.Constructor_InvalidDensityMode_Throws]'
+      name: Constructor_InvalidDensityMode_Throws
+      fullName: Game.Tests.Data.ChunkSoilPackedTests.Constructor_InvalidDensityMode_Throws
+      resultStatus: 1
+      duration: 0.000935
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1033
+      parentUniqueId: 'Tests.dll/Game/Tests/Data/[Tests][Game.Tests.Data.ChunkSoilPackedTests][suite]'
+    - id: 1040
+      uniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/[Tests][Game.Tests.Data.ChunkSoilPackedTests.Constructor_InvalidMaterialMode_Throws]'
+      name: Constructor_InvalidMaterialMode_Throws
+      fullName: Game.Tests.Data.ChunkSoilPackedTests.Constructor_InvalidMaterialMode_Throws
+      resultStatus: 1
+      duration: 0.0007961
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1033
+      parentUniqueId: 'Tests.dll/Game/Tests/Data/[Tests][Game.Tests.Data.ChunkSoilPackedTests][suite]'
+    - id: 1044
+      uniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/[Tests][Game.Tests.Data.ChunkSoilPackedTests.Constructor_MaterialPaletteLargerThanCapacity_Throws]'
+      name: Constructor_MaterialPaletteLargerThanCapacity_Throws
+      fullName: Game.Tests.Data.ChunkSoilPackedTests.Constructor_MaterialPaletteLargerThanCapacity_Throws
+      resultStatus: 1
+      duration: 0.0008863
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1033
+      parentUniqueId: 'Tests.dll/Game/Tests/Data/[Tests][Game.Tests.Data.ChunkSoilPackedTests][suite]'
+    - id: 1035
+      uniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/[Tests][Game.Tests.Data.ChunkSoilPackedTests.Constructor_NullDensity_Throws]'
+      name: Constructor_NullDensity_Throws
+      fullName: Game.Tests.Data.ChunkSoilPackedTests.Constructor_NullDensity_Throws
+      resultStatus: 1
+      duration: 0.0012386
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1033
+      parentUniqueId: 'Tests.dll/Game/Tests/Data/[Tests][Game.Tests.Data.ChunkSoilPackedTests][suite]'
+    - id: 1036
+      uniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/[Tests][Game.Tests.Data.ChunkSoilPackedTests.Constructor_NullMaterial_Throws]'
+      name: Constructor_NullMaterial_Throws
+      fullName: Game.Tests.Data.ChunkSoilPackedTests.Constructor_NullMaterial_Throws
+      resultStatus: 1
+      duration: 0.000263
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1033
+      parentUniqueId: 'Tests.dll/Game/Tests/Data/[Tests][Game.Tests.Data.ChunkSoilPackedTests][suite]'
+    - id: 1037
+      uniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/[Tests][Game.Tests.Data.ChunkSoilPackedTests.Constructor_TooShortDensity_Throws]'
+      name: Constructor_TooShortDensity_Throws
+      fullName: Game.Tests.Data.ChunkSoilPackedTests.Constructor_TooShortDensity_Throws
+      resultStatus: 1
+      duration: 0.0002518
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1033
+      parentUniqueId: 'Tests.dll/Game/Tests/Data/[Tests][Game.Tests.Data.ChunkSoilPackedTests][suite]'
+    - id: 1038
+      uniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/[Tests][Game.Tests.Data.ChunkSoilPackedTests.Constructor_TooShortMaterial_Throws]'
+      name: Constructor_TooShortMaterial_Throws
+      fullName: Game.Tests.Data.ChunkSoilPackedTests.Constructor_TooShortMaterial_Throws
+      resultStatus: 1
+      duration: 0.0002416
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1033
+      parentUniqueId: 'Tests.dll/Game/Tests/Data/[Tests][Game.Tests.Data.ChunkSoilPackedTests][suite]'
+    - id: 1045
+      uniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/[Tests][Game.Tests.Data.ChunkSoilPackedTests.Constructor_ValidPacked4Density_IsAccepted]'
+      name: Constructor_ValidPacked4Density_IsAccepted
+      fullName: Game.Tests.Data.ChunkSoilPackedTests.Constructor_ValidPacked4Density_IsAccepted
+      resultStatus: 1
+      duration: 0.0001958
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1033
+      parentUniqueId: 'Tests.dll/Game/Tests/Data/[Tests][Game.Tests.Data.ChunkSoilPackedTests][suite]'
+    - id: 1095
+      uniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/[Tests][Game.Tests.Data.ChunkSoilPackedTests.ExpandDensity_ConstantValue_IsReplicatedToEveryVoxel]'
+      name: ExpandDensity_ConstantValue_IsReplicatedToEveryVoxel
+      fullName: Game.Tests.Data.ChunkSoilPackedTests.ExpandDensity_ConstantValue_IsReplicatedToEveryVoxel
+      resultStatus: 1
+      duration: 0.0620204
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1033
+      parentUniqueId: 'Tests.dll/Game/Tests/Data/[Tests][Game.Tests.Data.ChunkSoilPackedTests][suite]'
+    - id: 1096
+      uniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/[Tests][Game.Tests.Data.ChunkSoilPackedTests.ExpandDensity_WhenAlreadyPacked4_DoesNothing]'
+      name: ExpandDensity_WhenAlreadyPacked4_DoesNothing
+      fullName: Game.Tests.Data.ChunkSoilPackedTests.ExpandDensity_WhenAlreadyPacked4_DoesNothing
+      resultStatus: 1
+      duration: 0.000574
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1033
+      parentUniqueId: 'Tests.dll/Game/Tests/Data/[Tests][Game.Tests.Data.ChunkSoilPackedTests][suite]'
+    - id: 1103
+      uniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/[Tests][Game.Tests.Data.ChunkSoilPackedTests.ExpandMaterial_AlreadyPacked6_DoesNothing]'
+      name: ExpandMaterial_AlreadyPacked6_DoesNothing
+      fullName: Game.Tests.Data.ChunkSoilPackedTests.ExpandMaterial_AlreadyPacked6_DoesNothing
+      resultStatus: 1
+      duration: 0.0636937
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1033
+      parentUniqueId: 'Tests.dll/Game/Tests/Data/[Tests][Game.Tests.Data.ChunkSoilPackedTests][suite]'
+    - id: 1099
+      uniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/[Tests][Game.Tests.Data.ChunkSoilPackedTests.ExpandMaterial_ConstantToPacked1_PreservesValue]'
+      name: ExpandMaterial_ConstantToPacked1_PreservesValue
+      fullName: Game.Tests.Data.ChunkSoilPackedTests.ExpandMaterial_ConstantToPacked1_PreservesValue
+      resultStatus: 1
+      duration: 0.0004131
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1033
+      parentUniqueId: 'Tests.dll/Game/Tests/Data/[Tests][Game.Tests.Data.ChunkSoilPackedTests][suite]'
+    - id: 1100
+      uniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/[Tests][Game.Tests.Data.ChunkSoilPackedTests.ExpandMaterial_ConstantToPacked2_PreservesValue]'
+      name: ExpandMaterial_ConstantToPacked2_PreservesValue
+      fullName: Game.Tests.Data.ChunkSoilPackedTests.ExpandMaterial_ConstantToPacked2_PreservesValue
+      resultStatus: 1
+      duration: 0.0002643
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1033
+      parentUniqueId: 'Tests.dll/Game/Tests/Data/[Tests][Game.Tests.Data.ChunkSoilPackedTests][suite]'
+    - id: 1101
+      uniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/[Tests][Game.Tests.Data.ChunkSoilPackedTests.ExpandMaterial_ConstantToPacked4_PreservesValue]'
+      name: ExpandMaterial_ConstantToPacked4_PreservesValue
+      fullName: Game.Tests.Data.ChunkSoilPackedTests.ExpandMaterial_ConstantToPacked4_PreservesValue
+      resultStatus: 1
+      duration: 0.0002632
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1033
+      parentUniqueId: 'Tests.dll/Game/Tests/Data/[Tests][Game.Tests.Data.ChunkSoilPackedTests][suite]'
+    - id: 1102
+      uniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/[Tests][Game.Tests.Data.ChunkSoilPackedTests.ExpandMaterial_ConstantToPacked6_PreservesValue]'
+      name: ExpandMaterial_ConstantToPacked6_PreservesValue
+      fullName: Game.Tests.Data.ChunkSoilPackedTests.ExpandMaterial_ConstantToPacked6_PreservesValue
+      resultStatus: 1
+      duration: 0.0002954
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1033
+      parentUniqueId: 'Tests.dll/Game/Tests/Data/[Tests][Game.Tests.Data.ChunkSoilPackedTests][suite]'
+    - id: 1104
+      uniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/[Tests][Game.Tests.Data.ChunkSoilPackedTests.ExpandMaterial_FromPacked1ToPacked2_PreservesValues]'
+      name: ExpandMaterial_FromPacked1ToPacked2_PreservesValues
+      fullName: Game.Tests.Data.ChunkSoilPackedTests.ExpandMaterial_FromPacked1ToPacked2_PreservesValues
+      resultStatus: 1
+      duration: 0.0003712
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1033
+      parentUniqueId: 'Tests.dll/Game/Tests/Data/[Tests][Game.Tests.Data.ChunkSoilPackedTests][suite]'
+    - id: 1105
+      uniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/[Tests][Game.Tests.Data.ChunkSoilPackedTests.ExpandMaterial_FromPacked2ToPacked4_PreservesValues]'
+      name: ExpandMaterial_FromPacked2ToPacked4_PreservesValues
+      fullName: Game.Tests.Data.ChunkSoilPackedTests.ExpandMaterial_FromPacked2ToPacked4_PreservesValues
+      resultStatus: 1
+      duration: 0.0004138
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1033
+      parentUniqueId: 'Tests.dll/Game/Tests/Data/[Tests][Game.Tests.Data.ChunkSoilPackedTests][suite]'
+    - id: 1106
+      uniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/[Tests][Game.Tests.Data.ChunkSoilPackedTests.ExpandMaterial_FromPacked4ToPacked6_PreservesValues]'
+      name: ExpandMaterial_FromPacked4ToPacked6_PreservesValues
+      fullName: Game.Tests.Data.ChunkSoilPackedTests.ExpandMaterial_FromPacked4ToPacked6_PreservesValues
+      resultStatus: 1
+      duration: 0.0653616
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1033
+      parentUniqueId: 'Tests.dll/Game/Tests/Data/[Tests][Game.Tests.Data.ChunkSoilPackedTests][suite]'
+    - id: 1140
+      uniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/[Tests][Game.Tests.Data.ChunkSoilPackedTests.FullChunk_DensityPattern_RoundTrips]'
+      name: FullChunk_DensityPattern_RoundTrips
+      fullName: Game.Tests.Data.ChunkSoilPackedTests.FullChunk_DensityPattern_RoundTrips
+      resultStatus: 1
+      duration: 0.1607469
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1033
+      parentUniqueId: 'Tests.dll/Game/Tests/Data/[Tests][Game.Tests.Data.ChunkSoilPackedTests][suite]'
+    - id: 1142
+      uniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/[Tests][Game.Tests.Data.ChunkSoilPackedTests.FullChunk_MaterialExpandThenCompact_PreservesData]'
+      name: FullChunk_MaterialExpandThenCompact_PreservesData
+      fullName: Game.Tests.Data.ChunkSoilPackedTests.FullChunk_MaterialExpandThenCompact_PreservesData
+      resultStatus: 1
+      duration: 0.1081787
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1033
+      parentUniqueId: 'Tests.dll/Game/Tests/Data/[Tests][Game.Tests.Data.ChunkSoilPackedTests][suite]'
+    - id: 1141
+      uniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/[Tests][Game.Tests.Data.ChunkSoilPackedTests.FullChunk_MaterialPattern_RoundTrips]'
+      name: FullChunk_MaterialPattern_RoundTrips
+      fullName: Game.Tests.Data.ChunkSoilPackedTests.FullChunk_MaterialPattern_RoundTrips
+      resultStatus: 1
+      duration: 0.1062012
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1033
+      parentUniqueId: 'Tests.dll/Game/Tests/Data/[Tests][Game.Tests.Data.ChunkSoilPackedTests][suite]'
+    - id: 1054
+      uniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/[Tests][Game.Tests.Data.ChunkSoilPackedTests.GetDensity_InvalidCoordinates_Throws][suite]'
+      name: GetDensity_InvalidCoordinates_Throws
+      fullName: Game.Tests.Data.ChunkSoilPackedTests.GetDensity_InvalidCoordinates_Throws
+      resultStatus: 1
+      duration: 0.0025387
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 1
+      categories: []
+      parentId: 1033
+      parentUniqueId: 'Tests.dll/Game/Tests/Data/[Tests][Game.Tests.Data.ChunkSoilPackedTests][suite]'
+    - id: 1046
+      uniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/GetDensity_InvalidCoordinates_Throws/[Tests][Game.Tests.Data.ChunkSoilPackedTests.GetDensity_InvalidCoordinates_Throws(-1,0,0)]'
+      name: GetDensity_InvalidCoordinates_Throws(-1,0,0)
+      fullName: Game.Tests.Data.ChunkSoilPackedTests.GetDensity_InvalidCoordinates_Throws(-1,0,0)
+      resultStatus: 1
+      duration: 0.0014297
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1054
+      parentUniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/[Tests][Game.Tests.Data.ChunkSoilPackedTests.GetDensity_InvalidCoordinates_Throws][suite]'
+    - id: 1047
+      uniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/GetDensity_InvalidCoordinates_Throws/[Tests][Game.Tests.Data.ChunkSoilPackedTests.GetDensity_InvalidCoordinates_Throws(32,0,0)]'
+      name: GetDensity_InvalidCoordinates_Throws(32,0,0)
+      fullName: Game.Tests.Data.ChunkSoilPackedTests.GetDensity_InvalidCoordinates_Throws(32,0,0)
+      resultStatus: 1
+      duration: 0.0002628
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1054
+      parentUniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/[Tests][Game.Tests.Data.ChunkSoilPackedTests.GetDensity_InvalidCoordinates_Throws][suite]'
+    - id: 1048
+      uniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/GetDensity_InvalidCoordinates_Throws/[Tests][Game.Tests.Data.ChunkSoilPackedTests.GetDensity_InvalidCoordinates_Throws(0,-1,0)]'
+      name: GetDensity_InvalidCoordinates_Throws(0,-1,0)
+      fullName: Game.Tests.Data.ChunkSoilPackedTests.GetDensity_InvalidCoordinates_Throws(0,-1,0)
+      resultStatus: 1
+      duration: 0.0001107
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1054
+      parentUniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/[Tests][Game.Tests.Data.ChunkSoilPackedTests.GetDensity_InvalidCoordinates_Throws][suite]'
+    - id: 1049
+      uniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/GetDensity_InvalidCoordinates_Throws/[Tests][Game.Tests.Data.ChunkSoilPackedTests.GetDensity_InvalidCoordinates_Throws(0,32,0)]'
+      name: GetDensity_InvalidCoordinates_Throws(0,32,0)
+      fullName: Game.Tests.Data.ChunkSoilPackedTests.GetDensity_InvalidCoordinates_Throws(0,32,0)
+      resultStatus: 1
+      duration: 0.000128
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1054
+      parentUniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/[Tests][Game.Tests.Data.ChunkSoilPackedTests.GetDensity_InvalidCoordinates_Throws][suite]'
+    - id: 1050
+      uniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/GetDensity_InvalidCoordinates_Throws/[Tests][Game.Tests.Data.ChunkSoilPackedTests.GetDensity_InvalidCoordinates_Throws(0,0,-1)]'
+      name: GetDensity_InvalidCoordinates_Throws(0,0,-1)
+      fullName: Game.Tests.Data.ChunkSoilPackedTests.GetDensity_InvalidCoordinates_Throws(0,0,-1)
+      resultStatus: 1
+      duration: 0.0001052
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1054
+      parentUniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/[Tests][Game.Tests.Data.ChunkSoilPackedTests.GetDensity_InvalidCoordinates_Throws][suite]'
+    - id: 1051
+      uniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/GetDensity_InvalidCoordinates_Throws/[Tests][Game.Tests.Data.ChunkSoilPackedTests.GetDensity_InvalidCoordinates_Throws(0,0,32)]'
+      name: GetDensity_InvalidCoordinates_Throws(0,0,32)
+      fullName: Game.Tests.Data.ChunkSoilPackedTests.GetDensity_InvalidCoordinates_Throws(0,0,32)
+      resultStatus: 1
+      duration: 0.000133
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1054
+      parentUniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/[Tests][Game.Tests.Data.ChunkSoilPackedTests.GetDensity_InvalidCoordinates_Throws][suite]'
+    - id: 1052
+      uniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/GetDensity_InvalidCoordinates_Throws/[Tests][Game.Tests.Data.ChunkSoilPackedTests.GetDensity_InvalidCoordinates_Throws(int.MinValue,0,0)]'
+      name: GetDensity_InvalidCoordinates_Throws(int.MinValue,0,0)
+      fullName: Game.Tests.Data.ChunkSoilPackedTests.GetDensity_InvalidCoordinates_Throws(int.MinValue,0,0)
+      resultStatus: 1
+      duration: 0.00011
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1054
+      parentUniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/[Tests][Game.Tests.Data.ChunkSoilPackedTests.GetDensity_InvalidCoordinates_Throws][suite]'
+    - id: 1053
+      uniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/GetDensity_InvalidCoordinates_Throws/[Tests][Game.Tests.Data.ChunkSoilPackedTests.GetDensity_InvalidCoordinates_Throws(int.MaxValue,0,0)]'
+      name: GetDensity_InvalidCoordinates_Throws(int.MaxValue,0,0)
+      fullName: Game.Tests.Data.ChunkSoilPackedTests.GetDensity_InvalidCoordinates_Throws(int.MaxValue,0,0)
+      resultStatus: 1
+      duration: 0.0002593
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1054
+      parentUniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/[Tests][Game.Tests.Data.ChunkSoilPackedTests.GetDensity_InvalidCoordinates_Throws][suite]'
+    - id: 1061
+      uniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/[Tests][Game.Tests.Data.ChunkSoilPackedTests.GetMaterial_InvalidCoordinates_Throws][suite]'
+      name: GetMaterial_InvalidCoordinates_Throws
+      fullName: Game.Tests.Data.ChunkSoilPackedTests.GetMaterial_InvalidCoordinates_Throws
+      resultStatus: 1
+      duration: 0.0021978
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 1
+      categories: []
+      parentId: 1033
+      parentUniqueId: 'Tests.dll/Game/Tests/Data/[Tests][Game.Tests.Data.ChunkSoilPackedTests][suite]'
+    - id: 1055
+      uniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/GetMaterial_InvalidCoordinates_Throws/[Tests][Game.Tests.Data.ChunkSoilPackedTests.GetMaterial_InvalidCoordinates_Throws(-1,0,0)]'
+      name: GetMaterial_InvalidCoordinates_Throws(-1,0,0)
+      fullName: Game.Tests.Data.ChunkSoilPackedTests.GetMaterial_InvalidCoordinates_Throws(-1,0,0)
+      resultStatus: 1
+      duration: 0.0016749
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1061
+      parentUniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/[Tests][Game.Tests.Data.ChunkSoilPackedTests.GetMaterial_InvalidCoordinates_Throws][suite]'
+    - id: 1056
+      uniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/GetMaterial_InvalidCoordinates_Throws/[Tests][Game.Tests.Data.ChunkSoilPackedTests.GetMaterial_InvalidCoordinates_Throws(32,0,0)]'
+      name: GetMaterial_InvalidCoordinates_Throws(32,0,0)
+      fullName: Game.Tests.Data.ChunkSoilPackedTests.GetMaterial_InvalidCoordinates_Throws(32,0,0)
+      resultStatus: 1
+      duration: 0.0001604
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1061
+      parentUniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/[Tests][Game.Tests.Data.ChunkSoilPackedTests.GetMaterial_InvalidCoordinates_Throws][suite]'
+    - id: 1057
+      uniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/GetMaterial_InvalidCoordinates_Throws/[Tests][Game.Tests.Data.ChunkSoilPackedTests.GetMaterial_InvalidCoordinates_Throws(0,-1,0)]'
+      name: GetMaterial_InvalidCoordinates_Throws(0,-1,0)
+      fullName: Game.Tests.Data.ChunkSoilPackedTests.GetMaterial_InvalidCoordinates_Throws(0,-1,0)
+      resultStatus: 1
+      duration: 0.0001164
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1061
+      parentUniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/[Tests][Game.Tests.Data.ChunkSoilPackedTests.GetMaterial_InvalidCoordinates_Throws][suite]'
+    - id: 1058
+      uniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/GetMaterial_InvalidCoordinates_Throws/[Tests][Game.Tests.Data.ChunkSoilPackedTests.GetMaterial_InvalidCoordinates_Throws(0,32,0)]'
+      name: GetMaterial_InvalidCoordinates_Throws(0,32,0)
+      fullName: Game.Tests.Data.ChunkSoilPackedTests.GetMaterial_InvalidCoordinates_Throws(0,32,0)
+      resultStatus: 1
+      duration: 0.0000841
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1061
+      parentUniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/[Tests][Game.Tests.Data.ChunkSoilPackedTests.GetMaterial_InvalidCoordinates_Throws][suite]'
+    - id: 1059
+      uniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/GetMaterial_InvalidCoordinates_Throws/[Tests][Game.Tests.Data.ChunkSoilPackedTests.GetMaterial_InvalidCoordinates_Throws(0,0,-1)]'
+      name: GetMaterial_InvalidCoordinates_Throws(0,0,-1)
+      fullName: Game.Tests.Data.ChunkSoilPackedTests.GetMaterial_InvalidCoordinates_Throws(0,0,-1)
+      resultStatus: 1
+      duration: 0.0000807
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1061
+      parentUniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/[Tests][Game.Tests.Data.ChunkSoilPackedTests.GetMaterial_InvalidCoordinates_Throws][suite]'
+    - id: 1060
+      uniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/GetMaterial_InvalidCoordinates_Throws/[Tests][Game.Tests.Data.ChunkSoilPackedTests.GetMaterial_InvalidCoordinates_Throws(0,0,32)]'
+      name: GetMaterial_InvalidCoordinates_Throws(0,0,32)
+      fullName: Game.Tests.Data.ChunkSoilPackedTests.GetMaterial_InvalidCoordinates_Throws(0,0,32)
+      resultStatus: 1
+      duration: 0.0000813
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1061
+      parentUniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/[Tests][Game.Tests.Data.ChunkSoilPackedTests.GetMaterial_InvalidCoordinates_Throws][suite]'
+    - id: 1133
+      uniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/[Tests][Game.Tests.Data.ChunkSoilPackedTests.Mode_DataSizes_AreCorrect]'
+      name: Mode_DataSizes_AreCorrect
+      fullName: Game.Tests.Data.ChunkSoilPackedTests.Mode_DataSizes_AreCorrect
+      resultStatus: 1
+      duration: 0.0002634
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1033
+      parentUniqueId: 'Tests.dll/Game/Tests/Data/[Tests][Game.Tests.Data.ChunkSoilPackedTests][suite]'
+    - id: 1125
+      uniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/[Tests][Game.Tests.Data.ChunkSoilPackedTests.Mode_Packed1_ReadWrite_AllBitPositions]'
+      name: Mode_Packed1_ReadWrite_AllBitPositions
+      fullName: Game.Tests.Data.ChunkSoilPackedTests.Mode_Packed1_ReadWrite_AllBitPositions
+      resultStatus: 1
+      duration: 0.0593707
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1033
+      parentUniqueId: 'Tests.dll/Game/Tests/Data/[Tests][Game.Tests.Data.ChunkSoilPackedTests][suite]'
+    - id: 1126
+      uniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/[Tests][Game.Tests.Data.ChunkSoilPackedTests.Mode_Packed2_ReadWrite_AllValues]'
+      name: Mode_Packed2_ReadWrite_AllValues
+      fullName: Game.Tests.Data.ChunkSoilPackedTests.Mode_Packed2_ReadWrite_AllValues
+      resultStatus: 1
+      duration: 0.057027
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1033
+      parentUniqueId: 'Tests.dll/Game/Tests/Data/[Tests][Game.Tests.Data.ChunkSoilPackedTests][suite]'
+    - id: 1127
+      uniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/[Tests][Game.Tests.Data.ChunkSoilPackedTests.Mode_Packed4_ReadWrite_AllValues]'
+      name: Mode_Packed4_ReadWrite_AllValues
+      fullName: Game.Tests.Data.ChunkSoilPackedTests.Mode_Packed4_ReadWrite_AllValues
+      resultStatus: 1
+      duration: 0.0586784
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1033
+      parentUniqueId: 'Tests.dll/Game/Tests/Data/[Tests][Game.Tests.Data.ChunkSoilPackedTests][suite]'
+    - id: 1128
+      uniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/[Tests][Game.Tests.Data.ChunkSoilPackedTests.Mode_Packed6_ReadWrite_AllValues]'
+      name: Mode_Packed6_ReadWrite_AllValues
+      fullName: Game.Tests.Data.ChunkSoilPackedTests.Mode_Packed6_ReadWrite_AllValues
+      resultStatus: 1
+      duration: 0.1103747
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1033
+      parentUniqueId: 'Tests.dll/Game/Tests/Data/[Tests][Game.Tests.Data.ChunkSoilPackedTests][suite]'
+    - id: 1129
+      uniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/[Tests][Game.Tests.Data.ChunkSoilPackedTests.Mode_Packed6_ReadWrite_CrossByteBoundaries]'
+      name: Mode_Packed6_ReadWrite_CrossByteBoundaries
+      fullName: Game.Tests.Data.ChunkSoilPackedTests.Mode_Packed6_ReadWrite_CrossByteBoundaries
+      resultStatus: 1
+      duration: 0.000477
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1033
+      parentUniqueId: 'Tests.dll/Game/Tests/Data/[Tests][Game.Tests.Data.ChunkSoilPackedTests][suite]'
+    - id: 1130
+      uniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/[Tests][Game.Tests.Data.ChunkSoilPackedTests.Mode_WriteBits_OverwritesExistingPacked4Value]'
+      name: Mode_WriteBits_OverwritesExistingPacked4Value
+      fullName: Game.Tests.Data.ChunkSoilPackedTests.Mode_WriteBits_OverwritesExistingPacked4Value
+      resultStatus: 1
+      duration: 0.000193
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1033
+      parentUniqueId: 'Tests.dll/Game/Tests/Data/[Tests][Game.Tests.Data.ChunkSoilPackedTests][suite]'
+    - id: 1131
+      uniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/[Tests][Game.Tests.Data.ChunkSoilPackedTests.Mode_WriteBits_OverwritesExistingPacked6Value]'
+      name: Mode_WriteBits_OverwritesExistingPacked6Value
+      fullName: Game.Tests.Data.ChunkSoilPackedTests.Mode_WriteBits_OverwritesExistingPacked6Value
+      resultStatus: 1
+      duration: 0.000184
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1033
+      parentUniqueId: 'Tests.dll/Game/Tests/Data/[Tests][Game.Tests.Data.ChunkSoilPackedTests][suite]'
+    - id: 1132
+      uniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/[Tests][Game.Tests.Data.ChunkSoilPackedTests.Mode_WriteBits_ValueOutsideCapacity_IsMasked]'
+      name: Mode_WriteBits_ValueOutsideCapacity_IsMasked
+      fullName: Game.Tests.Data.ChunkSoilPackedTests.Mode_WriteBits_ValueOutsideCapacity_IsMasked
+      resultStatus: 1
+      duration: 0.0001686
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1033
+      parentUniqueId: 'Tests.dll/Game/Tests/Data/[Tests][Game.Tests.Data.ChunkSoilPackedTests][suite]'
+    - id: 1094
+      uniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/[Tests][Game.Tests.Data.ChunkSoilPackedTests.SetDensity_AllSixteenDensityValues]'
+      name: SetDensity_AllSixteenDensityValues
+      fullName: Game.Tests.Data.ChunkSoilPackedTests.SetDensity_AllSixteenDensityValues
+      resultStatus: 1
+      duration: 0.0003224
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1033
+      parentUniqueId: 'Tests.dll/Game/Tests/Data/[Tests][Game.Tests.Data.ChunkSoilPackedTests][suite]'
+    - id: 1092
+      uniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/[Tests][Game.Tests.Data.ChunkSoilPackedTests.SetDensity_ChangesConstantChunkToPacked4]'
+      name: SetDensity_ChangesConstantChunkToPacked4
+      fullName: Game.Tests.Data.ChunkSoilPackedTests.SetDensity_ChangesConstantChunkToPacked4
+      resultStatus: 1
+      duration: 0.0002363
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1033
+      parentUniqueId: 'Tests.dll/Game/Tests/Data/[Tests][Game.Tests.Data.ChunkSoilPackedTests][suite]'
+    - id: 1091
+      uniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/[Tests][Game.Tests.Data.ChunkSoilPackedTests.SetDensity_CubeDensityValues_RoundTrip][suite]'
+      name: SetDensity_CubeDensityValues_RoundTrip
+      fullName: Game.Tests.Data.ChunkSoilPackedTests.SetDensity_CubeDensityValues_RoundTrip
+      resultStatus: 1
+      duration: 0.0015677
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 1
+      categories: []
+      parentId: 1033
+      parentUniqueId: 'Tests.dll/Game/Tests/Data/[Tests][Game.Tests.Data.ChunkSoilPackedTests][suite]'
+    - id: 1075
+      uniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/SetDensity_CubeDensityValues_RoundTrip/[Tests][Game.Tests.Data.ChunkSoilPackedTests.SetDensity_CubeDensityValues_RoundTrip(0.0f,0.0f)]'
+      name: SetDensity_CubeDensityValues_RoundTrip(0.0f,0.0f)
+      fullName: Game.Tests.Data.ChunkSoilPackedTests.SetDensity_CubeDensityValues_RoundTrip(0.0f,0.0f)
+      resultStatus: 1
+      duration: 0.0004577
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1091
+      parentUniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/[Tests][Game.Tests.Data.ChunkSoilPackedTests.SetDensity_CubeDensityValues_RoundTrip][suite]'
+    - id: 1076
+      uniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/SetDensity_CubeDensityValues_RoundTrip/[Tests][Game.Tests.Data.ChunkSoilPackedTests.SetDensity_CubeDensityValues_RoundTrip(0.1f,0.1f)]'
+      name: SetDensity_CubeDensityValues_RoundTrip(0.1f,0.1f)
+      fullName: Game.Tests.Data.ChunkSoilPackedTests.SetDensity_CubeDensityValues_RoundTrip(0.1f,0.1f)
+      resultStatus: 1
+      duration: 0.0000849
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1091
+      parentUniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/[Tests][Game.Tests.Data.ChunkSoilPackedTests.SetDensity_CubeDensityValues_RoundTrip][suite]'
+    - id: 1077
+      uniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/SetDensity_CubeDensityValues_RoundTrip/[Tests][Game.Tests.Data.ChunkSoilPackedTests.SetDensity_CubeDensityValues_RoundTrip(0.2f,0.2f)]'
+      name: SetDensity_CubeDensityValues_RoundTrip(0.2f,0.2f)
+      fullName: Game.Tests.Data.ChunkSoilPackedTests.SetDensity_CubeDensityValues_RoundTrip(0.2f,0.2f)
+      resultStatus: 1
+      duration: 0.0000728
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1091
+      parentUniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/[Tests][Game.Tests.Data.ChunkSoilPackedTests.SetDensity_CubeDensityValues_RoundTrip][suite]'
+    - id: 1078
+      uniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/SetDensity_CubeDensityValues_RoundTrip/[Tests][Game.Tests.Data.ChunkSoilPackedTests.SetDensity_CubeDensityValues_RoundTrip(0.3f,0.3f)]'
+      name: SetDensity_CubeDensityValues_RoundTrip(0.3f,0.3f)
+      fullName: Game.Tests.Data.ChunkSoilPackedTests.SetDensity_CubeDensityValues_RoundTrip(0.3f,0.3f)
+      resultStatus: 1
+      duration: 0.0000794
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1091
+      parentUniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/[Tests][Game.Tests.Data.ChunkSoilPackedTests.SetDensity_CubeDensityValues_RoundTrip][suite]'
+    - id: 1079
+      uniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/SetDensity_CubeDensityValues_RoundTrip/[Tests][Game.Tests.Data.ChunkSoilPackedTests.SetDensity_CubeDensityValues_RoundTrip(0.4f,0.4f)]'
+      name: SetDensity_CubeDensityValues_RoundTrip(0.4f,0.4f)
+      fullName: Game.Tests.Data.ChunkSoilPackedTests.SetDensity_CubeDensityValues_RoundTrip(0.4f,0.4f)
+      resultStatus: 1
+      duration: 0.0000877
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1091
+      parentUniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/[Tests][Game.Tests.Data.ChunkSoilPackedTests.SetDensity_CubeDensityValues_RoundTrip][suite]'
+    - id: 1080
+      uniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/SetDensity_CubeDensityValues_RoundTrip/[Tests][Game.Tests.Data.ChunkSoilPackedTests.SetDensity_CubeDensityValues_RoundTrip(0.55f,0.55f)]'
+      name: SetDensity_CubeDensityValues_RoundTrip(0.55f,0.55f)
+      fullName: Game.Tests.Data.ChunkSoilPackedTests.SetDensity_CubeDensityValues_RoundTrip(0.55f,0.55f)
+      resultStatus: 1
+      duration: 0.0000731
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1091
+      parentUniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/[Tests][Game.Tests.Data.ChunkSoilPackedTests.SetDensity_CubeDensityValues_RoundTrip][suite]'
+    - id: 1081
+      uniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/SetDensity_CubeDensityValues_RoundTrip/[Tests][Game.Tests.Data.ChunkSoilPackedTests.SetDensity_CubeDensityValues_RoundTrip(0.6f,0.6f)]'
+      name: SetDensity_CubeDensityValues_RoundTrip(0.6f,0.6f)
+      fullName: Game.Tests.Data.ChunkSoilPackedTests.SetDensity_CubeDensityValues_RoundTrip(0.6f,0.6f)
+      resultStatus: 1
+      duration: 0.0000717
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1091
+      parentUniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/[Tests][Game.Tests.Data.ChunkSoilPackedTests.SetDensity_CubeDensityValues_RoundTrip][suite]'
+    - id: 1082
+      uniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/SetDensity_CubeDensityValues_RoundTrip/[Tests][Game.Tests.Data.ChunkSoilPackedTests.SetDensity_CubeDensityValues_RoundTrip(0.65f,0.65f)]'
+      name: SetDensity_CubeDensityValues_RoundTrip(0.65f,0.65f)
+      fullName: Game.Tests.Data.ChunkSoilPackedTests.SetDensity_CubeDensityValues_RoundTrip(0.65f,0.65f)
+      resultStatus: 1
+      duration: 0.0000706
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1091
+      parentUniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/[Tests][Game.Tests.Data.ChunkSoilPackedTests.SetDensity_CubeDensityValues_RoundTrip][suite]'
+    - id: 1083
+      uniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/SetDensity_CubeDensityValues_RoundTrip/[Tests][Game.Tests.Data.ChunkSoilPackedTests.SetDensity_CubeDensityValues_RoundTrip(0.7f,0.7f)]'
+      name: SetDensity_CubeDensityValues_RoundTrip(0.7f,0.7f)
+      fullName: Game.Tests.Data.ChunkSoilPackedTests.SetDensity_CubeDensityValues_RoundTrip(0.7f,0.7f)
+      resultStatus: 1
+      duration: 0.0000723
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1091
+      parentUniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/[Tests][Game.Tests.Data.ChunkSoilPackedTests.SetDensity_CubeDensityValues_RoundTrip][suite]'
+    - id: 1084
+      uniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/SetDensity_CubeDensityValues_RoundTrip/[Tests][Game.Tests.Data.ChunkSoilPackedTests.SetDensity_CubeDensityValues_RoundTrip(0.75f,0.75f)]'
+      name: SetDensity_CubeDensityValues_RoundTrip(0.75f,0.75f)
+      fullName: Game.Tests.Data.ChunkSoilPackedTests.SetDensity_CubeDensityValues_RoundTrip(0.75f,0.75f)
+      resultStatus: 1
+      duration: 0.0000713
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1091
+      parentUniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/[Tests][Game.Tests.Data.ChunkSoilPackedTests.SetDensity_CubeDensityValues_RoundTrip][suite]'
+    - id: 1085
+      uniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/SetDensity_CubeDensityValues_RoundTrip/[Tests][Game.Tests.Data.ChunkSoilPackedTests.SetDensity_CubeDensityValues_RoundTrip(0.8f,0.8f)]'
+      name: SetDensity_CubeDensityValues_RoundTrip(0.8f,0.8f)
+      fullName: Game.Tests.Data.ChunkSoilPackedTests.SetDensity_CubeDensityValues_RoundTrip(0.8f,0.8f)
+      resultStatus: 1
+      duration: 0.0000728
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1091
+      parentUniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/[Tests][Game.Tests.Data.ChunkSoilPackedTests.SetDensity_CubeDensityValues_RoundTrip][suite]'
+    - id: 1086
+      uniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/SetDensity_CubeDensityValues_RoundTrip/[Tests][Game.Tests.Data.ChunkSoilPackedTests.SetDensity_CubeDensityValues_RoundTrip(0.85f,0.85f)]'
+      name: SetDensity_CubeDensityValues_RoundTrip(0.85f,0.85f)
+      fullName: Game.Tests.Data.ChunkSoilPackedTests.SetDensity_CubeDensityValues_RoundTrip(0.85f,0.85f)
+      resultStatus: 1
+      duration: 0.0000712
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1091
+      parentUniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/[Tests][Game.Tests.Data.ChunkSoilPackedTests.SetDensity_CubeDensityValues_RoundTrip][suite]'
+    - id: 1087
+      uniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/SetDensity_CubeDensityValues_RoundTrip/[Tests][Game.Tests.Data.ChunkSoilPackedTests.SetDensity_CubeDensityValues_RoundTrip(0.9f,0.9f)]'
+      name: SetDensity_CubeDensityValues_RoundTrip(0.9f,0.9f)
+      fullName: Game.Tests.Data.ChunkSoilPackedTests.SetDensity_CubeDensityValues_RoundTrip(0.9f,0.9f)
+      resultStatus: 1
+      duration: 0.0000709
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1091
+      parentUniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/[Tests][Game.Tests.Data.ChunkSoilPackedTests.SetDensity_CubeDensityValues_RoundTrip][suite]'
+    - id: 1088
+      uniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/SetDensity_CubeDensityValues_RoundTrip/[Tests][Game.Tests.Data.ChunkSoilPackedTests.SetDensity_CubeDensityValues_RoundTrip(0.95f,0.95f)]'
+      name: SetDensity_CubeDensityValues_RoundTrip(0.95f,0.95f)
+      fullName: Game.Tests.Data.ChunkSoilPackedTests.SetDensity_CubeDensityValues_RoundTrip(0.95f,0.95f)
+      resultStatus: 1
+      duration: 0.0000705
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1091
+      parentUniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/[Tests][Game.Tests.Data.ChunkSoilPackedTests.SetDensity_CubeDensityValues_RoundTrip][suite]'
+    - id: 1089
+      uniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/SetDensity_CubeDensityValues_RoundTrip/[Tests][Game.Tests.Data.ChunkSoilPackedTests.SetDensity_CubeDensityValues_RoundTrip(1.0f,1.0f)]'
+      name: SetDensity_CubeDensityValues_RoundTrip(1.0f,1.0f)
+      fullName: Game.Tests.Data.ChunkSoilPackedTests.SetDensity_CubeDensityValues_RoundTrip(1.0f,1.0f)
+      resultStatus: 1
+      duration: 0.0000687
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1091
+      parentUniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/[Tests][Game.Tests.Data.ChunkSoilPackedTests.SetDensity_CubeDensityValues_RoundTrip][suite]'
+    - id: 1090
+      uniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/SetDensity_CubeDensityValues_RoundTrip/[Tests][Game.Tests.Data.ChunkSoilPackedTests.SetDensity_CubeDensityValues_RoundTrip(2.0f,2.0f)]'
+      name: SetDensity_CubeDensityValues_RoundTrip(2.0f,2.0f)
+      fullName: Game.Tests.Data.ChunkSoilPackedTests.SetDensity_CubeDensityValues_RoundTrip(2.0f,2.0f)
+      resultStatus: 1
+      duration: 0.0000721
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1091
+      parentUniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/[Tests][Game.Tests.Data.ChunkSoilPackedTests.SetDensity_CubeDensityValues_RoundTrip][suite]'
+    - id: 1137
+      uniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/[Tests][Game.Tests.Data.ChunkSoilPackedTests.SetDensity_LargePositiveValue_MapsToSpecialDensity]'
+      name: SetDensity_LargePositiveValue_MapsToSpecialDensity
+      fullName: Game.Tests.Data.ChunkSoilPackedTests.SetDensity_LargePositiveValue_MapsToSpecialDensity
+      resultStatus: 1
+      duration: 0.0002067
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1033
+      parentUniqueId: 'Tests.dll/Game/Tests/Data/[Tests][Game.Tests.Data.ChunkSoilPackedTests][suite]'
+    - id: 1138
+      uniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/[Tests][Game.Tests.Data.ChunkSoilPackedTests.SetDensity_NaN_CurrentImplementationMapsToSpecialDensity]'
+      name: SetDensity_NaN_CurrentImplementationMapsToSpecialDensity
+      fullName: Game.Tests.Data.ChunkSoilPackedTests.SetDensity_NaN_CurrentImplementationMapsToSpecialDensity
+      resultStatus: 1
+      duration: 0.000145
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1033
+      parentUniqueId: 'Tests.dll/Game/Tests/Data/[Tests][Game.Tests.Data.ChunkSoilPackedTests][suite]'
+    - id: 1139
+      uniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/[Tests][Game.Tests.Data.ChunkSoilPackedTests.SetDensity_NegativeValue_CurrentImplementationDoesNotClamp]'
+      name: SetDensity_NegativeValue_CurrentImplementationDoesNotClamp
+      fullName: Game.Tests.Data.ChunkSoilPackedTests.SetDensity_NegativeValue_CurrentImplementationDoesNotClamp
+      resultStatus: 1
+      duration: 0.0001373
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1033
+      parentUniqueId: 'Tests.dll/Game/Tests/Data/[Tests][Game.Tests.Data.ChunkSoilPackedTests][suite]'
+    - id: 1093
+      uniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/[Tests][Game.Tests.Data.ChunkSoilPackedTests.SetDensity_SameValue_DoesNotNeedExpansion]'
+      name: SetDensity_SameValue_DoesNotNeedExpansion
+      fullName: Game.Tests.Data.ChunkSoilPackedTests.SetDensity_SameValue_DoesNotNeedExpansion
+      resultStatus: 1
+      duration: 0.0002272
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1033
+      parentUniqueId: 'Tests.dll/Game/Tests/Data/[Tests][Game.Tests.Data.ChunkSoilPackedTests][suite]'
+    - id: 1136
+      uniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/[Tests][Game.Tests.Data.ChunkSoilPackedTests.SetDensity_Two_MapsToSpecialDensity]'
+      name: SetDensity_Two_MapsToSpecialDensity
+      fullName: Game.Tests.Data.ChunkSoilPackedTests.SetDensity_Two_MapsToSpecialDensity
+      resultStatus: 1
+      duration: 0.0001408
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1033
+      parentUniqueId: 'Tests.dll/Game/Tests/Data/[Tests][Game.Tests.Data.ChunkSoilPackedTests][suite]'
+    - id: 1135
+      uniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/[Tests][Game.Tests.Data.ChunkSoilPackedTests.SetDensity_ValueAboveOne_MapsToSpecialDensity]'
+      name: SetDensity_ValueAboveOne_MapsToSpecialDensity
+      fullName: Game.Tests.Data.ChunkSoilPackedTests.SetDensity_ValueAboveOne_MapsToSpecialDensity
+      resultStatus: 1
+      duration: 0.0001403
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1033
+      parentUniqueId: 'Tests.dll/Game/Tests/Data/[Tests][Game.Tests.Data.ChunkSoilPackedTests][suite]'
+    - id: 1111
+      uniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/[Tests][Game.Tests.Data.ChunkSoilPackedTests.SetMaterial_All64Values_RoundTrip]'
+      name: SetMaterial_All64Values_RoundTrip
+      fullName: Game.Tests.Data.ChunkSoilPackedTests.SetMaterial_All64Values_RoundTrip
+      resultStatus: 1
+      duration: 0.0676729
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1033
+      parentUniqueId: 'Tests.dll/Game/Tests/Data/[Tests][Game.Tests.Data.ChunkSoilPackedTests][suite]'
+    - id: 1074
+      uniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/[Tests][Game.Tests.Data.ChunkSoilPackedTests.SetMaterial_AllValidValues_RoundTrip][suite]'
+      name: SetMaterial_AllValidValues_RoundTrip
+      fullName: Game.Tests.Data.ChunkSoilPackedTests.SetMaterial_AllValidValues_RoundTrip
+      resultStatus: 1
+      duration: 0.0006491
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 1
+      categories: []
+      parentId: 1033
+      parentUniqueId: 'Tests.dll/Game/Tests/Data/[Tests][Game.Tests.Data.ChunkSoilPackedTests][suite]'
+    - id: 1068
+      uniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/SetMaterial_AllValidValues_RoundTrip/[Tests][Game.Tests.Data.ChunkSoilPackedTests.SetMaterial_AllValidValues_RoundTrip(0)]'
+      name: SetMaterial_AllValidValues_RoundTrip(0)
+      fullName: Game.Tests.Data.ChunkSoilPackedTests.SetMaterial_AllValidValues_RoundTrip(0)
+      resultStatus: 1
+      duration: 0.0003323
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1074
+      parentUniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/[Tests][Game.Tests.Data.ChunkSoilPackedTests.SetMaterial_AllValidValues_RoundTrip][suite]'
+    - id: 1069
+      uniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/SetMaterial_AllValidValues_RoundTrip/[Tests][Game.Tests.Data.ChunkSoilPackedTests.SetMaterial_AllValidValues_RoundTrip(1)]'
+      name: SetMaterial_AllValidValues_RoundTrip(1)
+      fullName: Game.Tests.Data.ChunkSoilPackedTests.SetMaterial_AllValidValues_RoundTrip(1)
+      resultStatus: 1
+      duration: 0.0000723
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1074
+      parentUniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/[Tests][Game.Tests.Data.ChunkSoilPackedTests.SetMaterial_AllValidValues_RoundTrip][suite]'
+    - id: 1070
+      uniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/SetMaterial_AllValidValues_RoundTrip/[Tests][Game.Tests.Data.ChunkSoilPackedTests.SetMaterial_AllValidValues_RoundTrip(31)]'
+      name: SetMaterial_AllValidValues_RoundTrip(31)
+      fullName: Game.Tests.Data.ChunkSoilPackedTests.SetMaterial_AllValidValues_RoundTrip(31)
+      resultStatus: 1
+      duration: 0.0000627
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1074
+      parentUniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/[Tests][Game.Tests.Data.ChunkSoilPackedTests.SetMaterial_AllValidValues_RoundTrip][suite]'
+    - id: 1071
+      uniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/SetMaterial_AllValidValues_RoundTrip/[Tests][Game.Tests.Data.ChunkSoilPackedTests.SetMaterial_AllValidValues_RoundTrip(32)]'
+      name: SetMaterial_AllValidValues_RoundTrip(32)
+      fullName: Game.Tests.Data.ChunkSoilPackedTests.SetMaterial_AllValidValues_RoundTrip(32)
+      resultStatus: 1
+      duration: 0.0000615
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1074
+      parentUniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/[Tests][Game.Tests.Data.ChunkSoilPackedTests.SetMaterial_AllValidValues_RoundTrip][suite]'
+    - id: 1072
+      uniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/SetMaterial_AllValidValues_RoundTrip/[Tests][Game.Tests.Data.ChunkSoilPackedTests.SetMaterial_AllValidValues_RoundTrip(62)]'
+      name: SetMaterial_AllValidValues_RoundTrip(62)
+      fullName: Game.Tests.Data.ChunkSoilPackedTests.SetMaterial_AllValidValues_RoundTrip(62)
+      resultStatus: 1
+      duration: 0.0000594
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1074
+      parentUniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/[Tests][Game.Tests.Data.ChunkSoilPackedTests.SetMaterial_AllValidValues_RoundTrip][suite]'
+    - id: 1073
+      uniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/SetMaterial_AllValidValues_RoundTrip/[Tests][Game.Tests.Data.ChunkSoilPackedTests.SetMaterial_AllValidValues_RoundTrip(63)]'
+      name: SetMaterial_AllValidValues_RoundTrip(63)
+      fullName: Game.Tests.Data.ChunkSoilPackedTests.SetMaterial_AllValidValues_RoundTrip(63)
+      resultStatus: 1
+      duration: 0.0000609
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1074
+      parentUniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/[Tests][Game.Tests.Data.ChunkSoilPackedTests.SetMaterial_AllValidValues_RoundTrip][suite]'
+    - id: 1109
+      uniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/[Tests][Game.Tests.Data.ChunkSoilPackedTests.SetMaterial_FiveValues_ExpandsToPacked4Semantics]'
+      name: SetMaterial_FiveValues_ExpandsToPacked4Semantics
+      fullName: Game.Tests.Data.ChunkSoilPackedTests.SetMaterial_FiveValues_ExpandsToPacked4Semantics
+      resultStatus: 1
+      duration: 0.0654425
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1033
+      parentUniqueId: 'Tests.dll/Game/Tests/Data/[Tests][Game.Tests.Data.ChunkSoilPackedTests][suite]'
+    - id: 1067
+      uniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/[Tests][Game.Tests.Data.ChunkSoilPackedTests.SetMaterial_OutOfRange_Throws][suite]'
+      name: SetMaterial_OutOfRange_Throws
+      fullName: Game.Tests.Data.ChunkSoilPackedTests.SetMaterial_OutOfRange_Throws
+      resultStatus: 1
+      duration: 0.0020249
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 1
+      categories: []
+      parentId: 1033
+      parentUniqueId: 'Tests.dll/Game/Tests/Data/[Tests][Game.Tests.Data.ChunkSoilPackedTests][suite]'
+    - id: 1063
+      uniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/SetMaterial_OutOfRange_Throws/[Tests][Game.Tests.Data.ChunkSoilPackedTests.SetMaterial_OutOfRange_Throws(-1)]'
+      name: SetMaterial_OutOfRange_Throws(-1)
+      fullName: Game.Tests.Data.ChunkSoilPackedTests.SetMaterial_OutOfRange_Throws(-1)
+      resultStatus: 1
+      duration: 0.0017393
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1067
+      parentUniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/[Tests][Game.Tests.Data.ChunkSoilPackedTests.SetMaterial_OutOfRange_Throws][suite]'
+    - id: 1064
+      uniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/SetMaterial_OutOfRange_Throws/[Tests][Game.Tests.Data.ChunkSoilPackedTests.SetMaterial_OutOfRange_Throws(64)]'
+      name: SetMaterial_OutOfRange_Throws(64)
+      fullName: Game.Tests.Data.ChunkSoilPackedTests.SetMaterial_OutOfRange_Throws(64)
+      resultStatus: 1
+      duration: 0.0001213
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1067
+      parentUniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/[Tests][Game.Tests.Data.ChunkSoilPackedTests.SetMaterial_OutOfRange_Throws][suite]'
+    - id: 1065
+      uniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/SetMaterial_OutOfRange_Throws/[Tests][Game.Tests.Data.ChunkSoilPackedTests.SetMaterial_OutOfRange_Throws(int.MinValue)]'
+      name: SetMaterial_OutOfRange_Throws(int.MinValue)
+      fullName: Game.Tests.Data.ChunkSoilPackedTests.SetMaterial_OutOfRange_Throws(int.MinValue)
+      resultStatus: 1
+      duration: 0.0000899
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1067
+      parentUniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/[Tests][Game.Tests.Data.ChunkSoilPackedTests.SetMaterial_OutOfRange_Throws][suite]'
+    - id: 1066
+      uniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/SetMaterial_OutOfRange_Throws/[Tests][Game.Tests.Data.ChunkSoilPackedTests.SetMaterial_OutOfRange_Throws(int.MaxValue)]'
+      name: SetMaterial_OutOfRange_Throws(int.MaxValue)
+      fullName: Game.Tests.Data.ChunkSoilPackedTests.SetMaterial_OutOfRange_Throws(int.MaxValue)
+      resultStatus: 1
+      duration: 0.0000744
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1067
+      parentUniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/[Tests][Game.Tests.Data.ChunkSoilPackedTests.SetMaterial_OutOfRange_Throws][suite]'
+    - id: 1110
+      uniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/[Tests][Game.Tests.Data.ChunkSoilPackedTests.SetMaterial_SeventeenUniqueValues_ExpandsToPacked6]'
+      name: SetMaterial_SeventeenUniqueValues_ExpandsToPacked6
+      fullName: Game.Tests.Data.ChunkSoilPackedTests.SetMaterial_SeventeenUniqueValues_ExpandsToPacked6
+      resultStatus: 1
+      duration: 0.0654293
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1033
+      parentUniqueId: 'Tests.dll/Game/Tests/Data/[Tests][Game.Tests.Data.ChunkSoilPackedTests][suite]'
+    - id: 1108
+      uniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/[Tests][Game.Tests.Data.ChunkSoilPackedTests.SetMaterial_ThreeValues_ExpandsAndPreservesExistingValues]'
+      name: SetMaterial_ThreeValues_ExpandsAndPreservesExistingValues
+      fullName: Game.Tests.Data.ChunkSoilPackedTests.SetMaterial_ThreeValues_ExpandsAndPreservesExistingValues
+      resultStatus: 1
+      duration: 0.0004273
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1033
+      parentUniqueId: 'Tests.dll/Game/Tests/Data/[Tests][Game.Tests.Data.ChunkSoilPackedTests][suite]'
+    - id: 1107
+      uniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/[Tests][Game.Tests.Data.ChunkSoilPackedTests.SetMaterial_TwoValues_UsesPacked1Semantics]'
+      name: SetMaterial_TwoValues_UsesPacked1Semantics
+      fullName: Game.Tests.Data.ChunkSoilPackedTests.SetMaterial_TwoValues_UsesPacked1Semantics
+      resultStatus: 1
+      duration: 0.000227
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1033
+      parentUniqueId: 'Tests.dll/Game/Tests/Data/[Tests][Game.Tests.Data.ChunkSoilPackedTests][suite]'
+    - id: 1134
+      uniqueId: 'Tests.dll/Game/Tests/Data/ChunkSoilPackedTests/[Tests][Game.Tests.Data.ChunkSoilPackedTests.UnsafeGetDensity_ValidCoordinates_MatchesSafeAccess]'
+      name: UnsafeGetDensity_ValidCoordinates_MatchesSafeAccess
+      fullName: Game.Tests.Data.ChunkSoilPackedTests.UnsafeGetDensity_ValidCoordinates_MatchesSafeAccess
+      resultStatus: 1
+      duration: 0.0003363
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1033
+      parentUniqueId: 'Tests.dll/Game/Tests/Data/[Tests][Game.Tests.Data.ChunkSoilPackedTests][suite]'
+    - id: 1001
+      uniqueId: 'Tests.dll/[Tests][RegionSerializeTests][suite]'
+      name: RegionSerializeTests
+      fullName: RegionSerializeTests
+      resultStatus: 2
+      duration: 154.58397
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 1
+      categories: []
+      parentId: 1145
+      parentUniqueId: '[Tests.dll][suite]'
+    - id: 1017
+      uniqueId: 'Tests.dll/RegionSerializeTests/[Tests][RegionSerializeTests.BothHeadersCorrupted_LoadThrowsInvalidData]'
+      name: BothHeadersCorrupted_LoadThrowsInvalidData
+      fullName: RegionSerializeTests.BothHeadersCorrupted_LoadThrowsInvalidData
+      resultStatus: 1
+      duration: 0.0043659
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1001
+      parentUniqueId: 'Tests.dll/[Tests][RegionSerializeTests][suite]'
+    - id: 1030
+      uniqueId: 'Tests.dll/RegionSerializeTests/[Tests][RegionSerializeTests.CompactionFailure_DoesNotReplaceOriginalFile]'
+      name: CompactionFailure_DoesNotReplaceOriginalFile
+      fullName: RegionSerializeTests.CompactionFailure_DoesNotReplaceOriginalFile
+      resultStatus: 2
+      duration: 0.0862149
+      messages: "  Expected: <System.IO.IOException>\r\n  But was:  null\r\n"
+      output: 
+      stacktrace: 'at RegionSerializeTests.CompactionFailure_DoesNotReplaceOriginalFile
+        () [0x00143] in D:\Github\Flat.Adventure\WorldBuilder\Assets\Code\Tests\RegionSerializeTest.cs:883
+
+'
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1001
+      parentUniqueId: 'Tests.dll/[Tests][RegionSerializeTests][suite]'
+    - id: 1015
+      uniqueId: 'Tests.dll/RegionSerializeTests/[Tests][RegionSerializeTests.CorruptedHeaderA_WithValidHeaderB_LoadsSuccessfully]'
+      name: CorruptedHeaderA_WithValidHeaderB_LoadsSuccessfully
+      fullName: RegionSerializeTests.CorruptedHeaderA_WithValidHeaderB_LoadsSuccessfully
+      resultStatus: 2
+      duration: 0.0028102
+      messages: "  Expected: 1\r\n  But was:  0\r\n"
+      output: 
+      stacktrace: 'at RegionSerializeTests.AssertChunkEqual (Code.Data.ChunkCacheUpdate
+        expected, Code.Data.ChunkCacheUpdate actual) [0x0001d] in D:\Github\Flat.Adventure\WorldBuilder\Assets\Code\Tests\RegionSerializeTest.cs:1134
+
+        at
+        RegionSerializeTests.CorruptedHeaderA_WithValidHeaderB_LoadsSuccessfully
+        () [0x00076] in D:\Github\Flat.Adventure\WorldBuilder\Assets\Code\Tests\RegionSerializeTest.cs:433
+
+'
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1001
+      parentUniqueId: 'Tests.dll/[Tests][RegionSerializeTests][suite]'
+    - id: 1016
+      uniqueId: 'Tests.dll/RegionSerializeTests/[Tests][RegionSerializeTests.CorruptedHeaderB_WithValidHeaderA_LoadsSuccessfully]'
+      name: CorruptedHeaderB_WithValidHeaderA_LoadsSuccessfully
+      fullName: RegionSerializeTests.CorruptedHeaderB_WithValidHeaderA_LoadsSuccessfully
+      resultStatus: 2
+      duration: 0.0033156
+      messages: "  Expected and actual are both <System.Byte[100]>\r\n  Values differ
+        at index [0]\r\n  Expected: 1\r\n  But was:  111\r\n"
+      output: 
+      stacktrace: 'at NUnit.Framework.CollectionAssert.AreEqual (System.Collections.IEnumerable
+        expected, System.Collections.IEnumerable actual, System.String message, System.Object[]
+        args) [0x00007] in <f577cd9686154d6ab10efd7e65e64366>:0
+
+        at NUnit.Framework.CollectionAssert.AreEqual
+        (System.Collections.IEnumerable expected, System.Collections.IEnumerable
+        actual) [0x00000] in <f577cd9686154d6ab10efd7e65e64366>:0
+
+        at RegionSerializeTests.AssertChunkEqual
+        (Code.Data.ChunkCacheUpdate expected, Code.Data.ChunkCacheUpdate actual)
+        [0x00039] in D:\Github\Flat.Adventure\WorldBuilder\Assets\Code\Tests\RegionSerializeTest.cs:1138
+
+        at
+        RegionSerializeTests.CorruptedHeaderB_WithValidHeaderA_LoadsSuccessfully
+        () [0x00076] in D:\Github\Flat.Adventure\WorldBuilder\Assets\Code\Tests\RegionSerializeTest.cs:455
+
+'
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1001
+      parentUniqueId: 'Tests.dll/[Tests][RegionSerializeTests][suite]'
+    - id: 1023
+      uniqueId: 'Tests.dll/RegionSerializeTests/[Tests][RegionSerializeTests.DataLengthsGreaterThanEntryLength_HeaderIsRejected]'
+      name: DataLengthsGreaterThanEntryLength_HeaderIsRejected
+      fullName: RegionSerializeTests.DataLengthsGreaterThanEntryLength_HeaderIsRejected
+      resultStatus: 2
+      duration: 0.0014391
+      messages: "  Expected: <System.IO.InvalidDataException>\r\n  But was:  null\r\n"
+      output: 
+      stacktrace: 'at RegionSerializeTests.DataLengthsGreaterThanEntryLength_HeaderIsRejected
+        () [0x0005f] in D:\Github\Flat.Adventure\WorldBuilder\Assets\Code\Tests\RegionSerializeTest.cs:576
+
+'
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1001
+      parentUniqueId: 'Tests.dll/[Tests][RegionSerializeTests][suite]'
+    - id: 1019
+      uniqueId: 'Tests.dll/RegionSerializeTests/[Tests][RegionSerializeTests.EmptyFile_LoadThrowsInvalidData]'
+      name: EmptyFile_LoadThrowsInvalidData
+      fullName: RegionSerializeTests.EmptyFile_LoadThrowsInvalidData
+      resultStatus: 1
+      duration: 0.0003588
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1001
+      parentUniqueId: 'Tests.dll/[Tests][RegionSerializeTests][suite]'
+    - id: 1028
+      uniqueId: 'Tests.dll/RegionSerializeTests/[Tests][RegionSerializeTests.FailureDuringFlush_DoesNotProduceInvalidCommittedState]'
+      name: FailureDuringFlush_DoesNotProduceInvalidCommittedState
+      fullName: RegionSerializeTests.FailureDuringFlush_DoesNotProduceInvalidCommittedState
+      resultStatus: 1
+      duration: 0.0020584
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1001
+      parentUniqueId: 'Tests.dll/[Tests][RegionSerializeTests][suite]'
+    - id: 1026
+      uniqueId: 'Tests.dll/RegionSerializeTests/[Tests][RegionSerializeTests.FailureDuringHeaderWrite_CanLeaveRecoverableHeader]'
+      name: FailureDuringHeaderWrite_CanLeaveRecoverableHeader
+      fullName: RegionSerializeTests.FailureDuringHeaderWrite_CanLeaveRecoverableHeader
+      resultStatus: 1
+      duration: 0.0015426
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1001
+      parentUniqueId: 'Tests.dll/[Tests][RegionSerializeTests][suite]'
+    - id: 1025
+      uniqueId: 'Tests.dll/RegionSerializeTests/[Tests][RegionSerializeTests.FailureDuringInitialDataWrite_DoesNotCreateValidFile]'
+      name: FailureDuringInitialDataWrite_DoesNotCreateValidFile
+      fullName: RegionSerializeTests.FailureDuringInitialDataWrite_DoesNotCreateValidFile
+      resultStatus: 2
+      duration: 0.0017062
+      messages: "  Expected: <System.IO.InvalidDataException>\r\n  But was:  null\r\n"
+      output: 
+      stacktrace: 'at RegionSerializeTests.FailureDuringInitialDataWrite_DoesNotCreateValidFile
+        () [0x0006e] in D:\Github\Flat.Adventure\WorldBuilder\Assets\Code\Tests\RegionSerializeTest.cs:620
+
+'
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1001
+      parentUniqueId: 'Tests.dll/[Tests][RegionSerializeTests][suite]'
+    - id: 1027
+      uniqueId: 'Tests.dll/RegionSerializeTests/[Tests][RegionSerializeTests.FailureDuringSecondHeaderWrite_OldOrNewHeaderMustRemainValid]'
+      name: FailureDuringSecondHeaderWrite_OldOrNewHeaderMustRemainValid
+      fullName: RegionSerializeTests.FailureDuringSecondHeaderWrite_OldOrNewHeaderMustRemainValid
+      resultStatus: 1
+      duration: 0.0012033
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1001
+      parentUniqueId: 'Tests.dll/[Tests][RegionSerializeTests][suite]'
+    - id: 1022
+      uniqueId: 'Tests.dll/RegionSerializeTests/[Tests][RegionSerializeTests.InvalidNegativeLength_HeaderIsRejected]'
+      name: InvalidNegativeLength_HeaderIsRejected
+      fullName: RegionSerializeTests.InvalidNegativeLength_HeaderIsRejected
+      resultStatus: 2
+      duration: 0.001237
+      messages: "  Expected: <System.IO.InvalidDataException>\r\n  But was:  null\r\n"
+      output: 
+      stacktrace: 'at RegionSerializeTests.InvalidNegativeLength_HeaderIsRejected
+        () [0x0005e] in D:\Github\Flat.Adventure\WorldBuilder\Assets\Code\Tests\RegionSerializeTest.cs:545
+
+'
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1001
+      parentUniqueId: 'Tests.dll/[Tests][RegionSerializeTests][suite]'
+    - id: 1021
+      uniqueId: 'Tests.dll/RegionSerializeTests/[Tests][RegionSerializeTests.InvalidNegativeOffset_HeaderIsRejected]'
+      name: InvalidNegativeOffset_HeaderIsRejected
+      fullName: RegionSerializeTests.InvalidNegativeOffset_HeaderIsRejected
+      resultStatus: 2
+      duration: 0.0016649
+      messages: "  Expected: <System.IO.InvalidDataException>\r\n  But was:  null\r\n"
+      output: 
+      stacktrace: 'at RegionSerializeTests.InvalidNegativeOffset_HeaderIsRejected
+        () [0x0005e] in D:\Github\Flat.Adventure\WorldBuilder\Assets\Code\Tests\RegionSerializeTest.cs:528
+
+'
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1001
+      parentUniqueId: 'Tests.dll/[Tests][RegionSerializeTests][suite]'
+    - id: 1011
+      uniqueId: 'Tests.dll/RegionSerializeTests/[Tests][RegionSerializeTests.Load_WithRequiredLods_DoesNotReturnUnrequiredChunks]'
+      name: Load_WithRequiredLods_DoesNotReturnUnrequiredChunks
+      fullName: RegionSerializeTests.Load_WithRequiredLods_DoesNotReturnUnrequiredChunks
+      resultStatus: 1
+      duration: 0.0038949
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1001
+      parentUniqueId: 'Tests.dll/[Tests][RegionSerializeTests][suite]'
+    - id: 1032
+      uniqueId: 'Tests.dll/RegionSerializeTests/[Tests][RegionSerializeTests.LoadingAfterEverySave_RemainsConsistent]'
+      name: LoadingAfterEverySave_RemainsConsistent
+      fullName: RegionSerializeTests.LoadingAfterEverySave_RemainsConsistent
+      resultStatus: 2
+      duration: 0.0064411
+      messages: "  Expected and actual are both <System.Byte[2347]>\r\n  Values differ
+        at index [0]\r\n  Expected: 178\r\n  But was:  0\r\n"
+      output: 
+      stacktrace: 'at NUnit.Framework.CollectionAssert.AreEqual (System.Collections.IEnumerable
+        expected, System.Collections.IEnumerable actual, System.String message, System.Object[]
+        args) [0x00007] in <f577cd9686154d6ab10efd7e65e64366>:0
+
+        at NUnit.Framework.CollectionAssert.AreEqual
+        (System.Collections.IEnumerable expected, System.Collections.IEnumerable
+        actual) [0x00000] in <f577cd9686154d6ab10efd7e65e64366>:0
+
+        at RegionSerializeTests.AssertChunkEqual
+        (Code.Data.ChunkCacheUpdate expected, Code.Data.ChunkCacheUpdate actual)
+        [0x00039] in D:\Github\Flat.Adventure\WorldBuilder\Assets\Code\Tests\RegionSerializeTest.cs:1138
+
+        at
+        RegionSerializeTests.LoadingAfterEverySave_RemainsConsistent () [0x000fe]
+        in D:\Github\Flat.Adventure\WorldBuilder\Assets\Code\Tests\RegionSerializeTest.cs:1000
+
+'
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1001
+      parentUniqueId: 'Tests.dll/[Tests][RegionSerializeTests][suite]'
+    - id: 1007
+      uniqueId: 'Tests.dll/RegionSerializeTests/[Tests][RegionSerializeTests.ManyChunks_ManySaves_PreserveAllLatestData]'
+      name: ManyChunks_ManySaves_PreserveAllLatestData
+      fullName: RegionSerializeTests.ManyChunks_ManySaves_PreserveAllLatestData
+      resultStatus: 2
+      duration: 0.0809839
+      messages: "  Expected and actual are both <System.Byte[14]>\r\n  Values differ
+        at index [0]\r\n  Expected: 34\r\n  But was:  0\r\n"
+      output: 
+      stacktrace: 'at NUnit.Framework.CollectionAssert.AreEqual (System.Collections.IEnumerable
+        expected, System.Collections.IEnumerable actual, System.String message, System.Object[]
+        args) [0x00007] in <f577cd9686154d6ab10efd7e65e64366>:0
+
+        at NUnit.Framework.CollectionAssert.AreEqual
+        (System.Collections.IEnumerable expected, System.Collections.IEnumerable
+        actual) [0x00000] in <f577cd9686154d6ab10efd7e65e64366>:0
+
+        at RegionSerializeTests.AssertChunkEqual
+        (Code.Data.ChunkCacheUpdate expected, Code.Data.ChunkCacheUpdate actual)
+        [0x00039] in D:\Github\Flat.Adventure\WorldBuilder\Assets\Code\Tests\RegionSerializeTest.cs:1138
+
+        at
+        RegionSerializeTests.ManyChunks_ManySaves_PreserveAllLatestData () [0x0012c]
+        in D:\Github\Flat.Adventure\WorldBuilder\Assets\Code\Tests\RegionSerializeTest.cs:182
+
+'
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1001
+      parentUniqueId: 'Tests.dll/[Tests][RegionSerializeTests][suite]'
+    - id: 1006
+      uniqueId: 'Tests.dll/RegionSerializeTests/[Tests][RegionSerializeTests.ManyConsecutiveSaves_PreserveLatestVersion]'
+      name: ManyConsecutiveSaves_PreserveLatestVersion
+      fullName: RegionSerializeTests.ManyConsecutiveSaves_PreserveLatestVersion
+      resultStatus: 1
+      duration: 0.0093266
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1001
+      parentUniqueId: 'Tests.dll/[Tests][RegionSerializeTests][suite]'
+    - id: 1024
+      uniqueId: 'Tests.dll/RegionSerializeTests/[Tests][RegionSerializeTests.OffsetBeforeHeader_HeaderIsRejected]'
+      name: OffsetBeforeHeader_HeaderIsRejected
+      fullName: RegionSerializeTests.OffsetBeforeHeader_HeaderIsRejected
+      resultStatus: 2
+      duration: 0.0053141
+      messages: "  Expected: <System.IO.InvalidDataException>\r\n  But was:  null\r\n"
+      output: 
+      stacktrace: 'at RegionSerializeTests.OffsetBeforeHeader_HeaderIsRejected ()
+        [0x0005d] in D:\Github\Flat.Adventure\WorldBuilder\Assets\Code\Tests\RegionSerializeTest.cs:590
+
+'
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1001
+      parentUniqueId: 'Tests.dll/[Tests][RegionSerializeTests][suite]'
+    - id: 1020
+      uniqueId: 'Tests.dll/RegionSerializeTests/[Tests][RegionSerializeTests.RandomGarbageFile_LoadThrowsInvalidData]'
+      name: RandomGarbageFile_LoadThrowsInvalidData
+      fullName: RegionSerializeTests.RandomGarbageFile_LoadThrowsInvalidData
+      resultStatus: 1
+      duration: 0.0011696
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1001
+      parentUniqueId: 'Tests.dll/[Tests][RegionSerializeTests][suite]'
+    - id: 1014
+      uniqueId: 'Tests.dll/RegionSerializeTests/[Tests][RegionSerializeTests.RandomizedStress_ManySaves_PreserveLatestState]'
+      name: RandomizedStress_ManySaves_PreserveLatestState
+      fullName: RegionSerializeTests.RandomizedStress_ManySaves_PreserveLatestState
+      resultStatus: 2
+      duration: 3.3190465
+      messages: "  Expected and actual are both <System.Byte[817]>\r\n  Values differ
+        at index [0]\r\n  Expected: 110\r\n  But was:  0\r\n"
+      output: 
+      stacktrace: 'at NUnit.Framework.CollectionAssert.AreEqual (System.Collections.IEnumerable
+        expected, System.Collections.IEnumerable actual, System.String message, System.Object[]
+        args) [0x00007] in <f577cd9686154d6ab10efd7e65e64366>:0
+
+        at NUnit.Framework.CollectionAssert.AreEqual
+        (System.Collections.IEnumerable expected, System.Collections.IEnumerable
+        actual) [0x00000] in <f577cd9686154d6ab10efd7e65e64366>:0
+
+        at RegionSerializeTests.AssertChunkEqual
+        (Code.Data.ChunkCacheUpdate expected, Code.Data.ChunkCacheUpdate actual)
+        [0x00039] in D:\Github\Flat.Adventure\WorldBuilder\Assets\Code\Tests\RegionSerializeTest.cs:1138
+
+        at
+        RegionSerializeTests.RandomizedStress_ManySaves_PreserveLatestState () [0x00116]
+        in D:\Github\Flat.Adventure\WorldBuilder\Assets\Code\Tests\RegionSerializeTest.cs:406
+
+'
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1001
+      parentUniqueId: 'Tests.dll/[Tests][RegionSerializeTests][suite]'
+    - id: 1029
+      uniqueId: 'Tests.dll/RegionSerializeTests/[Tests][RegionSerializeTests.RepeatedUpdates_EventuallyTriggerCompaction_AndPreserveData]'
+      name: RepeatedUpdates_EventuallyTriggerCompaction_AndPreserveData
+      fullName: RegionSerializeTests.RepeatedUpdates_EventuallyTriggerCompaction_AndPreserveData
+      resultStatus: 2
+      duration: 0.9845132
+      messages: "  Expected and actual are both <System.Byte[3440]>\r\n  Values differ
+        at index [0]\r\n  Expected: 3\r\n  But was:  194\r\n"
+      output: 
+      stacktrace: 'at NUnit.Framework.CollectionAssert.AreEqual (System.Collections.IEnumerable
+        expected, System.Collections.IEnumerable actual, System.String message, System.Object[]
+        args) [0x00007] in <f577cd9686154d6ab10efd7e65e64366>:0
+
+        at NUnit.Framework.CollectionAssert.AreEqual
+        (System.Collections.IEnumerable expected, System.Collections.IEnumerable
+        actual) [0x00000] in <f577cd9686154d6ab10efd7e65e64366>:0
+
+        at RegionSerializeTests.AssertChunkEqual
+        (Code.Data.ChunkCacheUpdate expected, Code.Data.ChunkCacheUpdate actual)
+        [0x00039] in D:\Github\Flat.Adventure\WorldBuilder\Assets\Code\Tests\RegionSerializeTest.cs:1138
+
+        at
+        RegionSerializeTests.RepeatedUpdates_EventuallyTriggerCompaction_AndPreserveData
+        () [0x00161] in D:\Github\Flat.Adventure\WorldBuilder\Assets\Code\Tests\RegionSerializeTest.cs:828
+
+'
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1001
+      parentUniqueId: 'Tests.dll/[Tests][RegionSerializeTests][suite]'
+    - id: 1012
+      uniqueId: 'Tests.dll/RegionSerializeTests/[Tests][RegionSerializeTests.Save_LargeChunk_Works]'
+      name: Save_LargeChunk_Works
+      fullName: RegionSerializeTests.Save_LargeChunk_Works
+      resultStatus: 2
+      duration: 0.0341218
+      messages: "  Expected and actual are both <System.Byte[1000000]>\r\n  Values
+        differ at index [0]\r\n  Expected: 1\r\n  But was:  144\r\n"
+      output: 
+      stacktrace: 'at NUnit.Framework.CollectionAssert.AreEqual (System.Collections.IEnumerable
+        expected, System.Collections.IEnumerable actual, System.String message, System.Object[]
+        args) [0x00007] in <f577cd9686154d6ab10efd7e65e64366>:0
+
+        at NUnit.Framework.CollectionAssert.AreEqual
+        (System.Collections.IEnumerable expected, System.Collections.IEnumerable
+        actual) [0x00000] in <f577cd9686154d6ab10efd7e65e64366>:0
+
+        at RegionSerializeTests.AssertChunkEqual
+        (Code.Data.ChunkCacheUpdate expected, Code.Data.ChunkCacheUpdate actual)
+        [0x00039] in D:\Github\Flat.Adventure\WorldBuilder\Assets\Code\Tests\RegionSerializeTest.cs:1138
+
+        at
+        RegionSerializeTests.Save_LargeChunk_Works () [0x0004c] in D:\Github\Flat.Adventure\WorldBuilder\Assets\Code\Tests\RegionSerializeTest.cs:329
+
+'
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1001
+      parentUniqueId: 'Tests.dll/[Tests][RegionSerializeTests][suite]'
+    - id: 1013
+      uniqueId: 'Tests.dll/RegionSerializeTests/[Tests][RegionSerializeTests.Save_ManyLargeChunks_Works]'
+      name: Save_ManyLargeChunks_Works
+      fullName: RegionSerializeTests.Save_ManyLargeChunks_Works
+      resultStatus: 2
+      duration: 0.2491399
+      messages: "  Expected and actual are both <System.Byte[100000]>\r\n  Values
+        differ at index [0]\r\n  Expected: 1\r\n  But was:  144\r\n"
+      output: 
+      stacktrace: 'at NUnit.Framework.CollectionAssert.AreEqual (System.Collections.IEnumerable
+        expected, System.Collections.IEnumerable actual, System.String message, System.Object[]
+        args) [0x00007] in <f577cd9686154d6ab10efd7e65e64366>:0
+
+        at NUnit.Framework.CollectionAssert.AreEqual
+        (System.Collections.IEnumerable expected, System.Collections.IEnumerable
+        actual) [0x00000] in <f577cd9686154d6ab10efd7e65e64366>:0
+
+        at RegionSerializeTests.AssertChunkEqual
+        (Code.Data.ChunkCacheUpdate expected, Code.Data.ChunkCacheUpdate actual)
+        [0x00039] in D:\Github\Flat.Adventure\WorldBuilder\Assets\Code\Tests\RegionSerializeTest.cs:1138
+
+        at
+        RegionSerializeTests.Save_ManyLargeChunks_Works () [0x000a8] in D:\Github\Flat.Adventure\WorldBuilder\Assets\Code\Tests\RegionSerializeTest.cs:353
+
+'
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1001
+      parentUniqueId: 'Tests.dll/[Tests][RegionSerializeTests][suite]'
+    - id: 1002
+      uniqueId: 'Tests.dll/RegionSerializeTests/[Tests][RegionSerializeTests.Save_NewFile_ThenLoad_ReturnsSameData]'
+      name: Save_NewFile_ThenLoad_ReturnsSameData
+      fullName: RegionSerializeTests.Save_NewFile_ThenLoad_ReturnsSameData
+      resultStatus: 2
+      duration: 0.0007604
+      messages: "  Expected: 3\r\n  But was:  73\r\n"
+      output: 
+      stacktrace: 'at RegionSerializeTests.Save_NewFile_ThenLoad_ReturnsSameData
+        () [0x00068] in D:\Github\Flat.Adventure\WorldBuilder\Assets\Code\Tests\RegionSerializeTest.cs:36
+
+'
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1001
+      parentUniqueId: 'Tests.dll/[Tests][RegionSerializeTests][suite]'
+    - id: 1005
+      uniqueId: 'Tests.dll/RegionSerializeTests/[Tests][RegionSerializeTests.Save_NewFile_WithAllDataTypes_Works]'
+      name: Save_NewFile_WithAllDataTypes_Works
+      fullName: RegionSerializeTests.Save_NewFile_WithAllDataTypes_Works
+      resultStatus: 2
+      duration: 0.0006698
+      messages: "  Expected and actual are both <System.Byte[1024]>\r\n  Values differ
+        at index [0]\r\n  Expected: 6\r\n  But was:  0\r\n"
+      output: 
+      stacktrace: 'at NUnit.Framework.CollectionAssert.AreEqual (System.Collections.IEnumerable
+        expected, System.Collections.IEnumerable actual, System.String message, System.Object[]
+        args) [0x00007] in <f577cd9686154d6ab10efd7e65e64366>:0
+
+        at NUnit.Framework.CollectionAssert.AreEqual
+        (System.Collections.IEnumerable expected, System.Collections.IEnumerable
+        actual) [0x00000] in <f577cd9686154d6ab10efd7e65e64366>:0
+
+        at RegionSerializeTests.AssertChunkEqual
+        (Code.Data.ChunkCacheUpdate expected, Code.Data.ChunkCacheUpdate actual)
+        [0x00039] in D:\Github\Flat.Adventure\WorldBuilder\Assets\Code\Tests\RegionSerializeTest.cs:1138
+
+        at
+        RegionSerializeTests.Save_NewFile_WithAllDataTypes_Works () [0x0004f] in
+        D:\Github\Flat.Adventure\WorldBuilder\Assets\Code\Tests\RegionSerializeTest.cs:103
+
+'
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1001
+      parentUniqueId: 'Tests.dll/[Tests][RegionSerializeTests][suite]'
+    - id: 1003
+      uniqueId: 'Tests.dll/RegionSerializeTests/[Tests][RegionSerializeTests.Save_NewFile_WithEmptyChunks_LoadsEmptyChunks]'
+      name: Save_NewFile_WithEmptyChunks_LoadsEmptyChunks
+      fullName: RegionSerializeTests.Save_NewFile_WithEmptyChunks_LoadsEmptyChunks
+      resultStatus: 2
+      duration: 0.0004854
+      messages: "  Expected: 3\r\n  But was:  73\r\n"
+      output: 
+      stacktrace: 'at RegionSerializeTests.Save_NewFile_WithEmptyChunks_LoadsEmptyChunks
+        () [0x0005a] in D:\Github\Flat.Adventure\WorldBuilder\Assets\Code\Tests\RegionSerializeTest.cs:58
+
+'
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1001
+      parentUniqueId: 'Tests.dll/[Tests][RegionSerializeTests][suite]'
+    - id: 1004
+      uniqueId: 'Tests.dll/RegionSerializeTests/[Tests][RegionSerializeTests.Save_NewFile_WithOnlyOneDataType_Works]'
+      name: Save_NewFile_WithOnlyOneDataType_Works
+      fullName: RegionSerializeTests.Save_NewFile_WithOnlyOneDataType_Works
+      resultStatus: 2
+      duration: 0.0066719
+      messages: "  Expected and actual are both <System.Byte[100]>\r\n  Values differ
+        at index [0]\r\n  Expected: 1\r\n  But was:  144\r\n"
+      output: 
+      stacktrace: 'at NUnit.Framework.CollectionAssert.AreEqual (System.Collections.IEnumerable
+        expected, System.Collections.IEnumerable actual, System.String message, System.Object[]
+        args) [0x00007] in <f577cd9686154d6ab10efd7e65e64366>:0
+
+        at NUnit.Framework.CollectionAssert.AreEqual
+        (System.Collections.IEnumerable expected, System.Collections.IEnumerable
+        actual) [0x00000] in <f577cd9686154d6ab10efd7e65e64366>:0
+
+        at RegionSerializeTests.Save_NewFile_WithOnlyOneDataType_Works
+        () [0x00090] in D:\Github\Flat.Adventure\WorldBuilder\Assets\Code\Tests\RegionSerializeTest.cs:83
+
+'
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1001
+      parentUniqueId: 'Tests.dll/[Tests][RegionSerializeTests][suite]'
+    - id: 1031
+      uniqueId: 'Tests.dll/RegionSerializeTests/[Tests][RegionSerializeTests.TempUpgradeFailure_DoesNotCorruptOriginal]'
+      name: TempUpgradeFailure_DoesNotCorruptOriginal
+      fullName: RegionSerializeTests.TempUpgradeFailure_DoesNotCorruptOriginal
+      resultStatus: 2
+      duration: 0.0438742
+      messages: "  Expected: <System.IO.IOException>\r\n  But was:  null\r\n"
+      output: 
+      stacktrace: 'at RegionSerializeTests.TempUpgradeFailure_DoesNotCorruptOriginal
+        () [0x000e7] in D:\Github\Flat.Adventure\WorldBuilder\Assets\Code\Tests\RegionSerializeTest.cs:942
+
+'
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1001
+      parentUniqueId: 'Tests.dll/[Tests][RegionSerializeTests][suite]'
+    - id: 1018
+      uniqueId: 'Tests.dll/RegionSerializeTests/[Tests][RegionSerializeTests.TruncatedHeader_LoadThrowsInvalidData]'
+      name: TruncatedHeader_LoadThrowsInvalidData
+      fullName: RegionSerializeTests.TruncatedHeader_LoadThrowsInvalidData
+      resultStatus: 1
+      duration: 0.0006937
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1001
+      parentUniqueId: 'Tests.dll/[Tests][RegionSerializeTests][suite]'
+    - id: 1008
+      uniqueId: 'Tests.dll/RegionSerializeTests/[Tests][RegionSerializeTests.UpdatingChunk_WithLargerData_PreservesOtherChunks]'
+      name: UpdatingChunk_WithLargerData_PreservesOtherChunks
+      fullName: RegionSerializeTests.UpdatingChunk_WithLargerData_PreservesOtherChunks
+      resultStatus: 2
+      duration: 149.7118
+      messages: "  Expected and actual are both <System.Byte[5000]>\r\n  Values differ
+        at index [0]\r\n  Expected: 1\r\n  But was:  0\r\n"
+      output: 
+      stacktrace: 'at NUnit.Framework.CollectionAssert.AreEqual (System.Collections.IEnumerable
+        expected, System.Collections.IEnumerable actual, System.String message, System.Object[]
+        args) [0x00007] in <f577cd9686154d6ab10efd7e65e64366>:0
+
+        at NUnit.Framework.CollectionAssert.AreEqual
+        (System.Collections.IEnumerable expected, System.Collections.IEnumerable
+        actual) [0x00000] in <f577cd9686154d6ab10efd7e65e64366>:0
+
+        at RegionSerializeTests.AssertChunkEqual
+        (Code.Data.ChunkCacheUpdate expected, Code.Data.ChunkCacheUpdate actual)
+        [0x00039] in D:\Github\Flat.Adventure\WorldBuilder\Assets\Code\Tests\RegionSerializeTest.cs:1138
+
+        at
+        RegionSerializeTests.UpdatingChunk_WithLargerData_PreservesOtherChunks ()
+        [0x0008b] in D:\Github\Flat.Adventure\WorldBuilder\Assets\Code\Tests\RegionSerializeTest.cs:205
+
+'
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1001
+      parentUniqueId: 'Tests.dll/[Tests][RegionSerializeTests][suite]'
+    - id: 1009
+      uniqueId: 'Tests.dll/RegionSerializeTests/[Tests][RegionSerializeTests.UpdatingChunk_WithSmallerData_PreservesOtherChunks]'
+      name: UpdatingChunk_WithSmallerData_PreservesOtherChunks
+      fullName: RegionSerializeTests.UpdatingChunk_WithSmallerData_PreservesOtherChunks
+      resultStatus: 1
+      duration: 0.0164197
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1001
+      parentUniqueId: 'Tests.dll/[Tests][RegionSerializeTests][suite]'
+    - id: 1010
+      uniqueId: 'Tests.dll/RegionSerializeTests/[Tests][RegionSerializeTests.UpdatingChunkWithZeroLength_RemovesChunkData]'
+      name: UpdatingChunkWithZeroLength_RemovesChunkData
+      fullName: RegionSerializeTests.UpdatingChunkWithZeroLength_RemovesChunkData
+      resultStatus: 1
+      duration: 0.0007224
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1001
+      parentUniqueId: 'Tests.dll/[Tests][RegionSerializeTests][suite]'
+    m_ResultText: "CorruptedHeaderA_WithValidHeaderB_LoadsSuccessfully (0,003s)\n---\n 
+      Expected: 1\r\n  But was:  0\r\n\n---\nat RegionSerializeTests.AssertChunkEqual
+      (Code.Data.ChunkCacheUpdate expected, Code.Data.ChunkCacheUpdate actual) [0x0001d]
+      in <color=#40a0ff><a href=\"D:\\Github\\Flat.Adventure\\WorldBuilder\\Assets\\Code\\Tests\\RegionSerializeTest.cs\"
+      line=\"1134\r\">Assets\\Code\\Tests\\RegionSerializeTest.cs:1134\r</a></color>\nat
+      RegionSerializeTests.CorruptedHeaderA_WithValidHeaderB_LoadsSuccessfully ()
+      [0x00076] in <color=#40a0ff><a href=\"D:\\Github\\Flat.Adventure\\WorldBuilder\\Assets\\Code\\Tests\\RegionSerializeTest.cs\"
+      line=\"433\r\">Assets\\Code\\Tests\\RegionSerializeTest.cs:433\r</a></color>"
+    m_ResultStacktrace: 'at RegionSerializeTests.AssertChunkEqual (Code.Data.ChunkCacheUpdate
+      expected, Code.Data.ChunkCacheUpdate actual) [0x0001d] in D:\Github\Flat.Adventure\WorldBuilder\Assets\Code\Tests\RegionSerializeTest.cs:1134
+
+      at
+      RegionSerializeTests.CorruptedHeaderA_WithValidHeaderB_LoadsSuccessfully ()
+      [0x00076] in D:\Github\Flat.Adventure\WorldBuilder\Assets\Code\Tests\RegionSerializeTest.cs:433
+
+'
+    m_TestListState:
+      scrollPos: {x: 0, y: 46}
+      m_SelectedIDs: d31bbdbc
+      m_LastClickedID: -1128457261
+      m_ExpandedIDs: e9624bb2d31a8ddadcd794f2e557abf7b63a6168ffffff7f
+      m_RenameOverlay:
+        m_UserAcceptedRename: 0
+        m_Name: 
+        m_OriginalName: 
+        m_EditFieldRect:
+          serializedVersion: 2
+          x: 0
+          y: 0
+          width: 0
+          height: 0
+        m_UserData: 0
+        m_IsWaitingForDelay: 0
+        m_IsRenaming: 0
+        m_OriginalEventType: 11
+        m_IsRenamingFilename: 0
+        m_TrimLeadingAndTrailingWhitespace: 0
+        m_ClientGUIView: {fileID: 0}
+      m_SearchString: 
+    m_TestRunnerUIFilter:
+      PassedHidden: 0
+      FailedHidden: 0
+      NotRunHidden: 0
+      m_SearchString: 
+      selectedCategories: []
+      availableCategories:
+      - Uncategorized
+    m_SelectedOption: 0
+  - m_Window: {fileID: 0}
+    runProgress:
+      RunGuid: ad27872a-05a5-42e6-a8a0-57e6f7ca7036
+      ExecutionSettings:
+        m_TargetPlatform: 0
+        m_HasTargetPlatform: 0
+        filter:
+          testMode: 0
+          testNames: []
+          groupNames: []
+          categoryNames: []
+          assemblyNames: []
+        filters:
+        - testMode: 1
+          testNames:
+          - RegionSerializeTests.UpdatingChunk_WithLargerData_PreservesOtherChunks
+          groupNames: []
+          categoryNames: []
+          assemblyNames: []
+        runSynchronously: 0
+        playerHeartbeatTimeout: 600
+        orderedTestNames: []
+        ignoreTests: []
+        featureFlags:
+          fileCleanUpCheck: 0
+          requiresSplashScreen: 0
+          strictDomainReload: 0
+          disableNestedEnumeratorBugfix: 0
+        randomOrderSeed: 0
+      HasFinished: 1
+      Progress: 0.9999999
+      CurrentStepName: Unlock Reload Assemblies
+      CurrentStageName: 
+    m_NewResultList: []
+    m_ResultText: 
+    m_ResultStacktrace: 
+    m_TestListState:
+      scrollPos: {x: 0, y: 0}
+      m_SelectedIDs: 
+      m_LastClickedID: 0
+      m_ExpandedIDs: 
+      m_RenameOverlay:
+        m_UserAcceptedRename: 0
+        m_Name: 
+        m_OriginalName: 
+        m_EditFieldRect:
+          serializedVersion: 2
+          x: 0
+          y: 0
+          width: 0
+          height: 0
+        m_UserData: 0
+        m_IsWaitingForDelay: 0
+        m_IsRenaming: 0
+        m_OriginalEventType: 11
+        m_IsRenamingFilename: 0
+        m_TrimLeadingAndTrailingWhitespace: 0
+        m_ClientGUIView: {fileID: 0}
+      m_SearchString: 
+    m_TestRunnerUIFilter:
+      PassedHidden: 0
+      FailedHidden: 0
+      NotRunHidden: 0
+      m_SearchString: 
+      selectedCategories: []
+      availableCategories: []
+    m_SelectedOption: 0
+  - m_Window: {fileID: 0}
+    runProgress:
+      RunGuid: ad27872a-05a5-42e6-a8a0-57e6f7ca7036
+      ExecutionSettings:
+        m_TargetPlatform: 0
+        m_HasTargetPlatform: 0
+        filter:
+          testMode: 0
+          testNames: []
+          groupNames: []
+          categoryNames: []
+          assemblyNames: []
+        filters:
+        - testMode: 1
+          testNames:
+          - RegionSerializeTests.UpdatingChunk_WithLargerData_PreservesOtherChunks
+          groupNames: []
+          categoryNames: []
+          assemblyNames: []
+        runSynchronously: 0
+        playerHeartbeatTimeout: 600
+        orderedTestNames: []
+        ignoreTests: []
+        featureFlags:
+          fileCleanUpCheck: 0
+          requiresSplashScreen: 0
+          strictDomainReload: 0
+          disableNestedEnumeratorBugfix: 0
+        randomOrderSeed: 0
+      HasFinished: 1
+      Progress: 0.9999999
+      CurrentStepName: Unlock Reload Assemblies
+      CurrentStageName: 
+    m_NewResultList: []
+    m_ResultText: 
+    m_ResultStacktrace: 
+    m_TestListState:
+      scrollPos: {x: 0, y: 0}
+      m_SelectedIDs: 
+      m_LastClickedID: 0
+      m_ExpandedIDs: 
+      m_RenameOverlay:
+        m_UserAcceptedRename: 0
+        m_Name: 
+        m_OriginalName: 
+        m_EditFieldRect:
+          serializedVersion: 2
+          x: 0
+          y: 0
+          width: 0
+          height: 0
+        m_UserData: 0
+        m_IsWaitingForDelay: 0
+        m_IsRenaming: 0
+        m_OriginalEventType: 11
+        m_IsRenamingFilename: 0
+        m_TrimLeadingAndTrailingWhitespace: 0
+        m_ClientGUIView: {fileID: 0}
+      m_SearchString: 
+    m_TestRunnerUIFilter:
+      PassedHidden: 0
+      FailedHidden: 0
+      NotRunHidden: 0
+      m_SearchString: 
+      selectedCategories: []
+      availableCategories: []
+    m_SelectedOption: 0
+--- !u!114 &17
 MonoBehaviour:
   m_ObjectHideFlags: 52
   m_CorrespondingSourceObject: {fileID: 0}
@@ -1199,7 +4286,7 @@ MonoBehaviour:
     0.0\n    },\n    \"m_Labels\": [],\n    \"m_Space\": 0\n}\n\n"
   m_AssetMaybeChangedOnDisk: 0
   m_AssetMaybeDeleted: 0
---- !u!114 &14
+--- !u!114 &18
 MonoBehaviour:
   m_ObjectHideFlags: 52
   m_CorrespondingSourceObject: {fileID: 0}
@@ -1370,7 +4457,7 @@ MonoBehaviour:
     \"m_Labels\": [],\n    \"m_Space\": 0\n}\n\n"
   m_AssetMaybeChangedOnDisk: 0
   m_AssetMaybeDeleted: 0
---- !u!114 &15
+--- !u!114 &19
 MonoBehaviour:
   m_ObjectHideFlags: 52
   m_CorrespondingSourceObject: {fileID: 0}
@@ -1636,7 +4723,7 @@ MonoBehaviour:
     m_DynamicPanelContainerData: []
     m_OverlaysVisible: 1
     m_DynamicPanelBehavior: 0
---- !u!114 &16
+--- !u!114 &20
 MonoBehaviour:
   m_ObjectHideFlags: 52
   m_CorrespondingSourceObject: {fileID: 0}
@@ -1739,7 +4826,7 @@ MonoBehaviour:
   m_XRRenderMode: -1
   m_RenderTexture: {fileID: 0}
   m_showToolbar: 1
---- !u!114 &17
+--- !u!114 &21
 MonoBehaviour:
   m_ObjectHideFlags: 52
   m_CorrespondingSourceObject: {fileID: 0}
@@ -1787,7 +4874,8 @@ MonoBehaviour:
     m_ShowAllHits: 0
     m_SkipHidden: 0
     m_SearchArea: 1
-    m_Folders: []
+    m_Folders:
+    - Assets/Settings
     m_Globs: []
     m_ProductIds: 
     m_AnyWithAssetOrigin: 0
@@ -1809,17 +4897,18 @@ MonoBehaviour:
       m_Data: 0
     m_ExpandedIDs:
     - m_Data: 0
-    - m_Data: 48406
-    - m_Data: 48408
-    - m_Data: 48410
-    - m_Data: 48412
-    - m_Data: 48414
-    - m_Data: 48416
-    - m_Data: 48418
-    - m_Data: 48420
-    - m_Data: 48422
-    - m_Data: 48424
     - m_Data: 48426
+    - m_Data: 48428
+    - m_Data: 48430
+    - m_Data: 48432
+    - m_Data: 48434
+    - m_Data: 48436
+    - m_Data: 48438
+    - m_Data: 48440
+    - m_Data: 48442
+    - m_Data: 48444
+    - m_Data: 48446
+    - m_Data: 48448
     m_RenameOverlay:
       m_UserAcceptedRename: 0
       m_Name: 
@@ -1853,17 +4942,18 @@ MonoBehaviour:
       m_Data: 0
     m_ExpandedIDs:
     - m_Data: 0
-    - m_Data: 48406
-    - m_Data: 48408
-    - m_Data: 48410
-    - m_Data: 48412
-    - m_Data: 48414
-    - m_Data: 48416
-    - m_Data: 48418
-    - m_Data: 48420
-    - m_Data: 48422
-    - m_Data: 48424
     - m_Data: 48426
+    - m_Data: 48428
+    - m_Data: 48430
+    - m_Data: 48432
+    - m_Data: 48434
+    - m_Data: 48436
+    - m_Data: 48438
+    - m_Data: 48440
+    - m_Data: 48442
+    - m_Data: 48444
+    - m_Data: 48446
+    - m_Data: 48448
     m_RenameOverlay:
       m_UserAcceptedRename: 0
       m_Name: 
@@ -1881,7 +4971,7 @@ MonoBehaviour:
       m_OriginalEventType: 11
       m_IsRenamingFilename: 1
       m_TrimLeadingAndTrailingWhitespace: 0
-      m_ClientGUIView: {fileID: 6}
+      m_ClientGUIView: {fileID: 9}
     m_SearchString: 
     m_CreateAssetUtility:
       m_EndAction: {fileID: 0}
@@ -1926,7 +5016,7 @@ MonoBehaviour:
     m_GridSize: 64
   m_SkipHiddenPackages: 0
   m_DirectoriesAreaWidth: 70
---- !u!114 &18
+--- !u!114 &22
 MonoBehaviour:
   m_ObjectHideFlags: 52
   m_CorrespondingSourceObject: {fileID: 0}
@@ -1971,13 +5061,24 @@ MonoBehaviour:
       m_LastClickedID:
         m_Data: 0
       m_ExpandedIDs:
-      - m_Data: -52024
-      - m_Data: -50880
-      - m_Data: -49644
-      - m_Data: -48642
-      - m_Data: -47224
-      - m_Data: -46288
-      - m_Data: -1334
+      - m_Data: -10298
+      - m_Data: -9964
+      - m_Data: -9624
+      - m_Data: -9266
+      - m_Data: -8932
+      - m_Data: -8196
+      - m_Data: -7798
+      - m_Data: -7096
+      - m_Data: -6750
+      - m_Data: -6410
+      - m_Data: -6064
+      - m_Data: -5314
+      - m_Data: -4974
+      - m_Data: -4254
+      - m_Data: -3546
+      - m_Data: -2844
+      - m_Data: -2090
+      - m_Data: -1322
       m_RenameOverlay:
         m_UserAcceptedRename: 0
         m_Name: 
@@ -1995,7 +5096,7 @@ MonoBehaviour:
         m_OriginalEventType: 11
         m_IsRenamingFilename: 0
         m_TrimLeadingAndTrailingWhitespace: 0
-        m_ClientGUIView: {fileID: 9}
+        m_ClientGUIView: {fileID: 12}
       m_SearchString: 
     m_ExpandedScenes: []
     m_CurrenRootEntityId:
@@ -2004,7 +5105,7 @@ MonoBehaviour:
       m_IsLocked: 0
     m_CurrentSortingName: TransformSorting
   m_WindowGUID: 4c969a2b90040154d917609493e03593
---- !u!114 &19
+--- !u!114 &23
 MonoBehaviour:
   m_ObjectHideFlags: 52
   m_CorrespondingSourceObject: {fileID: 0}
@@ -2627,13 +5728,13 @@ MonoBehaviour:
   m_AudioPlay: 0
   m_DebugDrawModesUseInteractiveLightBakingData: 0
   m_Position:
-    m_Target: {x: 19.705215, y: -1.2166746, z: 42.709198}
+    m_Target: {x: 22.001078, y: 14.459509, z: 13.33239}
     speed: 2
-    m_Value: {x: 19.705215, y: -1.2166746, z: 42.709198}
+    m_Value: {x: 22.001078, y: 14.459509, z: 13.33239}
   m_RenderMode: 0
   m_CameraMode:
-    drawMode: 2
-    name: Shaded Wireframe
+    drawMode: 0
+    name: Shaded
     section: Shading Mode
   m_ValidateTrueMetals: 0
   m_DoValidateTrueMetals: 0
@@ -2676,13 +5777,13 @@ MonoBehaviour:
     m_gridOpacity: 0.5
     m_NearestPlaneToHandleMode: 0
   m_Rotation:
-    m_Target: {x: -0.27018812, y: 0.045942064, z: -0.012855652, w: -0.96165234}
+    m_Target: {x: -0.10498755, y: 0.30200833, z: -0.033418853, w: -0.9469491}
     speed: 2
-    m_Value: {x: -0.27018812, y: 0.045942068, z: -0.012855653, w: -0.9616524}
+    m_Value: {x: -0.104987554, y: 0.30200833, z: -0.033418853, w: -0.9469491}
   m_Size:
-    m_Target: 26.94234
+    m_Target: 12.179857
     speed: 2
-    m_Value: 26.94234
+    m_Value: 12.179857
   m_Ortho:
     m_Target: 0
     speed: 2
@@ -2703,7 +5804,7 @@ MonoBehaviour:
   m_LastSceneViewRotation: {x: 0.22208405, y: -0.33136553, z: 0.080564044, w: 0.9134469}
   m_LastSceneViewOrtho: 0
   m_Viewpoint:
-    m_SceneView: {fileID: 19}
+    m_SceneView: {fileID: 23}
     m_CameraOverscanSettings:
       m_Opacity: 50
       m_Scale: 1
@@ -2716,7 +5817,7 @@ MonoBehaviour:
     name: Contributors / Receivers
     section: Lighting
   m_ViewIsLockedToObject: 0
---- !u!114 &20
+--- !u!114 &24
 MonoBehaviour:
   m_ObjectHideFlags: 52
   m_CorrespondingSourceObject: {fileID: 0}
@@ -2771,7 +5872,7 @@ MonoBehaviour:
   m_CurrentEditor: 0
   m_LayerEditor:
     m_SelectedLayerIndex: 0
---- !u!114 &21
+--- !u!114 &25
 MonoBehaviour:
   m_ObjectHideFlags: 52
   m_CorrespondingSourceObject: {fileID: 0}
@@ -2809,7 +5910,7 @@ MonoBehaviour:
     m_DynamicPanelContainerData: []
     m_OverlaysVisible: 1
     m_DynamicPanelBehavior: 0
---- !u!114 &22
+--- !u!114 &26
 MonoBehaviour:
   m_ObjectHideFlags: 52
   m_CorrespondingSourceObject: {fileID: 0}
@@ -2861,7 +5962,7 @@ MonoBehaviour:
   m_LockTracker:
     m_IsLocked: 0
   m_PreviewWindow: {fileID: 0}
---- !u!114 &23
+--- !u!114 &27
 MonoBehaviour:
   m_ObjectHideFlags: 52
   m_CorrespondingSourceObject: {fileID: 0}

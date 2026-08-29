@@ -6,6 +6,7 @@ using System.Threading;
 using Code.Data;
 using Code.Worlds.Storage;
 using Game.Data;
+using Game.Worlds.Storage;
 
 namespace Code.Worlds {
     public class WorldCache {
@@ -238,6 +239,7 @@ namespace Code.Worlds {
                 var current = new WriteStorageData();
                 foreach (var chunk in region.chunks[lod]) {
                     if (chunk.Version != chunk.CurrentVersion) {
+                        current.AddOperation(chunk.Pos);
                         chunk.RequestExport(current);
                     }
                 }

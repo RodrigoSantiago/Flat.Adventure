@@ -1,6 +1,11 @@
+using System.Runtime.InteropServices;
+using Code;
 using Code.Data;
+using Code.Worlds;
 using Code.Worlds.Storage;
+using Game.Worlds.Storage;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 namespace Game.Data {
     public class Chunk {
@@ -10,8 +15,9 @@ namespace Game.Data {
         public int Lod { get; private set; }
         public int Version { get; set; }
         public int CurrentVersion { get; private set; }
+        public int MeshVersion { get; private set; }
         public ChunkSoil Soil { get; private set; }
-        public Mesh Mesh { get; private set; }
+        public Mesh SoilMesh { get; private set; }
         public bool Released { get; set; } = true;
 
         public Chunk(IndexPos pos, int lod) {
@@ -39,23 +45,43 @@ namespace Game.Data {
         // public List<Grass> grass;          // Grass uses a special rendering method
 
         public void RequestExport(WriteStorageData output) {
+            if (SoilMesh != null) {
+                GraphicsBuffer buffer = SoilMesh.GetVertexBuffer(0);
+
+                AsyncGPUReadback.Request(buffer, request => {
+                    if (request.hasError) {
+                        buffer.Dispose();
+                        WorldManager.Instance.RunTask(() => RequestData(output, null));
+                        return;
+                    }
+
+                    var vertices = request.GetData<GeneratedVertexLow>();
+                    
+                    byte[] bytes = vertices.Reinterpret<byte>(Marshal.SizeOf<GeneratedVertexLow>()).ToArray();
+                    buffer.Dispose();
+                    
+                    WorldManager.Instance.RunTask(() => RequestData(output, bytes));
+                });
+            } else {
+                WorldManager.Instance.RunTask(() => RequestData(output, null));
+            }
+        }
+
+        private void RequestData(WriteStorageData output, byte[] mesh) {
+            var update = new ChunkCacheUpdate();
+            update.chunkEntryId = Region.GetLocalId(Lod, Pos - Pos.GetChunkIndex(Region.MaxLod));
+            update.version = CurrentVersion;
             
-        }
-        
-        public ChunkCacheUpdate Export() {
-            return null;
-        }
-        
-        public byte[] ExportSoil() {
-            return null;
-        }
+            if (mesh != null && MeshVersion == CurrentVersion) {
+                update.meshData = mesh;
+            }
 
-        public byte[] ExportMesh() {
-            return null;
-        }
-
-        public byte[] ExportList() {
-            return null;
+            if (Soil != null) {
+                update.soilDenData = Soil.ExportDensity();
+                update.soilMatData = Soil.ExportMaterial();
+            }
+            
+            output.PutData(Pos, update);
         }
     }
 }

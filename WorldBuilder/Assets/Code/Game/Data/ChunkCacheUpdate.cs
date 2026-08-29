@@ -7,6 +7,6 @@ namespace Code.Data {
         public byte[] meshData;
         public byte[] listData;
 
-        public int TotalLength => soilDenData?.Length ?? 0 + soilMatData?.Length ?? 0 + meshData?.Length ?? 0 + listData?.Length ?? 0;
+        public long TotalLength => (soilDenData?.Length ?? 0) + (soilMatData?.Length ?? 0) + (meshData?.Length ?? 0) + (listData?.Length ?? 0);
     }
 }

@@ -779,7 +779,7 @@ namespace Game.Tests.Data {
 
         [Test]
         public void Mode_DataSizes_AreCorrect() {
-            Assert.That(ChunkSoil.Mode.Constant.dataSize, Is.EqualTo(1));
+            Assert.That(ChunkSoil.Mode.Constant.dataSize, Is.EqualTo(0));
 
             Assert.That(ChunkSoil.Mode.Packed1.dataSize, Is.EqualTo(4096));
 

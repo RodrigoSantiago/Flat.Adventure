@@ -77,6 +77,10 @@ namespace Code.Data {
             return new IndexPos(x, y, z) * (ChunkSoil.Size1D * (1 << lod));
         }
 
+        public static int GetLocalId(int lod, IndexPos pos) {
+            return GetLocalId(lod, pos.x, pos.y, pos.z);
+        }
+
         public static int GetLocalId(int lod, int x, int y, int z) {
             return x + y * LodSizeX[lod] + z * LodSizeY[lod];
         }

@@ -1,26 +1,44 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using Code.Data;
+using Game.Data;
 
-namespace Code.Worlds.Storage {
+namespace Game.Worlds.Storage {
     public class WriteStorageData {
-        public WriteStorageData() {
-            
-        }
 
-        public List<ChunkCacheUpdate> Updates { get; }
+        private bool completed;
+        private Action action;
+        private List<IndexPos> Operations { get; } = new();
+        private List<ChunkCacheUpdate> CompletedTasks { get; } = new();
+        
+        public List<ChunkCacheUpdate> Updates => new (CompletedTasks);
 
-        public void AddOperation() {
-            
+        public void AddOperation(IndexPos operation) {
+            lock (Operations) {
+                Operations.Add(operation);
+                completed = false;
+            }
         }
         
-        public void PutData(ChunkCacheUpdate update) {
-            
+        public void PutData(IndexPos operation, ChunkCacheUpdate update) {
+            lock (Operations) {
+                Operations.Remove(operation);
+                CompletedTasks.Add(update);
+                completed = (Operations.Count == 0);
+
+                if (completed && action != null) {
+                    action.Invoke();
+                }
+            }
         }
 
         public void SetOnCompleted(Action action) {
-            
+            lock (Operations) {
+                this.action = action;
+                if (completed) {
+                    action.Invoke();
+                }
+            }
         }
     }
 }

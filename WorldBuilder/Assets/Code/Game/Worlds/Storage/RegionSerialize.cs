@@ -4,32 +4,31 @@ using System.IO;
 using System.Linq;
 using Code.Data;
 
-namespace Code.Worlds.Storage {
+namespace Game.Worlds.Storage {
 
     public class RegionSerialize {
 
-        private static readonly int EntryOffset = sizeof(int) * 7;
-        private static readonly int HeaderOffset = sizeof(int) + EntryOffset * Region.TotalChunks;
-        private static readonly float ExtraPadding = 1.10f;
-        private static readonly float MaxSpaceWaste = 1.50f;
+        private static readonly int EntryOffset = sizeof(long) * 2 + sizeof(int) * 5;
+        private static readonly int HeaderOffset = (sizeof(int) + EntryOffset * Region.TotalChunks) * 2 + 4;
+        private static readonly float MaxSpaceWaste = 2.50f;
 
         private readonly byte[] headerBuffer = new byte[HeaderOffset];
         
         private class RegionHeader {
-            public int magic;
             public ChunkEntry[] entries;
+            public int version;
 
             public RegionHeader Clone() {
                 return new RegionHeader {
-                    magic = magic,
-                    entries = (ChunkEntry[])entries.Clone()
+                    entries = (ChunkEntry[])entries.Clone(),
+                    version = version
                 };
             }
         }
 
         private struct ChunkEntry {
-            public int offset;
-            public int length;
+            public long offset;
+            public long length;
             public int version;
             public int soilDenLength;
             public int soilMatLength;
@@ -37,38 +36,18 @@ namespace Code.Worlds.Storage {
             public int listLength;
         }
 
-        private readonly Func<string, Stream> createInput;
-        private readonly Func<string, Stream> createOutput;
+        private readonly IStreamTransfer streamTransfer;
 
-        public RegionSerialize(Func<string, Stream> createInput, Func<string, Stream> createOutput) {
-            this.createInput = createInput;
-            this.createOutput = createOutput;
+        public RegionSerialize(IStreamTransfer streamTransfer) {
+            this.streamTransfer = streamTransfer;
         }
 
-        public RegionSerialize() : this(InputStream, OutputStream) {
+        public RegionSerialize() : this(new FileStreamTransfer()) {
             
         }
 
-        private static Stream InputStream(string path) {
-            return new FileStream(
-                path,
-                FileMode.Open,
-                FileAccess.Read,
-                FileShare.Read);
-        }
-        
-        private static Stream OutputStream(string path) {
-            return new FileStream(
-                path,
-                FileMode.OpenOrCreate,
-                FileAccess.ReadWrite,
-                FileShare.None,
-                bufferSize: 64 * 1024,
-                options: FileOptions.WriteThrough);
-        }
-
         public ChunkCacheUpdate[] Load(string filePath, int requiredLods) {
-            using var stream = createInput(filePath);
+            using var stream = streamTransfer.CreateInput(filePath);
             var header = ReadHeader(stream);
             if (header == null) {
                 throw new InvalidDataException("Invalid chunk file");
@@ -78,224 +57,246 @@ namespace Code.Worlds.Storage {
         }
 
         public void Save(string filePath, ChunkCacheUpdate[] updateChunks, bool update) {
-            using var stream = createOutput(filePath);
+            using var iStream = update ? streamTransfer.CreateInput(filePath) : null;
+
+            bool temp = false;
             
-            var header = ReadHeader(stream);
+            var header = iStream == null ? null : ReadHeader(iStream);
             if (header == null) {
                 if (update) {
                     throw new InvalidDataException("Failed to update the chunk");
                 }
                 header = new RegionHeader {
-                    magic = 0xC0FE,
-                    entries = new ChunkEntry[Region.TotalChunks]
+                    entries = new ChunkEntry[Region.TotalChunks],
+                    version = 1,
                 };
-            }
+                PackHeader(header, updateChunks);
+                
+            } else {
+                var originalHeader = header?.Clone();
+                float waste = AppendHeader(header, updateChunks);
+                
+                if (waste >= MaxSpaceWaste) {
+                    
+                    var allChunks = ReadChunkUpdate(iStream, originalHeader, -1);
+                    
+                    foreach (var chunk in updateChunks) {
+                        allChunks[chunk.chunkEntryId].version = chunk.version;
+                        allChunks[chunk.chunkEntryId].soilDenData = chunk.soilDenData;
+                        allChunks[chunk.chunkEntryId].soilMatData = chunk.soilMatData;
+                        allChunks[chunk.chunkEntryId].meshData = chunk.meshData;
+                        allChunks[chunk.chunkEntryId].listData = chunk.listData;
+                    }
 
-            var originalHeader = header.Clone();
-
-            foreach (var chunk in updateChunks) {
-                var entry = header.entries[chunk.chunkEntryId];
-                if (chunk.TotalLength > entry.length) {
-                    entry.offset = 0;
+                    updateChunks = allChunks;
+                    header = originalHeader;
+                    
+                    PackHeader(header, updateChunks);
+                    temp = true;
+                    
                 }
-                header.entries[chunk.chunkEntryId] = entry;
             }
-
+            
+            iStream?.Close();
+            
+                
+            using var oStream = streamTransfer.CreateOutput(filePath, temp);
+                
             foreach (var chunk in updateChunks) {
                 var entry = header.entries[chunk.chunkEntryId];
-                entry.version = chunk.version;
+                if (chunk.TotalLength > 0) {
+                    oStream.Seek(entry.offset, SeekOrigin.Begin);
+                    if (chunk.soilDenData != null) WriteData(oStream, chunk.soilDenData);
+                    if (chunk.soilMatData != null) WriteData(oStream, chunk.soilMatData);
+                    if (chunk.meshData != null) WriteData(oStream, chunk.meshData);
+                    if (chunk.listData != null) WriteData(oStream, chunk.listData);
+                }
+            }
+                
+            header.version = temp ? 1 : header.version + 1;
+            WriteHeader(oStream, header);
+            streamTransfer.Flush(oStream);
+            
+            if (temp) {
+                streamTransfer.UpgradeTempOutput(filePath);
+            }
+        }
+
+        private float AppendHeader(RegionHeader header, ChunkCacheUpdate[] chunks) {
+            var occupied = header.entries
+                .Where(e => e.offset > 0 && e.length > 0)
+                .OrderBy(e => e.offset).ToList();
+            
+            foreach (var chunk in chunks) {
+                var entry = header.entries[chunk.chunkEntryId];
                 
                 if (chunk.TotalLength == 0) {
-                    entry.offset = 0;
-                    entry.length = 0;
-                    entry.soilDenLength = 0;
-                    entry.soilMatLength = 0;
-                    entry.meshLength = 0;
-                    entry.listLength = 0;
+                    entry = new ChunkEntry {
+                        version = chunk.version
+                    };
                 } else {
-                    if (chunk.TotalLength > entry.length) {
-                        int extraLength = (int)(chunk.TotalLength * ExtraPadding);
-                        entry.length = FindFreeSpace(header, chunk.TotalLength, extraLength, out entry.offset);
-                    }
+                    entry.version = chunk.version;
+                    entry.length = chunk.TotalLength;
+                    entry.offset = FindFreeSpace(occupied, chunk.TotalLength);
                     entry.soilDenLength = chunk.soilDenData?.Length ?? 0;
                     entry.soilMatLength = chunk.soilMatData?.Length ?? 0;
                     entry.meshLength = chunk.meshData?.Length ?? 0;
                     entry.listLength = chunk.listData?.Length ?? 0;
+                    occupied.Add(entry);
+                    occupied.Sort((a, b) => a.offset.CompareTo(b.offset));
                 }
 
                 header.entries[chunk.chunkEntryId] = entry;
             }
 
-            long totalRequired = 0;
-            long totalUsed = 0;
+            long totalRequired = HeaderOffset;
+            long totalUsed = HeaderOffset;
             foreach (var entry in header.entries) {
-                totalRequired += entry.soilDenLength + entry.soilMatLength + entry.meshLength + entry.listLength;
-                totalUsed += entry.length;
+                totalUsed = Math.Max(totalUsed, entry.offset + entry.length);
+                totalRequired += entry.length;
             }
 
-            float waste = totalUsed / (float)totalRequired;
-            if (waste > MaxSpaceWaste || (totalRequired == 0 && totalUsed > 4096)) {
-                var allChunks = ReadChunkUpdate(stream, originalHeader, -1);
-                foreach (var chunk in updateChunks) {
-                    allChunks[chunk.chunkEntryId].version = chunk.version;
-                    allChunks[chunk.chunkEntryId].soilDenData = chunk.soilDenData;
-                    allChunks[chunk.chunkEntryId].soilMatData = chunk.soilMatData;
-                    allChunks[chunk.chunkEntryId].meshData = chunk.meshData;
-                    allChunks[chunk.chunkEntryId].listData = chunk.listData;
-                }
+            return totalUsed / (float)totalRequired;
+        }
 
-                int lastOffset = HeaderOffset;
-                foreach (var chunk in allChunks) {
-                    var entry = originalHeader.entries[chunk.chunkEntryId];
+        private void PackHeader(RegionHeader header, ChunkCacheUpdate[] chunks) {
+            long lastOffset = HeaderOffset;
+            foreach (var chunk in chunks) {
+                var entry = header.entries[chunk.chunkEntryId];
+                if (chunk.TotalLength == 0) {
+                    entry = new ChunkEntry {
+                        version = chunk.version
+                    };
+                } else {
                     entry.version = chunk.version;
-                    entry.length = (int)(chunk.TotalLength * ExtraPadding);
-                    if (entry.length == 0) {
-                        entry.offset = 0;
-                        entry.soilDenLength = 0;
-                        entry.soilMatLength = 0;
-                        entry.meshLength = 0;
-                        entry.listLength = 0;
-                    } else {
-                        entry.offset = lastOffset;
-                        entry.soilDenLength = chunk.soilDenData?.Length ?? 0;
-                        entry.soilMatLength = chunk.soilMatData?.Length ?? 0;
-                        entry.meshLength = chunk.meshData?.Length ?? 0;
-                        entry.listLength = chunk.listData?.Length ?? 0;
+                    entry.length = chunk.TotalLength;
+                    entry.offset = lastOffset;
+                    entry.soilDenLength = chunk.soilDenData?.Length ?? 0;
+                    entry.soilMatLength = chunk.soilMatData?.Length ?? 0;
+                    entry.meshLength = chunk.meshData?.Length ?? 0;
+                    entry.listLength = chunk.listData?.Length ?? 0;
 
-                        lastOffset += entry.length;
-                    }
-
-                    header.entries[chunk.chunkEntryId] = entry;
-                }
-            
-                WriteDead(stream);
-                foreach (var chunk in allChunks) {
-                    var entry = header.entries[chunk.chunkEntryId];
-                    if (chunk.TotalLength > 0) {
-                        stream.Seek(entry.offset, SeekOrigin.Begin);
-                        if (chunk.soilDenData != null) WriteData(stream, chunk.soilDenData, 0, chunk.soilDenData.Length);
-                        if (chunk.soilMatData != null) WriteData(stream, chunk.soilMatData, 0, chunk.soilMatData.Length);
-                        if (chunk.meshData != null) WriteData(stream, chunk.meshData, 0, chunk.meshData.Length);
-                        if (chunk.listData != null) WriteData(stream, chunk.listData, 0, chunk.listData.Length);
-                    }
+                    lastOffset += entry.length;
                 }
 
-            } else {
-            
-                WriteDead(stream);
-                foreach (var chunk in updateChunks) {
-                    var entry = header.entries[chunk.chunkEntryId];
-                    if (chunk.TotalLength > 0) {
-                        stream.Seek(entry.offset, SeekOrigin.Begin);
-                        if (chunk.soilDenData != null) WriteData(stream, chunk.soilDenData, 0, chunk.soilDenData.Length);
-                        if (chunk.soilMatData != null) WriteData(stream, chunk.soilMatData, 0, chunk.soilMatData.Length);
-                        if (chunk.meshData != null) WriteData(stream, chunk.meshData, 0, chunk.meshData.Length);
-                        if (chunk.listData != null) WriteData(stream, chunk.listData, 0, chunk.listData.Length);
-                    }
-                }
-            }
-            
-            WriteHeader(stream, header);
-
-            if (stream is FileStream fileStream) {
-                fileStream.Flush(true);
-            } else {
-                stream.Flush();
+                header.entries[chunk.chunkEntryId] = entry;
             }
         }
 
-        private int FindFreeSpace(RegionHeader header, int minLength, int maxLength, out int offset) {
-            var occupied = header.entries
-                .Where(e => e.offset > 0 && e.length > 0)
-                .OrderBy(e => e.offset);
-
-            int candidateOffset = HeaderOffset;
+        private long FindFreeSpace(List<ChunkEntry> occupied, long minLength) {
+            long candidateOffset = HeaderOffset;
 
             foreach (var entry in occupied) {
-                int gapLength = entry.offset - candidateOffset;
+                long gapLength = entry.offset - candidateOffset;
 
                 if (gapLength >= minLength) {
-                    offset = candidateOffset;
-                    return Math.Min(maxLength, gapLength);
+                    return candidateOffset;
                 }
 
                 candidateOffset = entry.offset + entry.length;
             }
             
-            offset = candidateOffset;
-            return maxLength;
+            return candidateOffset;
         }
         
         private RegionHeader ReadHeader(Stream stream) {
             try {
-                if (stream.Length < HeaderOffset) {
-                    return null;
-                }
+                if (stream.Length < HeaderOffset) return null;
 
                 stream.Seek(0, SeekOrigin.Begin);
-                ReadData(stream, headerBuffer, 0, headerBuffer.Length);
-
+                ReadData(stream, headerBuffer, 0, HeaderOffset);
+                
                 int cursor = 0;
-
                 int magic = ReadInt(headerBuffer, ref cursor);
                 if (magic != 0xC0FE) {
                     return null;
                 }
 
-                var header = new RegionHeader {
-                    magic = magic,
-                    entries = new ChunkEntry[Region.TotalChunks]
-                };
+                int cursorA = 4;
+                int cursorB = (HeaderOffset - 4) / 2 + 4;
 
-                for (int i = 0; i < header.entries.Length; i++) {
-                    var entry = new ChunkEntry {
-                        offset = ReadInt(headerBuffer, ref cursor),
-                        length = ReadInt(headerBuffer, ref cursor),
-                        version = ReadInt(headerBuffer, ref cursor),
-                        soilDenLength = ReadInt(headerBuffer, ref cursor),
-                        soilMatLength = ReadInt(headerBuffer, ref cursor),
-                        meshLength = ReadInt(headerBuffer, ref cursor),
-                        listLength = ReadInt(headerBuffer, ref cursor)
-                    };
+                var headerA = ReadHeaderVersion(stream, ref cursorA);
+                var headerB = ReadHeaderVersion(stream, ref cursorB);
 
-                    long dataLength = (long)entry.soilDenLength + entry.soilMatLength + entry.meshLength + entry.listLength;
+                if (headerA == null && headerB == null) return null;
+                
+                if (headerA == null) return headerB;
+                if (headerB == null) return headerA;
 
-                    if (entry.offset < 0
-                        || entry.length < 0
-                        || entry.soilDenLength < 0
-                        || entry.soilMatLength < 0
-                        || entry.meshLength < 0
-                        || entry.listLength < 0
-                        || (entry.offset > 0 && entry.offset < HeaderOffset)
-                        || (entry.offset == 0 && entry.length > 0)
-                        || dataLength > entry.length
-                        || (entry.offset > 0 && (long)entry.offset + entry.length > stream.Length)) {
-                        return null;
-                    }
-
-                    header.entries[i] = entry;
+                if (!AreHeadersEqual(headerA, headerB) && headerA.version == headerB.version) {
+                    return headerB;
                 }
 
-                return header;
+                return headerA;
             } catch {
                 return null;
             }
         }
 
-        private void WriteDead(Stream stream) {
-            stream.Seek(0, SeekOrigin.Begin);
-            int cursor = 0;
-            WriteInt(headerBuffer, ref cursor, 0xDEAD);
+        private bool AreHeadersEqual(RegionHeader a, RegionHeader b) {
+            if (a.version != b.version) return false;
+
+            for (int i = 0; i < a.entries.Length; i++) {
+                if (a.entries[i].offset != b.entries[i].offset ||
+                    a.entries[i].length != b.entries[i].length ||
+                    a.entries[i].version != b.entries[i].version ||
+                    a.entries[i].soilDenLength != b.entries[i].soilDenLength ||
+                    a.entries[i].soilMatLength != b.entries[i].soilMatLength ||
+                    a.entries[i].meshLength != b.entries[i].meshLength ||
+                    a.entries[i].listLength != b.entries[i].listLength) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        private RegionHeader ReadHeaderVersion(Stream stream, ref int cursor) {
+            var header = new RegionHeader {
+                entries = new ChunkEntry[Region.TotalChunks]
+            };
+
+            for (int i = 0; i < header.entries.Length; i++) {
+                var entry = new ChunkEntry {
+                    offset = ReadLong(headerBuffer, ref cursor),
+                    length = ReadLong(headerBuffer, ref cursor),
+                    version = ReadInt(headerBuffer, ref cursor),
+                    soilDenLength = ReadInt(headerBuffer, ref cursor),
+                    soilMatLength = ReadInt(headerBuffer, ref cursor),
+                    meshLength = ReadInt(headerBuffer, ref cursor),
+                    listLength = ReadInt(headerBuffer, ref cursor)
+                };
+
+                long dataLength = (long)entry.soilDenLength + entry.soilMatLength + 
+                                        entry.meshLength + entry.listLength;
+
+                if (entry.offset < 0
+                    || entry.length < 0
+                    || entry.soilDenLength < 0
+                    || entry.soilMatLength < 0
+                    || entry.meshLength < 0
+                    || entry.listLength < 0
+                    || (entry.offset > 0 && entry.offset < HeaderOffset)
+                    || (entry.offset == 0 && entry.length > 0)
+                    || dataLength > entry.length
+                    || (entry.offset > 0 && entry.offset + entry.length > stream.Length)) {
+                    return null;
+                }
+
+                header.entries[i] = entry;
+            }
+
+            header.version = ReadInt(headerBuffer, ref cursor);
+            
+            return header;
         }
 
         private void WriteHeader(Stream stream, RegionHeader header) {
             int cursor = 0;
-
-            WriteInt(headerBuffer, ref cursor, header.magic);
+            WriteInt(headerBuffer, ref cursor, 0xC0FE);
 
             foreach (var entry in header.entries) {
-                WriteInt(headerBuffer, ref cursor, entry.offset);
-                WriteInt(headerBuffer, ref cursor, entry.length);
+                WriteLong(headerBuffer, ref cursor, entry.offset);
+                WriteLong(headerBuffer, ref cursor, entry.length);
                 WriteInt(headerBuffer, ref cursor, entry.version);
                 WriteInt(headerBuffer, ref cursor, entry.soilDenLength);
                 WriteInt(headerBuffer, ref cursor, entry.soilMatLength);
@@ -303,8 +304,15 @@ namespace Code.Worlds.Storage {
                 WriteInt(headerBuffer, ref cursor, entry.listLength);
             }
 
+            WriteInt(headerBuffer, ref cursor, header.version);
+
             stream.Seek(0, SeekOrigin.Begin);
-            stream.Write(headerBuffer, 0, headerBuffer.Length);
+            stream.Write(headerBuffer, 0, 4);
+            stream.Write(headerBuffer, 4, (HeaderOffset - 4) / 2);
+            streamTransfer.Flush(stream);
+            
+            stream.Write(headerBuffer, 4, (HeaderOffset - 4) / 2);
+            streamTransfer.Flush(stream);
         }
 
         private int ReadInt(byte[] buffer, ref int offset) {
@@ -326,12 +334,39 @@ namespace Code.Worlds.Storage {
             offset += sizeof(int);
         }
         
+        private long ReadLong(byte[] buffer, ref int offset) {
+            long value = buffer[offset]
+                         | ((long)buffer[offset + 1] << 8)
+                         | ((long)buffer[offset + 2] << 16)
+                         | ((long)buffer[offset + 3] << 24)
+                         | ((long)buffer[offset + 4] << 32)
+                         | ((long)buffer[offset + 5] << 40)
+                         | ((long)buffer[offset + 6] << 48)
+                         | ((long)buffer[offset + 7] << 56);
+
+            offset += sizeof(long);
+            return value;
+        }
+
+        private void WriteLong(byte[] buffer, ref int offset, long value) {
+            buffer[offset] = (byte)value;
+            buffer[offset + 1] = (byte)(value >> 8);
+            buffer[offset + 2] = (byte)(value >> 16);
+            buffer[offset + 3] = (byte)(value >> 24);
+            buffer[offset + 4] = (byte)(value >> 32);
+            buffer[offset + 5] = (byte)(value >> 40);
+            buffer[offset + 6] = (byte)(value >> 48);
+            buffer[offset + 7] = (byte)(value >> 56);
+
+            offset += sizeof(long);
+        }
+        
         private ChunkCacheUpdate[] ReadChunkUpdate(Stream stream, RegionHeader header, int requiredLods) {
             var caches = new List<ChunkCacheUpdate>(header.entries.Length);
             for (int i = 0; i < header.entries.Length; i++) {
                 var entry = header.entries[i];
                 int lod = Region.GetLod(i);
-                if (!Region.IsRequired(lod, requiredLods)) continue;
+                if (!Region.IsRequired(lod, requiredLods) || entry.version == 0) continue;
                 
                 var cache = new ChunkCacheUpdate {
                     chunkEntryId = i,
@@ -370,8 +405,8 @@ namespace Code.Worlds.Storage {
             return caches.ToArray();
         }
 
-        private void WriteData(Stream stream, byte[] data, int offset, int length) {
-            stream.Write(data, offset, length);
+        private void WriteData(Stream stream, byte[] data) {
+            stream.Write(data, 0, data.Length);
         }
 
         private void ReadData(Stream stream, byte[] data, int offset, int length) {

@@ -31,6 +31,10 @@ namespace Code.Worlds {
             // Run NOW if current thread = Unity
         }
 
+        public void RunTask(Action action) {
+            // Run NOW if current thread = Unity
+        }
+
         public void OnChunkLoaded(Chunk chunk) {
             if (!AllChunks[chunk.Lod].ContainsKey(chunk.Pos)) {
                 var worldChunk = new WorldChunk(chunk);
