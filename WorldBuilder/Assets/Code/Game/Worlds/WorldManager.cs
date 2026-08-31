@@ -1,47 +1,67 @@
 using System;
 using System.Collections.Generic;
-using Code.Data;
+using System.Threading;
+using Code;
 using Game.Data;
+using Game.Entities;
+using Game.Worlds.Generation;
+using UnityEngine;
 
-namespace Code.Worlds {
+namespace Game.Worlds {
     public class WorldManager {
-        public static WorldManager Instance { get; } = new WorldManager();
         
-        private const int MaxLOD = 3; // 0, 1, 2
-        
-        private Dictionary<IndexPos, WorldChunk>[] AllChunks { get; }
         public IndexPos view;
         public IndexPos viewLod0;
         public IndexPos viewLod1;
         public IndexPos viewLod2;
+
+        public string Storage { get; }
+        public WorldCache Cache { get; }
+        public WorldGenerator Generator { get; }
+        public WorldBuilder Builder { get; }
         
-        private long LoopTick => 0;
+        private Dictionary<IndexPos, CvChunk>[] AllChunks { get; }
 
-        private ChunkMeshGenerator meshGenerator;
-        private WorldBuilder builder;
+        private Thread mainThread;
 
-        public WorldManager() {
-            AllChunks = new Dictionary<IndexPos, WorldChunk>[MaxLOD];
-            for (int i = 0; i < MaxLOD; i++) {
-                AllChunks[i] = new Dictionary<IndexPos, WorldChunk>();
+        public WorldManager(string storage) {
+            Storage = storage;
+            
+            Cache = new WorldCache(this);
+            Generator = new WorldGenerator(this);
+            Builder = new WorldBuilder(this);
+            Builder.OnChunkLoaded = OnChunkLoaded;
+            
+            AllChunks = new Dictionary<IndexPos, CvChunk>[Region.MaxLod];
+            for (int i = 0; i < Region.MaxLod; i++) {
+                AllChunks[i] = new Dictionary<IndexPos, CvChunk>();
             }
-        }
-
-        public void Run(Action action) {
-            // Run NOW if current thread = Unity
-        }
-
-        public void RunTask(Action action) {
-            // Run NOW if current thread = Unity
         }
 
         public void OnChunkLoaded(Chunk chunk) {
             if (!AllChunks[chunk.Lod].ContainsKey(chunk.Pos)) {
-                var worldChunk = new WorldChunk(chunk);
+                var worldChunk = new GameObject("Chunk " + chunk.Pos + "[" + chunk.Lod + "]").AddComponent<CvChunk>();
+                worldChunk.Setup(this, chunk);
+                
                 AllChunks[chunk.Lod][chunk.Pos] = worldChunk;
-                worldChunk.Initialize();
+                for (int x = -1; x <= 1; x++) 
+                for (int y = -1; y <= 1; y++)
+                for (int z = -1; z <= 1; z++) {
+                    var near = FindChunk(chunk.Lod, chunk.Pos + new IndexPos(x, y, z) * 32);
+                    if (near != null && near != worldChunk) {
+                        near.RequestMesh();
+                    }
+                }
             }
 
+        }
+
+        public CvChunk FindChunk(int lod, IndexPos pos) {
+            if (AllChunks[lod].TryGetValue(pos, out var cvChunk)) {
+                return cvChunk;
+            }
+
+            return null;
         }
 
         public void SetViewPoint(IndexPos point) {

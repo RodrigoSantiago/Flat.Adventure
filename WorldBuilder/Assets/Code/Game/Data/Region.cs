@@ -1,6 +1,4 @@
-using Game.Data;
-
-namespace Code.Data {
+namespace Game.Data {
     public class Region {
         public const int TotalLods = 3;
         public const int MaxLod = 2; // [0 1 2]
@@ -71,8 +69,8 @@ namespace Code.Data {
 
         public static IndexPos GetLocalPosition(int lod, int index) {
             int x = index % LodSizeX[lod];
-            int z = index / LodSizeY[lod];
-            int y = (index % LodSizeY[lod]) / LodSizeX[lod];
+            int z = (index % LodSizeY[lod]) / LodSizeX[lod];
+            int y = index / LodSizeY[lod];
 
             return new IndexPos(x, y, z) * (ChunkSoil.Size1D * (1 << lod));
         }
@@ -82,7 +80,7 @@ namespace Code.Data {
         }
 
         public static int GetLocalId(int lod, int x, int y, int z) {
-            return x + y * LodSizeX[lod] + z * LodSizeY[lod];
+            return x + z * LodSizeX[lod] + y * LodSizeY[lod];
         }
     }
 }

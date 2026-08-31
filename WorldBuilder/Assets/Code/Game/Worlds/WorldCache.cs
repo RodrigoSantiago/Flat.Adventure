@@ -3,12 +3,11 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading;
-using Code.Data;
-using Code.Worlds.Storage;
 using Game.Data;
+using Game.Worlds.Generation;
 using Game.Worlds.Storage;
 
-namespace Code.Worlds {
+namespace Game.Worlds {
     public class WorldCache {
         
         private readonly RegionSerialize serializer = new();
@@ -19,6 +18,8 @@ namespace Code.Worlds {
 
         private volatile bool running;
         private readonly Thread localThread;
+        
+        private WorldManager Manager { get; }
 
         private class Work {
             public int attempts;
@@ -45,8 +46,9 @@ namespace Code.Worlds {
             public Action<Exception> onError;
         }
         
-        public WorldCache(string cacheDirectory) {
-            this.cacheDirectory = cacheDirectory;
+        public WorldCache(WorldManager manager) {
+            Manager = manager;
+            cacheDirectory = Manager.Storage;
 
             running = true;
             localThread = new Thread(QueueLoop) {
@@ -288,56 +290,26 @@ namespace Code.Worlds {
             }
         }
 
-        public void PutRegionData(IndexPos regionIndex, Chunk[] chunks, int lod, bool generateLod) {
-            int cLod = lod;
-            int maxLod = generateLod ? Region.MaxLod : lod; 
-            while (cLod <= maxLod) {
-                lock (cache) {
-                    if (!cache.TryGetValue(regionIndex, out var region)) {
-                        region = new Region(regionIndex);
-                        cache[regionIndex] = region;
-                    }
+        private static string RegionName(IndexPos indexPos) {
+            return indexPos.x + "_" + indexPos.y + "_" + indexPos.z;
+        }
 
-                    for (var i = 0; i < chunks.Length; i++) {
-                        var chunk = chunks[i];
-                        var currentChunk = region.GetChunk(cLod, i);
-                        if (currentChunk == null || chunk.Version > currentChunk.CurrentVersion) {
-                            region.SetChunk(cLod, i, chunk);
+        public void PutRegion(IndexPos regionIndex, Chunk[][] allLods) {
+            lock (cache) {
+                if (!cache.TryGetValue(regionIndex, out var region)) {
+                    region = new Region(regionIndex);
+                    cache[regionIndex] = region;
+                }
+                for (int i = 0; i < Region.TotalLods; i++) {
+                    region.chunks[i] ??= new Chunk[Region.LodSizeZ[i]];
+                    for (int j = 0; j < region.chunks[i].Length; j++) {
+                        if (region.chunks[i][j] == null ||
+                            region.chunks[i][j].CurrentVersion < allLods[i][j].CurrentVersion) {
+                            region.chunks[i][j] = allLods[i][j];
                         }
                     }
                 }
-
-                if (cLod == maxLod) {
-                    break;
-                }
-                
-                int dim = Region.LodSizeX[cLod];
-                int nextLod = cLod + 1;
-                var subLodChunk = new Chunk[Region.LodSizeZ[cLod + 1]];
-                for (int z = 0; z < dim; z += 2) 
-                for (int y = 0; y < dim; y += 2) 
-                for (int x = 0; x < dim; x += 2) {
-                    var id = Region.GetLocalId(nextLod, x / 2, y / 2, z / 2);
-                    var pos = Region.GetLocalPosition(nextLod, id);
-                    subLodChunk[id] = new Chunk(regionIndex + pos, nextLod, new [] {
-                        chunks[LocalId(cLod, x + 0, y + 0, z + 0)], chunks[LocalId(cLod, x + 1, y + 0, z + 0)], 
-                        chunks[LocalId(cLod, x + 0, y + 1, z + 0)], chunks[LocalId(cLod, x + 1, y + 1, z + 0)],
-                        chunks[LocalId(cLod, x + 0, y + 0, z + 1)], chunks[LocalId(cLod, x + 1, y + 0, z + 1)], 
-                        chunks[LocalId(cLod, x + 0, y + 1, z + 1)], chunks[LocalId(cLod, x + 1, y + 1, z + 1)]
-                    });
-                }
-
-                chunks = subLodChunk;
-                cLod++;
             }
-        }
-
-        private static int LocalId(int lod, int x, int y, int z) {
-            return Region.GetLocalId(lod, x, y, z);
-        }
-
-        private static string RegionName(IndexPos indexPos) {
-            return indexPos.x + "_" + indexPos.y + "_" + indexPos.z;
         }
     }
 }

@@ -1,8 +1,7 @@
+using System;
 using System.Runtime.InteropServices;
 using Code;
-using Code.Data;
-using Code.Worlds;
-using Code.Worlds.Storage;
+using Game.GraphicGenerator;
 using Game.Worlds.Storage;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -14,15 +13,21 @@ namespace Game.Data {
         
         public int Lod { get; private set; }
         public int Version { get; set; }
-        public int CurrentVersion { get; private set; }
+        public int CurrentVersion { get; set; }
         public int MeshVersion { get; private set; }
         public ChunkSoil Soil { get; private set; }
-        public Mesh SoilMesh { get; private set; }
+        public Mesh SoilMesh { get; set; }
         public bool Released { get; set; } = true;
 
         public Chunk(IndexPos pos, int lod) {
             Pos = pos;
             Lod = lod;
+        }
+        
+        public Chunk(IndexPos pos, int lod, ChunkSoil soil) {
+            Pos = pos;
+            Lod = lod;
+            Soil = soil;
         }
 
         public Chunk(IndexPos pos, int lod, ChunkCacheUpdate cache) {
@@ -33,10 +38,39 @@ namespace Game.Data {
         public Chunk(IndexPos pos, int lod, Chunk[] lowerLod) {
             Pos = pos;
             Lod = lod;
-            
-            // Version = Max(lowerLod.Version)
+            Soil = GenerateLod(lowerLod);
         }
-        
+
+        private static ChunkSoil GenerateLod(Chunk[] chunks) {
+            var result = new ChunkSoil();
+            result.ExpandMaterial();
+
+            for (int z = 0; z < 32; z++)
+            for (int y = 0; y < 32; y++)
+            for (int x = 0; x < 32; x++) {
+                int globalX = x * 2 + 1;
+                int globalY = y * 2 + 1;
+                int globalZ = z * 2 + 1;
+
+                int chunkX = globalX >> 5;
+                int chunkY = globalY >> 5;
+                int chunkZ = globalZ >> 5;
+
+                int index = chunkX | (chunkZ << 1) | (chunkY << 2);
+
+                float density = chunks[index].Soil.GetDensity(x, y, z);
+                density = Math.Clamp(0.5f + (density - 0.5f) * 2.0f, 0.0f, 1.0f);
+                result.SetDensity(x, y, z, density);
+
+                int material = chunks[index].Soil.GetMaterial(x, y, z);
+                result.SetMaterial(x, y, z, material);
+            }
+
+
+
+            return result;
+        }
+
         // public List<Structure> structures; // A structure has a chunkData special number [15] for LOD > 0
         // public List<Prop> props;           // Props are interactive objects, not visible on LOD > 0
         // public List<Item> items;           // Temporary collectables items
@@ -51,7 +85,7 @@ namespace Game.Data {
                 AsyncGPUReadback.Request(buffer, request => {
                     if (request.hasError) {
                         buffer.Dispose();
-                        WorldManager.Instance.RunTask(() => RequestData(output, null));
+                        GameManager.Instance.RunTask(() => RequestData(output, null));
                         return;
                     }
 
@@ -60,10 +94,10 @@ namespace Game.Data {
                     byte[] bytes = vertices.Reinterpret<byte>(Marshal.SizeOf<GeneratedVertexLow>()).ToArray();
                     buffer.Dispose();
                     
-                    WorldManager.Instance.RunTask(() => RequestData(output, bytes));
+                    GameManager.Instance.RunTask(() => RequestData(output, bytes));
                 });
             } else {
-                WorldManager.Instance.RunTask(() => RequestData(output, null));
+                GameManager.Instance.RunTask(() => RequestData(output, null));
             }
         }
 

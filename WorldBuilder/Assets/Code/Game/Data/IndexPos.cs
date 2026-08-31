@@ -28,7 +28,7 @@ namespace Game.Data {
         }
 
         public override bool Equals(object obj) {
-            return obj is IndexPos other && Equals(other);
+            return obj is IndexPos other && this == other;
         }
 
         public override int GetHashCode() {
@@ -42,11 +42,11 @@ namespace Game.Data {
         }
 
         public static bool operator ==(IndexPos a, IndexPos b) {
-            return a.Equals(b);
+            return a.x == b.x && a.y == b.y && a.z == b.z;
         }
 
         public static bool operator !=(IndexPos a, IndexPos b) {
-            return !a.Equals(b);
+            return a.x != b.x || a.y != b.y || a.z != b.z;
         }
 
         public static IndexPos operator +(IndexPos a, IndexPos b) {

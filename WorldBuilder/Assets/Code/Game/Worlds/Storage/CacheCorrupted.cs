@@ -1,6 +1,6 @@
 using System;
 
-namespace Code.Worlds.Storage {
+namespace Game.Worlds.Storage {
     public class CacheCorrupted : Exception {
     }
 }

@@ -1,19 +1,18 @@
-using System;
-using Code.Worlds;
 using Game.Data;
+using Game.Worlds;
 using UnityEngine;
 
-namespace Code {
-    public class CenterTester : MonoBehaviour {
+namespace Game.GameTest {
+    public class TestViewCenter : MonoBehaviour {
         public GameObject cube;
         public GameObject cube0;
         public GameObject cube1;
         public GameObject cube2;
 
-        private WorldManager manager = new WorldManager();
+        private WorldManager manager;
 
         private void Awake() {
-            
+            manager = new WorldManager(Application.persistentDataPath + "/WorldTest");
         }
 
         private void Update() {

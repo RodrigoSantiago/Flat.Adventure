@@ -241,6 +241,64 @@ namespace Game.Data {
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public int FindCompactPalette(byte[] data, ref Span<byte> palette) {
+                if (id == ConstantId) return -1;
+                
+                ulong used = 0;
+                int countLimit = Parse(id - 1).paletteCapacity;
+                int count = 0;
+
+                if (id == Packed1Id) {
+                    byte val = data[header];
+                    byte rep = (byte)((val & 0x1) == 0x1 ? 0xF : 0x0);
+                    
+                    count = 1;
+                    palette[0] = data[2 + (val & 0x1)];
+                    for (int i = 0, len = Size3D / 8; i < len; i++) {
+                        if (data[header + i] != rep) return -1;
+                    }
+
+                } else if (id == Packed2Id) {
+                    for (int i = 0; i < Size3D; i++) {
+                        int value = data[2 + ReadBits2(data, header, i)];
+                        ulong flag = 1UL << value;
+                        if ((used & flag) == 0) {
+                            if (count == countLimit) return -1;
+                            palette[count++] = (byte)value;
+                        }
+
+                        used |= flag;
+                    }
+                    
+                } else if (id == Packed4Id) {
+                    for (int i = 0; i < Size3D; i++) {
+                        int value = data[2 + ReadBits4(data, header, i)];
+                        ulong flag = 1UL << value;
+                        if ((used & flag) == 0) {
+                            if (count == countLimit) return -1;
+                            palette[count++] = (byte)value;
+                        }
+
+                        used |= flag;
+                    }
+                    
+                } else if (id == Packed6Id) {
+                    for (int i = 0; i < Size3D; i++) {
+                        int value = ReadBits6(data, header, i);
+                        ulong flag = 1UL << value;
+                        if ((used & flag) == 0) {
+                            if (count == countLimit) return -1;
+                            palette[count++] = (byte)value;
+                        }
+
+                        used |= flag;
+                    }
+                    
+                }
+                return count;
+            }
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public int GetDensityValue(byte[] data, int index) {
                 if (id == ConstantId) return data[1];
 
@@ -476,27 +534,10 @@ namespace Game.Data {
             byte[] source = material;
             var currentMode = Mode.Parse(source[ModeIndex]);
             
-            if (currentMode == Mode.Constant) return null;
-            
-            ulong used = 0;
-
-            int countLimit = Mode.Parse(currentMode.id - 1).paletteCapacity;
-            int count = 0;
-            
             Span<byte> palette = stackalloc byte[16];
-            for (int i = 0; i < Size3D; i++) {
-                int value = currentMode.GetMaterialValue(source, i);
-                ulong flag = 1UL << value;
-                if ((used & flag) == 0) {
-                    if (count == 16) {
-                        return null;
-                    }
-                    palette[count++] = (byte)value;
-                    if (count > countLimit) {
-                        return null;
-                    }
-                }
-                used |= flag;
+            int count = currentMode.FindCompactPalette(source, ref palette);
+            if (count == -1) {
+                return null;
             }
 
             var targetMode = count <= 1 ? Mode.Constant : 
@@ -733,6 +774,14 @@ namespace Game.Data {
                 dst[dstOffset++] = (byte)((value & 0b01000000) >> 6 |
                                           (value & 0b10000000) >> 3);
             }
+        }
+
+        public bool IsEmpty() {
+            if (density.Length == 4) {
+                return GetDensity(0, 0, 0) == 0.0f;
+            }
+
+            return false;
         }
     }
 }

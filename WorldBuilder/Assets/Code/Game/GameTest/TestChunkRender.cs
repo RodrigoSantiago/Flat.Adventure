@@ -1,15 +1,15 @@
 using System;
 using System.Collections.Generic;
-using Code.Data;
+using Code;
 using Game.Data;
+using Game.GraphicGenerator;
 using UnityEngine;
 
-namespace Code {
+namespace Game.GameTest {
     public class TestChunkRender : MonoBehaviour {
-        public ComputeShader shader;
+        
         public MeshFilter filter;
-
-        private ChunkMeshGenerator gen;
+        [SerializeField] private ChunkMeshGenerator gen;
 
         ChunkSoil chunk;
         ChunkSoil chunkSoil;
@@ -87,31 +87,27 @@ namespace Code {
                     }
                 }
             }
-            
+
             DateTime start = DateTime.Now;
-            gen = new ChunkMeshGenerator(shader);
-            gen.Init();
-            // chunk.CompactMaterial();
-            // chunkSoil.CompactMaterial();
-            Debug.Log(chunk.MaterialBitSize);
-            Debug.Log(chunkSoil.MaterialBitSize);
-            gen.Remesh(chunk, chunkSoil, (mesh) => {
+            
+            /*gen.Remesh(chunk, chunkSoil, (mesh) => {
                 filter.sharedMesh = mesh;
                 var period = DateTime.Now.Subtract(start);
                 Debug.Log(period);
-                Stress();
-            });
+                // Stress();
+            });*/
         }
 
         public List<Mesh> meshes = new();
+        
         public void Stress() {
             DateTime start = DateTime.Now;
             for (int i = 0; i < 99; i++) {
-                gen.Remesh(chunk, chunkSoil, (mesh) => {
+                gen.SimpleMesh(chunk, chunkSoil, (mesh) => {
                     meshes.Add(mesh);
                 });
             }
-            gen.Remesh(chunk, chunkSoil, (mesh) => {
+            gen.SimpleMesh(chunk, chunkSoil, (mesh) => {
                 filter.sharedMesh = mesh;
                 meshes.Add(mesh);
                 var period = DateTime.Now.Subtract(start);

@@ -1,20 +1,25 @@
 using System;
 using System.Collections.Generic;
-using Code.Data;
-using Code.Worlds;
-using Code.Worlds.Storage;
 using Game.Data;
+using Game.Worlds.Generation;
+using Game.Worlds.Storage;
 
-namespace Code {
+namespace Game.Worlds {
     
     public class WorldBuilder {
         
-        private Action<Chunk> OnChunkLoaded { get; set; }
-        private Action<IndexPos, int, Exception> OnChunkCorrupted { get; set; }
-        
-        private WorldCache cache;
-        private WorldGenerator generator;
+        public Action<Chunk> OnChunkLoaded { get; set; }
+        public Action<IndexPos, int, Exception> OnChunkCorrupted { get; set; }
+
         private readonly Dictionary<(int lod, IndexPos pos), RegionRequest> requests = new();
+        
+        private WorldManager Manager { get; }
+        private WorldCache Cache => Manager.Cache;
+        private WorldGenerator Generator => Manager.Generator;
+
+        public WorldBuilder(WorldManager manager) {
+            Manager = manager;
+        }
 
         class RegionRequest {
             public readonly int lod;
@@ -31,7 +36,7 @@ namespace Code {
             for (int i = 0; i < request.requiredChunks.Count; i++) {
                 var chunkIndex = request.requiredChunks[i];
                 
-                var chunk = cache.LoadChunkCache(chunkIndex, request.lod);
+                var chunk = Cache.LoadChunkCache(chunkIndex, request.lod);
                 if (chunk?.CurrentVersion > 0) {
                     request.requiredChunks.RemoveAt(i--);
                     OnChunkLoaded(chunk);
@@ -52,7 +57,7 @@ namespace Code {
         public void RequestChunk(IndexPos chunkIndex, int lod) {
             var regionIndex = chunkIndex.GetChunkIndex(Region.MaxLod);
 
-            var chunk = cache.LoadChunkCache(chunkIndex, lod);
+            var chunk = Cache.LoadChunkCache(chunkIndex, lod);
             if (chunk != null) {
                 if (chunk.CurrentVersion > 0) {
                     OnChunkLoaded(chunk);
@@ -65,17 +70,17 @@ namespace Code {
                     request.requiredChunks.Add(chunkIndex);
                     requests[(lod, regionIndex)] = request;
 
-                    cache.RequestLoadRegion(regionIndex, lod,
+                    Cache.RequestLoadRegion(regionIndex, lod,
                         () => {
-                            WorldManager.Instance.Run(() => OnRequestDone(request, true));
+                            GameManager.Instance.RunSync(() => OnRequestDone(request, true));
                         },
                         (error) => {
                             if (error is CacheNotFound) {
-                                WorldManager.Instance.Run(() => OnRequestDone(request, true));
+                                GameManager.Instance.RunSync(() => OnRequestDone(request, true));
                             } else if (error is CacheCorrupted) {
                                 // If network => request
                                 // If local => Show Error, Avoid showing multiple errors modals at the same time
-                                WorldManager.Instance.Run(() => OnChunkCorrupted(regionIndex, lod, error));
+                                GameManager.Instance.RunSync(() => OnChunkCorrupted(regionIndex, lod, error));
                             }
                         });
                 } else {
@@ -89,13 +94,13 @@ namespace Code {
             request.requiredChunks.AddRange(requiredChunks);
             
             // If network => request.requiredChunks
-            generator.GenerateRegion(regionIndex, () => {
-                WorldManager.Instance.Run(() => OnRequestDone(request, false));
+            Generator.GenerateRegion(regionIndex, () => {
+                GameManager.Instance.RunSync(() => OnRequestDone(request, false));
             });
         }
         
         public void ReleaseChunk(Chunk chunk) {
-            cache.ReleaseChunkCache(chunk);
+            Cache.ReleaseChunkCache(chunk);
         }
         
         // ---------------------------------
