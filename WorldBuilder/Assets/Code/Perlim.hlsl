@@ -49,7 +49,10 @@ void TriplanarNoiseColor_float(
     out float4 col
 )
 {
-    float noise = CheapNoise3D(globalPosition / scale);
+    float noiseA = CheapNoise3D((globalPosition + float3(100, 25, 336)) / scale);
+    float noiseB = CheapNoise3D((globalPosition + float3(500, 600, 210)) / scale * 4);
 
+    float noise = noiseA * 0.8 + noiseB * 0.2;
+    
     col = lerp(colorA, colorB, noise);
 }

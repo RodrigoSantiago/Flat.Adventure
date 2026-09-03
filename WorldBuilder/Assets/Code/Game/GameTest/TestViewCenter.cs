@@ -9,15 +9,9 @@ namespace Game.GameTest {
         public GameObject cube1;
         public GameObject cube2;
 
-        private WorldManager manager;
-
-        private void Awake() {
-            manager = new WorldManager(Application.persistentDataPath + "/WorldTest");
-        }
-
         private void Update() {
             var pos = IndexPos.FromVector3(transform.position);
-            manager.SetViewPoint(pos);
+            var manager = GameManager.Instance.OverWorld;
             if (cube) cube.transform.position = manager.view.ToVector3();
             if (cube0) cube0.transform.position = manager.viewLod0.ToVector3();
             if (cube1) cube1.transform.position = manager.viewLod1.ToVector3();

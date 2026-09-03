@@ -415,6 +415,15 @@ namespace Game.Data {
             ExpandMaterial(targetMode);
         }
 
+        public int PaletteCount {
+            get {
+                var currentMode = Mode.Parse(material[ModeIndex]);
+                if (currentMode == Mode.Constant) return 1;
+                if (currentMode == Mode.Packed6) return 64;
+                return material[PaletteIndex];
+            }
+        }
+
         private void ExpandMaterial(Mode targetMode) {
             var currentMode = Mode.Parse(material[ModeIndex]);
             

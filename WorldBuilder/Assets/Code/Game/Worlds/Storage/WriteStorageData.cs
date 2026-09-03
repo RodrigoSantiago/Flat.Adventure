@@ -5,23 +5,28 @@ using Game.Data;
 namespace Game.Worlds.Storage {
     public class WriteStorageData {
 
+        public bool Release { get; private set; }
         private bool completed;
         private Action action;
-        private List<IndexPos> Operations { get; } = new();
+        private List<(int, IndexPos)> Operations { get; } = new();
         private List<ChunkCacheUpdate> CompletedTasks { get; } = new();
         
         public List<ChunkCacheUpdate> Updates => new (CompletedTasks);
 
-        public void AddOperation(IndexPos operation) {
+        public WriteStorageData(bool release) {
+            Release = release;
+        }
+
+        public void AddOperation(int lod, IndexPos operation) {
             lock (Operations) {
-                Operations.Add(operation);
+                Operations.Add((lod, operation));
                 completed = false;
             }
         }
         
-        public void PutData(IndexPos operation, ChunkCacheUpdate update) {
+        public void PutData(int lod, IndexPos operation, ChunkCacheUpdate update) {
             lock (Operations) {
-                Operations.Remove(operation);
+                Operations.Remove((lod, operation));
                 CompletedTasks.Add(update);
                 completed = (Operations.Count == 0);
 

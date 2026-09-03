@@ -26,17 +26,19 @@ namespace Game.Entities {
             this.manager = manager;
             this.chunk = chunk;
             transform.position = new Vector3(this.chunk.Pos.x, this.chunk.Pos.y, this.chunk.Pos.z);
+            transform.localScale = Vector3.one * (1 << chunk.Lod);
             meshFilter.sharedMesh = this.chunk.SoilMesh;
             meshRenderer.material = ChunkMeshGenerator.Instance.GroundMaterial;
         }
 
         public void RequestMesh() {
             Chunk[] chunks = new Chunk[27];
+            
             int i = 0;
             for (int y = -1; y <= 1; y++)
             for (int z = -1; z <= 1; z++)
             for (int x = -1; x <= 1; x++) {
-                var pos = chunk.Pos + new IndexPos(x, y, z) * 32;
+                var pos = chunk.Pos + new IndexPos(x, y, z) * (32 << chunk.Lod);
                 if (pos.x < 0 || pos.y < 0 || pos.z < 0) {
                     chunks[i++] = null;
                 } else {
@@ -49,6 +51,7 @@ namespace Game.Entities {
                 }
             }
 
+            chunks[13] = chunk;
             GameManager.Instance.RequestMesh(chunks, (mesh) => {
                 chunk.SoilMesh = mesh;
                 meshFilter.sharedMesh = mesh;

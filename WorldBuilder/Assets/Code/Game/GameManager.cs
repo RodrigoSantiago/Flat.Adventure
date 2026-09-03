@@ -1,8 +1,10 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Threading;
 using Code;
 using Game.Data;
+using Game.Entities.Player;
 using Game.GraphicGenerator;
 using Game.Worlds;
 using UnityEngine;
@@ -10,7 +12,7 @@ using UnityEngine;
 namespace Game {
     public class GameManager : MonoBehaviour {
         public static GameManager Instance { get; private set; }
-        
+
         private long LoopTick => 0;
         private readonly int GameSpeed = 60;
 
@@ -20,8 +22,9 @@ namespace Game {
         private readonly Queue<Action> taskQueue = new();
 
         [SerializeField] private ChunkMeshGenerator meshGenerator;
-        
+
         private WorldManager overWorld;
+        public WorldManager OverWorld => overWorld;
 
         public void Awake() {
             Instance = this;
@@ -29,24 +32,31 @@ namespace Game {
         }
 
         public void Start() {
-            // Load Game
+            // Load GameData
+            GameData.Instance.players.Add(0, new PlayerData());
+            
             // Setup WorldManagers
             overWorld = new WorldManager(Application.persistentDataPath + "/OverWorld");
+            overWorld.SetViewPoint(new IndexPos(0, 0, 0));
             
-            for (int x = 0; x <= 2; x++) 
-            for (int y = 0; y <= 2; y++)
-            for (int z = 0; z <= 2; z++) {
-                overWorld.Builder.RequestChunk(new IndexPos(x, y, z), 0);
+            // Setup Player
+            foreach (var player in GameData.Instance.players) {
+                var cvPlayer = new GameObject("Player").AddComponent<CvPlayerUnit>().Setup();
             }
         }
 
         public void Update() {
+            overWorld.RequestChunks();
             ExecuteSyncQueue();
             ExecuteTaskQueue();
         }
 
         public void OnDestroy() {
-            
+            overWorld.Dispose();
+        }
+
+        public void PlayerSetView(CvPlayerUnit cvPlayerUnit) {
+            overWorld.SetViewPoint((IndexPos)cvPlayerUnit.transform.position);
         }
 
         public void RequestMesh(Chunk[] chunk, Action<Mesh> action) {
@@ -71,9 +81,9 @@ namespace Game {
 
         private void ExecuteTaskQueue() {
             int maxTime = 1000 / GameSpeed;
-            
+
             DateTime start = DateTime.Now;
-            
+
             Action action;
             lock (taskQueue) {
                 taskQueue.TryDequeue(out action);
@@ -81,12 +91,12 @@ namespace Game {
 
             while (action != null) {
                 action.Invoke();
-                
+
                 var period = DateTime.Now - start;
                 if (period.Milliseconds > maxTime) {
                     break;
                 }
-                
+
                 lock (taskQueue) {
                     taskQueue.TryDequeue(out action);
                 }
@@ -101,7 +111,9 @@ namespace Game {
             foreach (var action in tempSyncQueue) {
                 action.Invoke();
             }
+
             tempSyncQueue.Clear();
         }
     }
+
 }

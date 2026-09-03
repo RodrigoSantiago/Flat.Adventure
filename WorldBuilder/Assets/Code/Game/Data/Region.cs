@@ -1,12 +1,14 @@
+using System.Linq;
+
 namespace Game.Data {
     public class Region {
-        public const int TotalLods = 3;
-        public const int MaxLod = 2; // [0 1 2]
+        public const int TotalLods = 4;
+        public const int MaxLod = 3; // [0 1 2]
         
-        public static readonly int[] LodSizeX = { 4, 2, 1};
-        public static readonly int[] LodSizeY = {16, 4, 1};
-        public static readonly int[] LodSizeZ = {64, 8, 1};
-        public static readonly int TotalChunks = LodSizeZ[0] + LodSizeZ[1] + LodSizeZ[2];
+        public static readonly int[] LodSize1 = {8, 4, 2, 1};
+        public static readonly int[] LodSize2 = {64, 16, 4, 1};
+        public static readonly int[] LodSize3 = {512, 64, 8, 1};
+        public static readonly int TotalChunks = LodSize3.Sum();
         
         private static readonly int[] LodId = new int[TotalChunks];
         private static readonly int[] LocalId = new int[TotalChunks];
@@ -17,7 +19,7 @@ namespace Game.Data {
             for (int i = 0; i < TotalChunks; i++) {
                 LodId[i] = currentLod;
                 LocalId[i] = localN++;
-                if (localN >= LodSizeZ[currentLod]) {
+                if (localN >= LodSize3[currentLod]) {
                     localN = 0;
                     currentLod--;
                 }
@@ -40,7 +42,7 @@ namespace Game.Data {
         }
 
         public Chunk GetChunkByPosition(int lod, int x, int y, int z) {
-            return chunks[lod][x + y * LodSizeX[lod] + z * LodSizeY[lod]];
+            return chunks[lod][GetLocalId(lod, x, y, z)];
         }
 
         public Chunk GetChunkByIndex(int index) {
@@ -68,9 +70,9 @@ namespace Game.Data {
         }
 
         public static IndexPos GetLocalPosition(int lod, int index) {
-            int x = index % LodSizeX[lod];
-            int z = (index % LodSizeY[lod]) / LodSizeX[lod];
-            int y = index / LodSizeY[lod];
+            int x = index % LodSize1[lod];
+            int z = (index % LodSize2[lod]) / LodSize1[lod];
+            int y = index / LodSize2[lod];
 
             return new IndexPos(x, y, z) * (ChunkSoil.Size1D * (1 << lod));
         }
@@ -80,7 +82,7 @@ namespace Game.Data {
         }
 
         public static int GetLocalId(int lod, int x, int y, int z) {
-            return x + z * LodSizeX[lod] + y * LodSizeY[lod];
+            return x / (32 << lod) + z / (32 << lod) * LodSize1[lod] + y / (32 << lod) * LodSize2[lod];
         }
     }
 }

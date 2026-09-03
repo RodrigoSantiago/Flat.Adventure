@@ -157,6 +157,14 @@ namespace Game.Data {
             return new Vector3(x, y, z);
         }
 
+        public static explicit operator IndexPos(Vector3 pos) {
+            return new IndexPos( Mathf.RoundToInt(pos.x), Mathf.RoundToInt(pos.y), Mathf.RoundToInt(pos.z) );
+        }
+
+        public static explicit operator Vector3(IndexPos pos) {
+            return new Vector3(pos.x, pos.y, pos.z);
+        }
+        
         public static IndexPos FromVector3(Vector3 pos) {
             return new IndexPos(Mathf.FloorToInt(pos.x), Mathf.FloorToInt(pos.y), Mathf.FloorToInt(pos.z));
         }

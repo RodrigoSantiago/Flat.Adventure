@@ -150,7 +150,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c9cbb348b3ef4a53a8e1d15d28fe8469, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Code.TestChunkRender
-  shader: {fileID: 7200000, guid: d598e01b93fe47bf85d1ba05a6179da8, type: 3}
   filter: {fileID: 121506531}
   gen: {fileID: 1964588184}
   meshes: []

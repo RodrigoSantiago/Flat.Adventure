@@ -90,7 +90,7 @@ namespace Game.GameTest {
 
             DateTime start = DateTime.Now;
             
-            /*gen.Remesh(chunk, chunkSoil, (mesh) => {
+            /*gen.SimpleMesh(new IndexPos(99, 99, 99), chunk, (mesh) => {
                 filter.sharedMesh = mesh;
                 var period = DateTime.Now.Subtract(start);
                 Debug.Log(period);
@@ -99,15 +99,16 @@ namespace Game.GameTest {
         }
 
         public List<Mesh> meshes = new();
-        
+
         public void Stress() {
             DateTime start = DateTime.Now;
             for (int i = 0; i < 99; i++) {
-                gen.SimpleMesh(chunk, chunkSoil, (mesh) => {
+                gen.SimpleMesh(new IndexPos(99 + i, 99 + i, 99 + i), chunk, (mesh) => {
                     meshes.Add(mesh);
                 });
             }
-            gen.SimpleMesh(chunk, chunkSoil, (mesh) => {
+
+            gen.SimpleMesh(new IndexPos(200, 200, 200), chunk, (mesh) => {
                 filter.sharedMesh = mesh;
                 meshes.Add(mesh);
                 var period = DateTime.Now.Subtract(start);

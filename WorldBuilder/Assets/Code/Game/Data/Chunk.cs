@@ -39,6 +39,9 @@ namespace Game.Data {
             Pos = pos;
             Lod = lod;
             Soil = GenerateLod(lowerLod);
+            foreach (var lChunk in lowerLod) {
+                CurrentVersion = Math.Max(CurrentVersion, lChunk.CurrentVersion);
+            }
         }
 
         private static ChunkSoil GenerateLod(Chunk[] chunks) {
@@ -48,25 +51,29 @@ namespace Game.Data {
             for (int z = 0; z < 32; z++)
             for (int y = 0; y < 32; y++)
             for (int x = 0; x < 32; x++) {
-                int globalX = x * 2 + 1;
-                int globalY = y * 2 + 1;
-                int globalZ = z * 2 + 1;
+                int globalX = x << 1;
+                int globalY = y << 1;
+                int globalZ = z << 1;
 
                 int chunkX = globalX >> 5;
                 int chunkY = globalY >> 5;
                 int chunkZ = globalZ >> 5;
 
                 int index = chunkX | (chunkZ << 1) | (chunkY << 2);
+                
+                int localX = globalX & 31;
+                int localY = globalY & 31;
+                int localZ = globalZ & 31;
 
-                float density = chunks[index].Soil.GetDensity(x, y, z);
+                var soil = chunks[index].Soil;
+
+                float density = soil.GetDensity(localX, localY, localZ);
+
                 density = Math.Clamp(0.5f + (density - 0.5f) * 2.0f, 0.0f, 1.0f);
+
                 result.SetDensity(x, y, z, density);
-
-                int material = chunks[index].Soil.GetMaterial(x, y, z);
-                result.SetMaterial(x, y, z, material);
+                result.SetMaterial(x, y, z, soil.GetMaterial(localX, localY, localZ));
             }
-
-
 
             return result;
         }
@@ -79,7 +86,7 @@ namespace Game.Data {
         // public List<Grass> grass;          // Grass uses a special rendering method
 
         public void RequestExport(WriteStorageData output) {
-            if (SoilMesh != null) {
+            if (SoilMesh != null && false) {
                 GraphicsBuffer buffer = SoilMesh.GetVertexBuffer(0);
 
                 AsyncGPUReadback.Request(buffer, request => {
@@ -115,7 +122,7 @@ namespace Game.Data {
                 update.soilMatData = Soil.ExportMaterial();
             }
             
-            output.PutData(Pos, update);
+            output.PutData(Lod, Pos, update);
         }
     }
 }

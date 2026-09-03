@@ -94,7 +94,7 @@ namespace Game.Worlds {
             request.requiredChunks.AddRange(requiredChunks);
             
             // If network => request.requiredChunks
-            Generator.GenerateRegion(regionIndex, () => {
+            Generator.EnqueueRegion(regionIndex, () => {
                 GameManager.Instance.RunSync(() => OnRequestDone(request, false));
             });
         }
