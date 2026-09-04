@@ -11,12 +11,14 @@ using UnityEngine;
 namespace Game.Worlds {
     public class WorldManager {
 
+        public IndexPos centerPoint;
         public IndexPos view;
         public IndexPos viewLod0;
         public IndexPos viewLod1;
         public IndexPos viewLod2;
 
         private bool init;
+        private IndexPos prevCenter;
         private IndexPos prevViewLod0;
         private IndexPos prevViewLod1;
         private IndexPos prevViewLod2;
@@ -30,6 +32,8 @@ namespace Game.Worlds {
 
         private Thread mainThread;
 
+        private GameObject[] lods;
+        
         public WorldManager(string storage) {
             Storage = storage;
             if (!Directory.Exists(storage)) {
@@ -45,6 +49,11 @@ namespace Game.Worlds {
             for (int i = 0; i < Region.TotalLods; i++) {
                 AllChunks[i] = new Dictionary<IndexPos, CvChunk>();
             }
+
+            lods = new GameObject[Region.TotalLods];
+            for (int i = 0; i < Region.TotalLods; i++) {
+                lods[i] = new GameObject("Lod " + i);
+            }
         }
 
         public void Dispose() {
@@ -56,7 +65,8 @@ namespace Game.Worlds {
             if (!AllChunks[chunk.Lod].ContainsKey(chunk.Pos)) {
                 var worldChunk = new GameObject("Chunk " + chunk.Pos + "[" + chunk.Lod + "]").AddComponent<CvChunk>();
                 worldChunk.Setup(this, chunk);
-
+                worldChunk.transform.SetParent(lods[chunk.Lod].transform, true);
+                
                 AllChunks[chunk.Lod][chunk.Pos] = worldChunk;
                 for (int x = -1; x <= 1; x++)
                 for (int y = -1; y <= 1; y++)
@@ -79,7 +89,8 @@ namespace Game.Worlds {
         }
 
         public void SetViewPoint(IndexPos point) {
-
+            centerPoint = point;
+            
             int chunkSize = 32;
 
             var center = point.GetChunkIndex(0) / chunkSize;
@@ -130,7 +141,13 @@ namespace Game.Worlds {
                     return;
                 }
             }
+
+            if (prevCenter != centerPoint) {
+                Cache.SetPriorityCenter(centerPoint);
+                Generator.SetPriorityCenter(centerPoint);
+            }
             
+            prevCenter = centerPoint;
             prevViewLod0 = viewLod0;
             prevViewLod1 = viewLod1;
             prevViewLod2 = viewLod2;
@@ -150,20 +167,20 @@ namespace Game.Worlds {
                 viewLod: viewLod1,
                 chunkSize: 64,
                 size: 12,
-                excludeViewLod: viewLod0 - new IndexPos(1, 1, 1),
-                excludeSize: 8 - 2,
+                excludeViewLod: viewLod0 + new IndexPos(32, 32, 32),
+                excludeSize: 8 - 4,
                 excludeChunkSize: 32
             );
 
-            /*RequestLod(
+            RequestLod(
                 lod: 2,
                 viewLod: viewLod2,
                 chunkSize: 128,
                 size: 16,
-                excludeViewLod: viewLod1 - new IndexPos(1, 1, 1),
-                excludeSize: 12 - 2,
+                excludeViewLod: viewLod1 + new IndexPos(64, 64, 64),
+                excludeSize: 12 - 4,
                 excludeChunkSize: 64
-            );*/
+            );
         }
 
         private void RequestLod(

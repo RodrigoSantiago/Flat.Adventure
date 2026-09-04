@@ -1,71 +1,80 @@
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Threading;
 using Game.Data;
+using Game.Data.Queues;
 using UnityEngine;
 
 namespace Game.Worlds.Generation {
-    public class WorldGenerator : IDisposable {
-        private readonly BlockingCollection<IndexPos> _queue = new();
-        private readonly ConcurrentDictionary<IndexPos, Action> _pendingRequests = new();
-        private readonly Thread _workerThread;
-        private readonly CancellationTokenSource _cts = new();
+    public class WorldGenerator {
+        
+        private readonly TaskConsumer<Work> consumer;
 
         private WorldManager Manager { get; }
         private WorldCache Cache => Manager.Cache;
+        
+        private class Work : ITaskGroup<Work> {
+            public int Attempts { get; set; }
+            
+            private WorldGenerator generator;
+            private IndexPos regionIndex;
+            private List<Action> listeners = new();
+            private int compare;
+
+            public Work(WorldGenerator generator, IndexPos regionIndex, Action listener) {
+                this.generator = generator;
+                this.regionIndex = regionIndex;
+                listeners.Add(listener);
+            }
+
+            public void SetSortValue(IndexPos sort) {
+                var d = regionIndex - sort;
+                compare = d.x * d.x + d.y * d.y + d.z * d.z;
+            }
+
+            public int Compare() {
+                return compare;
+            }
+
+            public bool Group(Work task) {
+                if (task.regionIndex == regionIndex) {
+                    listeners.AddRange(task.listeners);
+                    return true;
+                }
+
+                return false;
+            }
+
+            public void Execute() {
+                generator.GenerateRegionInternal(regionIndex);
+            }
+
+            public void SetSuccess() {
+                foreach (var listener in listeners) {
+                    listener.Invoke();
+                }
+            }
+
+            public void SetError(Exception e) {
+                Debug.LogError("Failed to generate chunk [" + regionIndex + "]: " + e);
+            }
+        }
 
         public WorldGenerator(WorldManager manager) {
             Manager = manager;
-
-            _workerThread = new Thread(ProcessQueue) {
-                IsBackground = true,
-                Name = "WorldGeneratorThread"
-            };
-            _workerThread.Start();
+            consumer = new TaskConsumer<Work>();
+            consumer.Init();
         }
 
-        /// <summary>
-        /// Enfileira uma região para geração assíncrona. 
-        /// Se a região já estiver pendente, apenas acumula o listener.
-        /// </summary>
+        public void SetPriorityCenter(IndexPos center) {
+            consumer.SortValue = center;
+        }
+
+        public void Dispose() {
+            consumer.Dispose();
+        }
+
         public void EnqueueRegion(IndexPos regionIndex, Action onGenerated) {
-            if (_queue.IsAddingCompleted) return;
-
-            // Tenta adicionar ou acumular o callback no dicionário thread-safe
-            _pendingRequests.AddOrUpdate(
-                regionIndex,
-                onGenerated, // Se for a primeira vez, cria a entrada com o callback
-                (key, existingAction) => existingAction + onGenerated // Se já existir, acumula o listener
-            );
-
-            // Adiciona na fila de processamento apenas na primeira vez
-            // (Verificamos se o callback inserido é igual ao recebido para saber se foi uma adição nova)
-            if (_pendingRequests.TryGetValue(regionIndex, out var currentAction) && currentAction == onGenerated) {
-                _queue.Add(regionIndex);
-            }
-        }
-
-        private void ProcessQueue() {
-            try {
-                foreach (var regionIndex in _queue.GetConsumingEnumerable(_cts.Token)) {
-                    try {
-                        // Remove do dicionário para pegar TODOS os listeners acumulados até este momento
-                        _pendingRequests.TryRemove(regionIndex, out var accumulatedCallbacks);
-
-                        // Processa a geração pesada
-                        GenerateRegionInternal(regionIndex);
-
-                        // Invoca todos os callbacks acumulados de uma só vez na worker thread
-                        accumulatedCallbacks?.Invoke();
-                    } catch (OperationCanceledException) {
-                        break;
-                    } catch (Exception ex) {
-                        Debug.LogError($"Erro ao gerar região {regionIndex}: {ex}");
-                    }
-                }
-            } catch (OperationCanceledException) {
-            }
+            consumer.Enqueue(new Work(this, regionIndex, onGenerated));
         }
 
         private void GenerateRegionInternal(IndexPos regionIndex) {
@@ -84,16 +93,8 @@ namespace Game.Worlds.Generation {
             var allLods = BuildAllLodsFromBase(regionIndex, chunks);
             Cache.PutRegion(regionIndex, allLods);
         }
-
-        public void Dispose() {
-            _queue.CompleteAdding();
-            _cts.Cancel();
-            _cts.Dispose();
-            _queue.Dispose();
-        }
-
         
-        public Chunk[][] BuildAllLodsFromBase(IndexPos regionIndex, Chunk[] lod0Chunks) {
+        private Chunk[][] BuildAllLodsFromBase(IndexPos regionIndex, Chunk[] lod0Chunks) {
             var allChunks = new Chunk[Region.TotalLods][];
             allChunks[0] = lod0Chunks;
             

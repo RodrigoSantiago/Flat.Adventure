@@ -27,6 +27,7 @@ namespace Game.Worlds {
             private readonly IndexPos regionIndex;
             private readonly WriteStorageData writeRequest;
             private List<WorkListener> listeners;
+            private int compare;
 
             public Work(WorldCache cache, IndexPos regionIndex, int requiredLods, WorkListener listener) {
                 this.cache = cache;
@@ -41,6 +42,15 @@ namespace Game.Worlds {
                 this.regionIndex = regionIndex;
                 this.writeRequest = writeRequest;
                 Attempts = 2;
+            }
+
+            public void SetSortValue(IndexPos sort) {
+                var d = regionIndex - sort;
+                compare = d.x * d.x + d.y * d.y + d.z * d.z;
+            }
+
+            public int Compare() {
+                return compare;
             }
 
             public bool Group(Work task) {
@@ -98,6 +108,10 @@ namespace Game.Worlds {
 
             consumer = new TaskConsumer<Work>();
             consumer.Init();
+        }
+
+        public void SetPriorityCenter(IndexPos center) {
+            consumer.SortValue = center;
         }
 
         public void Dispose() {

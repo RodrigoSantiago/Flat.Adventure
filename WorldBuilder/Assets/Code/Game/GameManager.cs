@@ -42,7 +42,7 @@ namespace Game {
             // Setup Player
             foreach (var player in GameData.Instance.players) {
                 var cvPlayer = new GameObject("Player").AddComponent<CvPlayerUnit>().Setup();
-                cvPlayer.transform.position = new Vector3(1024, 1024, 1024);
+                cvPlayer.transform.position = new Vector3(2048, 2048, 2048);
                 PlayerSetView(cvPlayer);
             }
         }

@@ -9,6 +9,11 @@ namespace Game.Data.Queues {
         private Thread localThread;
         private readonly TaskQueue<T> queue = new();
 
+        public IndexPos SortValue {
+            get => queue.SortValue;
+            set => queue.SortValue = value;
+        }
+
         public void Init() {
             lock (queue) {
                 if (running) return;
