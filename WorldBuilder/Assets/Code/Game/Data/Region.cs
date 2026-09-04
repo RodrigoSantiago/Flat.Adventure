@@ -3,7 +3,7 @@ using System.Linq;
 namespace Game.Data {
     public class Region {
         public const int TotalLods = 4;
-        public const int MaxLod = 3; // [0 1 2]
+        public const int MaxLod = 3; // [0 1 2 3]
         
         public static readonly int[] LodSize1 = {8, 4, 2, 1};
         public static readonly int[] LodSize2 = {64, 16, 4, 1};
@@ -12,16 +12,17 @@ namespace Game.Data {
         
         private static readonly int[] LodId = new int[TotalChunks];
         private static readonly int[] LocalId = new int[TotalChunks];
+        private static readonly int[] LodCount = {0, 512, 576, 584};
 
         static Region() {
-            int currentLod = MaxLod;
+            int currentLod = 0;
             int localN = 0;
             for (int i = 0; i < TotalChunks; i++) {
                 LodId[i] = currentLod;
                 LocalId[i] = localN++;
                 if (localN >= LodSize3[currentLod]) {
                     localN = 0;
-                    currentLod--;
+                    currentLod++;
                 }
             }
         }
@@ -77,12 +78,22 @@ namespace Game.Data {
             return new IndexPos(x, y, z) * (ChunkSoil.Size1D * (1 << lod));
         }
 
+        public static int GetId(int lod, int x, int y, int z) {
+            return GetLocalId(lod, x, y, z) + LodCount[lod];
+        }
+
+        public static int GetId(int lod, IndexPos pos) {
+            return GetLocalId(lod, pos) + LodCount[lod];
+        }
+
         public static int GetLocalId(int lod, IndexPos pos) {
             return GetLocalId(lod, pos.x, pos.y, pos.z);
         }
 
         public static int GetLocalId(int lod, int x, int y, int z) {
-            return x / (32 << lod) + z / (32 << lod) * LodSize1[lod] + y / (32 << lod) * LodSize2[lod];
+            return   x / (32 << lod) 
+                   + z / (32 << lod) * LodSize1[lod] 
+                   + y / (32 << lod) * LodSize2[lod];
         }
     }
 }

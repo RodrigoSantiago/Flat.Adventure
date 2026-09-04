@@ -125,10 +125,15 @@ namespace Game.Worlds {
         public void RequestChunks() {
             if (!init) {
                 init = true;
-                prevViewLod0 = viewLod0;
-                prevViewLod1 = viewLod1;
-                prevViewLod2 = viewLod2;
+            } else {
+                if (prevViewLod0 == viewLod0 && prevViewLod1 == viewLod1 && prevViewLod2 == viewLod2) {
+                    return;
+                }
             }
+            
+            prevViewLod0 = viewLod0;
+            prevViewLod1 = viewLod1;
+            prevViewLod2 = viewLod2;
 
             RequestLod(
                 lod: 0,
@@ -150,7 +155,7 @@ namespace Game.Worlds {
                 excludeChunkSize: 32
             );
 
-            RequestLod(
+            /*RequestLod(
                 lod: 2,
                 viewLod: viewLod2,
                 chunkSize: 128,
@@ -158,7 +163,7 @@ namespace Game.Worlds {
                 excludeViewLod: viewLod1 - new IndexPos(1, 1, 1),
                 excludeSize: 12 - 2,
                 excludeChunkSize: 64
-            );
+            );*/
         }
 
         private void RequestLod(

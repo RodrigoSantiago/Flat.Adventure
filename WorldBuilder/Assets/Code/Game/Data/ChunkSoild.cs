@@ -792,5 +792,234 @@ namespace Game.Data {
 
             return false;
         }
+        
+        public static ChunkSoil CreateFromRaw(ReadOnlySpan<byte> rawMaterial, ReadOnlySpan<byte> rawDensity, ReadOnlySpan<byte> palette, int count) {
+            var chunk = new ChunkSoil();
+
+            byte firstDensity = rawDensity[0];
+            bool isDensityConstant = true;
+
+            for (int i = 1; i < Size3D; i++) {
+                if (rawDensity[i] != firstDensity) {
+                    isDensityConstant = false;
+                    break;
+                }
+            }
+
+            if (isDensityConstant) {
+                chunk.density = CreateDensity(Mode.Constant);
+                chunk.density[1] = firstDensity;
+            } else {
+                chunk.density = CreateDensity(Mode.Packed4);
+                var packed4 = Mode.Packed4;
+                for (int i = 0; i < Size3D; i++) {
+                    packed4.WriteBits4(chunk.density, 1, i, rawDensity[i]);
+                }
+            }
+            
+            if (count <= 1) {
+                chunk.material = CreateMaterial(Mode.Constant);
+                chunk.material[1] = rawMaterial[0];
+                return chunk;
+            }
+
+            Mode targetMode = count <= 2 ? Mode.Packed1 :
+                              count <= 4 ? Mode.Packed2 :
+                              count <= 16 ? Mode.Packed4 : Mode.Packed6;
+
+            chunk.material = CreateMaterial(targetMode);
+
+            if (targetMode == Mode.Packed6) {
+                for (int i = 0; i < Size3D; i++) {
+                    targetMode.WriteBits6(chunk.material, 1, i, rawMaterial[i]);
+                }
+            } else {
+                Span<int> lookup = stackalloc int[64];
+                for (int i = 0; i < count; i++) {
+                    lookup[palette[i]] = i;
+                }
+
+                chunk.material[PaletteIndex] = (byte)count;
+                for (int i = 0; i < count; i++) {
+                    chunk.material[PaletteIndex + 1 + i] = palette[i];
+                }
+
+                int headerSize = targetMode.header;
+                if (targetMode == Mode.Packed4) {
+                    for (int i = 0; i < Size3D; i++) {
+                        int paletteIdx = lookup[rawMaterial[i]];
+                        targetMode.WriteBits4(chunk.material, headerSize, i, paletteIdx);
+                    }
+                } else if (targetMode == Mode.Packed2) {
+                    for (int i = 0; i < Size3D; i++) {
+                        int paletteIdx = lookup[rawMaterial[i]];
+                        targetMode.WriteBits2(chunk.material, headerSize, i, paletteIdx);
+                    }
+                } else {
+                    for (int i = 0; i < Size3D; i++) {
+                        int paletteIdx = lookup[rawMaterial[i]];
+                        targetMode.WriteBits1(chunk.material, headerSize, i, paletteIdx);
+                    }
+                }
+            }
+
+            return chunk;
+        }
+
+        [ThreadStatic] private static byte[] RawCacheMaterial;
+        [ThreadStatic] private static byte[] RawCacheDensity;
+        [ThreadStatic] private static byte[] SupRawCacheMaterial;
+        [ThreadStatic] private static byte[] SupRawCacheDensity;
+        
+        public static ChunkSoil DownsampleFromLod0(ChunkSoil[] lod0SubSet, int lodStep) {
+            if (RawCacheMaterial == null) {
+                RawCacheMaterial = new byte[Size3D];
+                RawCacheDensity = new byte[Size3D];
+                SupRawCacheMaterial = new byte[Size3D];
+                SupRawCacheDensity = new byte[Size3D];
+            }
+            
+            var rawMaterial = RawCacheMaterial;
+            var rawDensity = RawCacheDensity;
+
+            Span<byte> palette = stackalloc byte[64];
+            Span<bool> matSeen = stackalloc bool[64];
+            int uniqueMaterials = 0;
+
+            int samplesPerAxis = Size1D / lodStep; // LOD1: 16 | LOD2: 8 | LOD3: 4
+
+            Span<byte> chunkSampleMat = SupRawCacheMaterial;
+            Span<byte> chunkSampleDen = SupRawCacheDensity;
+
+            int chunkIdx = 0;
+            for (int cy = 0; cy < lodStep; cy++)
+            for (int cz = 0; cz < lodStep; cz++)
+            for (int cx = 0; cx < lodStep; cx++, chunkIdx++) {
+
+                var soil = lod0SubSet[chunkIdx];
+
+                UnpackMaterialSparseBulk(soil.material, chunkSampleMat, lodStep);
+                UnpackDensitySparseBulk(soil.density, chunkSampleDen, lodStep);
+
+                int startX = cx * samplesPerAxis;
+                int startY = cy * samplesPerAxis;
+                int startZ = cz * samplesPerAxis;
+
+                int srcReadIdx = 0;
+                for (int ly = 0; ly < samplesPerAxis; ly++) {
+                    int dstY = (startY + ly) << 10;
+
+                    for (int lz = 0; lz < samplesPerAxis; lz++) {
+                        int dstZY = (startZ + lz << 5) + dstY;
+
+                        for (int lx = 0; lx < samplesPerAxis; lx++, srcReadIdx++) {
+                            int dstIndex = (startX + lx) + dstZY;
+
+                            byte mat = chunkSampleMat[srcReadIdx];
+                            byte rawDenVal = chunkSampleDen[srcReadIdx];
+
+                            float denFloat = CubeDensity[rawDenVal];
+                            denFloat = Math.Clamp(0.5f + (denFloat - 0.5f) * 2.0f, 0.0f, 1.0f);
+
+                            rawDensity[dstIndex] = (byte)QuantizeDensity(denFloat);
+                            rawMaterial[dstIndex] = mat;
+
+                            if (!matSeen[mat]) {
+                                matSeen[mat] = true;
+                                palette[uniqueMaterials] = mat;
+                                uniqueMaterials++;
+                            }
+                        }
+                    }
+                }
+            }
+
+            return CreateFromRaw(rawMaterial, rawDensity, palette, uniqueMaterials);
+        }
+
+        private static void UnpackMaterialSparseBulk(byte[] src, Span<byte> dst, int step) {
+            var mode = Mode.Parse(src[ModeIndex]);
+            int writeIdx = 0;
+
+            if (mode == Mode.Constant) {
+                dst.Fill(src[1]);
+                return;
+            }
+
+            if (mode == Mode.Packed6) {
+                for (int y = 0; y < 32; y += step) {
+                    int yOffset = y << 10;
+                    for (int z = 0; z < 32; z += step) {
+                        int zyOffset = (z << 5) + yOffset;
+                        for (int x = 0; x < 32; x += step, writeIdx++) {
+                            int srcIdx = x + zyOffset;
+                            dst[writeIdx] = (byte)mode.ReadBits6(src, 1, srcIdx);
+                        }
+                    }
+                }
+                return;
+            }
+
+            int header = mode.header;
+
+            if (mode == Mode.Packed4) {
+                for (int y = 0; y < 32; y += step) {
+                    int yOffset = y << 10;
+                    for (int z = 0; z < 32; z += step) {
+                        int zyOffset = (z << 5) + yOffset;
+                        for (int x = 0; x < 32; x += step, writeIdx++) {
+                            int srcIdx = x + zyOffset;
+                            int paletteIdx = mode.ReadBits4(src, header, srcIdx);
+                            dst[writeIdx] = src[PaletteIndex + 1 + paletteIdx];
+                        }
+                    }
+                }
+            } else if (mode == Mode.Packed2) {
+                for (int y = 0; y < 32; y += step) {
+                    int yOffset = y << 10;
+                    for (int z = 0; z < 32; z += step) {
+                        int zyOffset = (z << 5) + yOffset;
+                        for (int x = 0; x < 32; x += step, writeIdx++) {
+                            int srcIdx = x + zyOffset;
+                            int paletteIdx = mode.ReadBits2(src, header, srcIdx);
+                            dst[writeIdx] = src[PaletteIndex + 1 + paletteIdx];
+                        }
+                    }
+                }
+            } else {
+                for (int y = 0; y < 32; y += step) {
+                    int yOffset = y << 10;
+                    for (int z = 0; z < 32; z += step) {
+                        int zyOffset = (z << 5) + yOffset;
+                        for (int x = 0; x < 32; x += step, writeIdx++) {
+                            int srcIdx = x + zyOffset;
+                            int paletteIdx = mode.ReadBits1(src, header, srcIdx);
+                            dst[writeIdx] = src[PaletteIndex + 1 + paletteIdx];
+                        }
+                    }
+                }
+            }
+        }
+
+        private static void UnpackDensitySparseBulk(byte[] src, Span<byte> dst, int step) {
+            var mode = Mode.Parse(src[ModeIndex]);
+
+            if (mode == Mode.Constant) {
+                dst.Fill(src[1]);
+                return;
+            }
+
+            int writeIdx = 0;
+            for (int y = 0; y < 32; y += step) {
+                int yOffset = y << 10;
+                for (int z = 0; z < 32; z += step) {
+                    int zyOffset = (z << 5) + yOffset;
+                    for (int x = 0; x < 32; x += step, writeIdx++) {
+                        int srcIdx = x + zyOffset;
+                        dst[writeIdx] = (byte)((src[1 + (srcIdx >> 1)] >> ((srcIdx & 1) << 2)) & 15);
+                    }
+                }
+            }
+        }
     }
 }

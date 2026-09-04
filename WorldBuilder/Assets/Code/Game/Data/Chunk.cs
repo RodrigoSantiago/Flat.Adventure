@@ -33,6 +33,9 @@ namespace Game.Data {
         public Chunk(IndexPos pos, int lod, ChunkCacheUpdate cache) {
             Pos = pos;
             Lod = lod;
+            Soil = new ChunkSoil(cache.soilDenData, cache.soilMatData);
+            CurrentVersion = cache.version;
+            Version = CurrentVersion;
         }
         
         public Chunk(IndexPos pos, int lod, Chunk[] lowerLod) {
@@ -41,6 +44,7 @@ namespace Game.Data {
             Soil = GenerateLod(lowerLod);
             foreach (var lChunk in lowerLod) {
                 CurrentVersion = Math.Max(CurrentVersion, lChunk.CurrentVersion);
+                Version = Math.Max(Version, lChunk.Version);
             }
         }
 
@@ -110,7 +114,7 @@ namespace Game.Data {
 
         private void RequestData(WriteStorageData output, byte[] mesh) {
             var update = new ChunkCacheUpdate();
-            update.chunkEntryId = Region.GetLocalId(Lod, Pos - Pos.GetChunkIndex(Region.MaxLod));
+            update.chunkEntryId = Region.GetId(Lod, Pos - Pos.GetChunkIndex(Region.MaxLod));
             update.version = CurrentVersion;
             
             if (mesh != null && MeshVersion == CurrentVersion) {

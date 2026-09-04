@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Game.Data;
+using K4os.Compression.LZ4;
 
 namespace Game.Worlds.Storage {
 
@@ -42,9 +43,7 @@ namespace Game.Worlds.Storage {
             this.streamTransfer = streamTransfer;
         }
 
-        public RegionSerialize() : this(new FileStreamTransfer()) {
-            
-        }
+        public RegionSerialize() : this(new FileStreamTransfer()) { }
 
         public ChunkCacheUpdate[] Load(string filePath, int requiredLods) {
             using var stream = streamTransfer.CreateInput(filePath);
@@ -57,6 +56,8 @@ namespace Game.Worlds.Storage {
         }
 
         public void Save(string filePath, ChunkCacheUpdate[] updateChunks, bool update) {
+            var compressedInputChunks = CompressChunkUpdates(updateChunks);
+
             using var iStream = update ? streamTransfer.CreateInput(filePath) : null;
 
             bool temp = false;
@@ -70,17 +71,16 @@ namespace Game.Worlds.Storage {
                     entries = new ChunkEntry[Region.TotalChunks],
                     version = 1,
                 };
-                PackHeader(header, updateChunks);
+                PackHeader(header, compressedInputChunks);
                 
             } else {
                 var originalHeader = header?.Clone();
-                float waste = AppendHeader(header, updateChunks);
+                float waste = AppendHeader(header, compressedInputChunks);
                 
                 if (waste >= MaxSpaceWaste) {
+                    var allChunks = ReadChunkUpdateRaw(iStream, originalHeader, -1);
                     
-                    var allChunks = ReadChunkUpdate(iStream, originalHeader, -1);
-                    
-                    foreach (var chunk in updateChunks) {
+                    foreach (var chunk in compressedInputChunks) {
                         allChunks[chunk.chunkEntryId].version = chunk.version;
                         allChunks[chunk.chunkEntryId].soilDenData = chunk.soilDenData;
                         allChunks[chunk.chunkEntryId].soilMatData = chunk.soilMatData;
@@ -88,21 +88,19 @@ namespace Game.Worlds.Storage {
                         allChunks[chunk.chunkEntryId].listData = chunk.listData;
                     }
 
-                    updateChunks = allChunks;
+                    compressedInputChunks = allChunks;
                     header = originalHeader;
                     
-                    PackHeader(header, updateChunks);
+                    PackHeader(header, compressedInputChunks);
                     temp = true;
-                    
                 }
             }
             
             iStream?.Close();
             
-                
             using var oStream = streamTransfer.CreateOutput(filePath, temp);
                 
-            foreach (var chunk in updateChunks) {
+            foreach (var chunk in compressedInputChunks) {
                 var entry = header.entries[chunk.chunkEntryId];
                 if (chunk.TotalLength > 0) {
                     oStream.Seek(entry.offset, SeekOrigin.Begin);
@@ -360,7 +358,7 @@ namespace Game.Worlds.Storage {
 
             offset += sizeof(long);
         }
-        
+
         private ChunkCacheUpdate[] ReadChunkUpdate(Stream stream, RegionHeader header, int requiredLods) {
             var caches = new List<ChunkCacheUpdate>(header.entries.Length);
             for (int i = 0; i < header.entries.Length; i++) {
@@ -381,23 +379,63 @@ namespace Game.Worlds.Storage {
                 }
 
                 if (entry.soilDenLength > 0) {
+                    cache.soilDenData = ReadAndDecompressBuffer(stream, entry.soilDenLength);
+                }
+
+                if (entry.soilMatLength > 0) {
+                    cache.soilMatData = ReadAndDecompressBuffer(stream, entry.soilMatLength);
+                }
+
+                if (entry.meshLength > 0) {
+                    cache.meshData = ReadAndDecompressBuffer(stream, entry.meshLength);
+                }
+                
+                if (entry.listLength > 0) {
+                    cache.listData = ReadAndDecompressBuffer(stream, entry.listLength);
+                }
+
+                caches.Add(cache);
+            }
+            return caches.ToArray();
+        }
+
+        private ChunkCacheUpdate[] ReadChunkUpdateRaw(Stream stream, RegionHeader header, int requiredLods) {
+            var caches = new List<ChunkCacheUpdate>(header.entries.Length);
+            for (int i = 0; i < header.entries.Length; i++) {
+                var entry = header.entries[i];
+                int lod = Region.GetLod(i);
+                if (!Region.IsRequired(lod, requiredLods) || entry.version == 0) continue;
+                
+                var cache = new ChunkCacheUpdate {
+                    chunkEntryId = i,
+                    version = entry.version
+                };
+                
+                if (entry.soilDenLength > 0 || 
+                    entry.soilMatLength > 0 || 
+                    entry.meshLength > 0 ||
+                    entry.listLength > 0) {
+                    stream.Seek(entry.offset, SeekOrigin.Begin);
+                }
+
+                if (entry.soilDenLength > 0) {
                     cache.soilDenData = new byte[entry.soilDenLength];
-                    ReadData(stream, cache.soilDenData, 0, cache.soilDenData.Length);
+                    ReadData(stream, cache.soilDenData, 0, entry.soilDenLength);
                 }
 
                 if (entry.soilMatLength > 0) {
                     cache.soilMatData = new byte[entry.soilMatLength];
-                    ReadData(stream, cache.soilMatData, 0, cache.soilMatData.Length);
+                    ReadData(stream, cache.soilMatData, 0, entry.soilMatLength);
                 }
 
                 if (entry.meshLength > 0) {
                     cache.meshData = new byte[entry.meshLength];
-                    ReadData(stream, cache.meshData, 0, cache.meshData.Length);
+                    ReadData(stream, cache.meshData, 0, entry.meshLength);
                 }
                 
                 if (entry.listLength > 0) {
                     cache.listData = new byte[entry.listLength];
-                    ReadData(stream, cache.listData, 0, cache.listData.Length);
+                    ReadData(stream, cache.listData, 0, entry.listLength);
                 }
 
                 caches.Add(cache);
@@ -421,6 +459,66 @@ namespace Game.Worlds.Storage {
                 if (read == 0) throw new EndOfStreamException();
                 totalRead += read;
             }
+        }
+
+        private ChunkCacheUpdate[] CompressChunkUpdates(ChunkCacheUpdate[] updates) {
+            var compressedList = new ChunkCacheUpdate[updates.Length];
+
+            for (int i = 0; i < updates.Length; i++) {
+                var orig = updates[i];
+                compressedList[i] = new ChunkCacheUpdate {
+                    chunkEntryId = orig.chunkEntryId,
+                    version = orig.version,
+                    soilDenData = CompressBuffer(orig.soilDenData),
+                    soilMatData = CompressBuffer(orig.soilMatData),
+                    meshData = CompressBuffer(orig.meshData),
+                    listData = CompressBuffer(orig.listData)
+                };
+            }
+
+            return compressedList;
+        }
+
+        private byte[] CompressBuffer(byte[] rawData) {
+            if (rawData == null || rawData.Length == 0) return null;
+
+            int maxOutputSize = LZ4Codec.MaximumOutputSize(rawData.Length);
+            byte[] compressedBuffer = new byte[sizeof(int) + maxOutputSize];
+
+            compressedBuffer[0] = (byte)rawData.Length;
+            compressedBuffer[1] = (byte)(rawData.Length >> 8);
+            compressedBuffer[2] = (byte)(rawData.Length >> 16);
+            compressedBuffer[3] = (byte)(rawData.Length >> 24);
+
+            int encodedLength = LZ4Codec.Encode(
+                rawData, 0, rawData.Length,
+                compressedBuffer, sizeof(int), maxOutputSize,
+                LZ4Level.L00_FAST
+            );
+
+            int totalCompressedSize = sizeof(int) + encodedLength;
+            Array.Resize(ref compressedBuffer, totalCompressedSize);
+
+            return compressedBuffer;
+        }
+
+        private byte[] ReadAndDecompressBuffer(Stream stream, int compressedLength) {
+            byte[] compressedData = new byte[compressedLength];
+            ReadData(stream, compressedData, 0, compressedLength);
+
+            int originalSize = compressedData[0]
+                             | (compressedData[1] << 8)
+                             | (compressedData[2] << 16)
+                             | (compressedData[3] << 24);
+
+            byte[] decompressedBuffer = new byte[originalSize];
+
+            LZ4Codec.Decode(
+                compressedData, sizeof(int), compressedLength - sizeof(int),
+                decompressedBuffer, 0, originalSize
+            );
+
+            return decompressedBuffer;
         }
     }
 }

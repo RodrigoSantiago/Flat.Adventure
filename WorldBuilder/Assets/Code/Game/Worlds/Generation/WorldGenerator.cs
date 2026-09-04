@@ -47,21 +47,24 @@ namespace Game.Worlds.Generation {
         }
 
         private void ProcessQueue() {
-            foreach (var regionIndex in _queue.GetConsumingEnumerable(_cts.Token)) {
-                try {
-                    // Remove do dicionário para pegar TODOS os listeners acumulados até este momento
-                    _pendingRequests.TryRemove(regionIndex, out var accumulatedCallbacks);
+            try {
+                foreach (var regionIndex in _queue.GetConsumingEnumerable(_cts.Token)) {
+                    try {
+                        // Remove do dicionário para pegar TODOS os listeners acumulados até este momento
+                        _pendingRequests.TryRemove(regionIndex, out var accumulatedCallbacks);
 
-                    // Processa a geração pesada
-                    GenerateRegionInternal(regionIndex);
+                        // Processa a geração pesada
+                        GenerateRegionInternal(regionIndex);
 
-                    // Invoca todos os callbacks acumulados de uma só vez na worker thread
-                    accumulatedCallbacks?.Invoke();
-                } catch (OperationCanceledException) {
-                    break;
-                } catch (Exception ex) {
-                    Debug.LogError($"Erro ao gerar região {regionIndex}: {ex}");
+                        // Invoca todos os callbacks acumulados de uma só vez na worker thread
+                        accumulatedCallbacks?.Invoke();
+                    } catch (OperationCanceledException) {
+                        break;
+                    } catch (Exception ex) {
+                        Debug.LogError($"Erro ao gerar região {regionIndex}: {ex}");
+                    }
                 }
+            } catch (OperationCanceledException) {
             }
         }
 
@@ -78,7 +81,7 @@ namespace Game.Worlds.Generation {
                 chunks[i++] = chunk;
             }
 
-            var allLods = BuildLods(regionIndex, chunks);
+            var allLods = BuildAllLodsFromBase(regionIndex, chunks);
             Cache.PutRegion(regionIndex, allLods);
         }
 
@@ -89,63 +92,83 @@ namespace Game.Worlds.Generation {
             _queue.Dispose();
         }
 
-        // --- Algoritmo de Geração e Lods ---
-
-        public Chunk[][] BuildLods(IndexPos regionIndex, Chunk[] chunks) {
-            Chunk[][] allChunks = new Chunk[Region.TotalLods][];
-            allChunks[0] = chunks;
+        
+        public Chunk[][] BuildAllLodsFromBase(IndexPos regionIndex, Chunk[] lod0Chunks) {
+            var allChunks = new Chunk[Region.TotalLods][];
+            allChunks[0] = lod0Chunks;
             
-            int cLod = 0;
-            while (cLod < Region.MaxLod) {
-                int dim = Region.LodSize1[cLod];
-                int nextLod = cLod + 1;
-                
-                allChunks[nextLod] = new Chunk[Region.LodSize3[nextLod]];
-                for (int y = 0; y < dim; y += 2) 
-                for (int z = 0; z < dim; z += 2) 
-                for (int x = 0; x < dim; x += 2) {
-                    var id = Region.GetLocalId(nextLod, x / 2 * (32 << nextLod), y / 2 * (32 << nextLod), z / 2 * (32 << nextLod));
-                    var pos = Region.GetLocalPosition(nextLod, id);
-                    allChunks[nextLod][id] = new Chunk(regionIndex + pos, nextLod, new [] {
-                        chunks[LocalId(cLod, x + 0, y + 0, z + 0)], chunks[LocalId(cLod, x + 1, y + 0, z + 0)], 
-                        chunks[LocalId(cLod, x + 0, y + 0, z + 1)], chunks[LocalId(cLod, x + 1, y + 0, z + 1)],
-                        chunks[LocalId(cLod, x + 0, y + 1, z + 0)], chunks[LocalId(cLod, x + 1, y + 1, z + 0)], 
-                        chunks[LocalId(cLod, x + 0, y + 1, z + 1)], chunks[LocalId(cLod, x + 1, y + 1, z + 1)]
-                    });
-                }
+            var subSetSoilBuffer = new ChunkSoil[512];
+            
+            for (int lod = 1; lod <= Region.MaxLod; lod++) {
+                int lodStep = 1 << lod; // 2, 4, 8
+                int gridDim = Region.LodSize1[lod]; // 4, 2, 1
+                int totalLodChunks = Region.LodSize3[lod]; // 64, 8, 1
 
-                chunks = allChunks[nextLod];
-                cLod++; 
+                allChunks[lod] = new Chunk[totalLodChunks];
+
+                for (int y = 0; y < gridDim; y++) 
+                for (int z = 0; z < gridDim; z++) 
+                for (int x = 0; x < gridDim; x++) {
+            
+                    int localId = x + (z * gridDim) + (y * gridDim * gridDim);
+                    IndexPos worldPos = regionIndex + Region.GetLocalPosition(lod, localId);
+                    
+                    int maxVersion = FillLodSubBlock(lod0Chunks, subSetSoilBuffer, x, y, z, lodStep);
+
+                    ChunkSoil soil = ChunkSoil.DownsampleFromLod0(subSetSoilBuffer, lodStep);
+
+                    allChunks[lod][localId] = new Chunk(worldPos, lod, soil) { CurrentVersion = maxVersion };
+                }
             }
+
             return allChunks;
         }
 
-        private static int LocalId(int lod, int x, int y, int z) => Region.GetLocalId(lod, x, y, z);
+        private static int FillLodSubBlock(Chunk[] chunks, ChunkSoil[] targetBuffer, int lodX, int lodY, int lodZ, int lodStep) {
+            int baseChunkX = lodX * lodStep;
+            int baseChunkY = lodY * lodStep;
+            int baseChunkZ = lodZ * lodStep;
 
-        private ChunkSoil GenerateSoil(IndexPos pos) {
-            var soil = new ChunkSoil();
-            for (int x = 0; x < 32; x++) {
-                for (int y = 0; y < 32; y++) {
-                    for (int z = 0; z < 32; z++) {
-                        var p = pos + new IndexPos(x, y, z);
-                        /*if (p.y - 4 <= p.x && p.x > 0 && p.y > 0 && p.z > 0) {
-                            soil.SetDensity(x, y, z, 1);
-                            soil.SetMaterial(x, y, z, 1);
-                        } else {
-                            soil.SetDensity(x, y, z, 0);
-                            soil.SetMaterial(x, y, z, 0);
-                        }*/
-                        if (x >= 8 && x < 24 && y >= 8 && y < 24 && z >= 8 && z < 24) {
-                            soil.SetDensity(x, y, z, 1);
-                            soil.SetMaterial(x, y, z, 1);
-                        } else {
-                            soil.SetDensity(x, y, z, 0);
-                            soil.SetMaterial(x, y, z, 0);
-                        }
-                    }
+            int maxVersion = 0;
+            int idx = 0;
+
+            for (int cy = 0; cy < lodStep; cy++)
+            for (int cz = 0; cz < lodStep; cz++)
+            for (int cx = 0; cx < lodStep; cx++) {
+                int lod0Index = (baseChunkX + cx) | ((baseChunkZ + cz) << 3) | ((baseChunkY + cy) << 6);
+        
+                var chunk = chunks[lod0Index];
+                targetBuffer[idx++] = chunk.Soil;
+
+                if (chunk.CurrentVersion > maxVersion) {
+                    maxVersion = chunk.CurrentVersion;
                 }
             }
-            return soil;
+
+            return maxVersion;
+        }
+
+        private ChunkSoil GenerateSoil(IndexPos pos) {
+            byte[] mat = new byte[ChunkSoil.Size3D];
+            byte[] den = new byte[ChunkSoil.Size3D];
+
+            byte[] palette = {0, 1};
+            int n = 0;
+            for (int y = 0; y < 32; y++) 
+            for (int z = 0; z < 32; z++)
+            for (int x = 0; x < 32; x++) {
+                var p = pos + new IndexPos(x, y, z);
+                if (x >= 8 && x < 24 && y >= 8 && y < 24 && z >= 8 && z < 24) {
+                    den[n] = 14;
+                    mat[n] = 1;
+                } else {
+                    den[n] = 0;
+                    mat[n] = 0;
+                }
+                n++;
+            }
+
+            return ChunkSoil.CreateFromRaw(mat, den, palette, 2);
         }
     }
 }
