@@ -1,12 +1,9 @@
-using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading;
-using Code;
 using Game.Data;
-using Game.Entities;
 using Game.Worlds.Generation;
-using UnityEngine;
+using Game.Worlds.Rendering;
 
 namespace Game.Worlds {
     public class WorldManager {
@@ -27,15 +24,18 @@ namespace Game.Worlds {
         public WorldCache Cache { get; }
         public WorldGenerator Generator { get; }
         public WorldBuilder Builder { get; }
+        public WorldRender Render { get; }
 
-        private Dictionary<IndexPos, CvChunk>[] AllChunks { get; }
+        private Dictionary<IndexPos, ChunkRenderData>[] AllChunksData { get; }
+
+        private readonly HashSet<IndexPos>[] requestedPositions;
+        private readonly List<IndexPos> toRemoveList = new ();
 
         private Thread mainThread;
-
-        private GameObject[] lods;
         
         public WorldManager(string storage) {
             Storage = storage;
+            
             if (!Directory.Exists(storage)) {
                 Directory.CreateDirectory(storage);
             }
@@ -45,15 +45,15 @@ namespace Game.Worlds {
             Builder = new WorldBuilder(this);
             Builder.OnChunkLoaded = OnChunkLoaded;
 
-            AllChunks = new Dictionary<IndexPos, CvChunk>[Region.TotalLods];
-            for (int i = 0; i < Region.TotalLods; i++) {
-                AllChunks[i] = new Dictionary<IndexPos, CvChunk>();
-            }
+            AllChunksData = new Dictionary<IndexPos, ChunkRenderData>[Region.TotalLods];
+            requestedPositions = new HashSet<IndexPos>[Region.TotalLods];
 
-            lods = new GameObject[Region.TotalLods];
             for (int i = 0; i < Region.TotalLods; i++) {
-                lods[i] = new GameObject("Lod " + i);
+                AllChunksData[i] = new Dictionary<IndexPos, ChunkRenderData>();
+                requestedPositions[i] = new HashSet<IndexPos>();
             }
+            
+            Render = new WorldRender(this);
         }
 
         public void Dispose() {
@@ -62,26 +62,29 @@ namespace Game.Worlds {
         }
 
         public void OnChunkLoaded(Chunk chunk) {
-            if (!AllChunks[chunk.Lod].ContainsKey(chunk.Pos)) {
-                var worldChunk = new GameObject("Chunk " + chunk.Pos + "[" + chunk.Lod + "]").AddComponent<CvChunk>();
-                worldChunk.Setup(this, chunk);
-                worldChunk.transform.SetParent(lods[chunk.Lod].transform, true);
+            if (!AllChunksData[chunk.Lod].TryGetValue(chunk.Pos, out var chunkData)) {
+                chunkData = new ChunkRenderData(this, chunk);
+                AllChunksData[chunk.Lod][chunk.Pos] = chunkData;
+            } else {
+                chunkData.RefreshChunk(chunk);
+            }
                 
-                AllChunks[chunk.Lod][chunk.Pos] = worldChunk;
-                for (int x = -1; x <= 1; x++)
-                for (int y = -1; y <= 1; y++)
-                for (int z = -1; z <= 1; z++) {
-                    var near = FindChunk(chunk.Lod, chunk.Pos + new IndexPos(x, y, z) * (32 << chunk.Lod));
-                    if (near != null) {
-                        near.RequestMesh();
-                    }
+            for (int x = -1; x <= 1; x++)
+            for (int y = -1; y <= 1; y++)
+            for (int z = -1; z <= 1; z++) {
+                var near = FindChunkData(chunk.Lod, chunk.Pos + new IndexPos(x, y, z) * (32 << chunk.Lod));
+                if (near != null) {
+                    near.RequestMesh();
                 }
             }
-
         }
 
-        public CvChunk FindChunk(int lod, IndexPos pos) {
-            if (AllChunks[lod].TryGetValue(pos, out var cvChunk)) {
+        public Chunk FindChunk(int lod, IndexPos pos) {
+            return FindChunkData(lod, pos)?.Chunk;
+        }
+
+        public ChunkRenderData FindChunkData(int lod, IndexPos pos) {
+            if (AllChunksData[lod].TryGetValue(pos, out var cvChunk)) {
                 return cvChunk;
             }
 
@@ -132,6 +135,14 @@ namespace Game.Worlds {
 
         public void RemoveTeleportPoint(int pointId) {
         }
+        
+        public void RenderChunks() {
+            Render.RenderFrame();
+        }
+
+        public void RequestChunk(int lod, IndexPos chunkIndex) {
+            Builder.RequestChunk(chunkIndex, lod);
+        }
 
         public void RequestChunks() {
             if (!init) {
@@ -181,6 +192,24 @@ namespace Game.Worlds {
                 excludeSize: 12 - 4,
                 excludeChunkSize: 64
             );
+
+            UnloadNotRequiredChunks();
+
+            for (int i = 0; i < Region.TotalLods; i++) {
+                requestedPositions[i].Clear();
+            }
+        }
+
+        public bool IsChunkRenderRequired(int lod, IndexPos pos) {
+            if (lod == 0) {
+                return IsInside(pos, viewLod0, 8, 32);
+            } else if (lod == 1) {
+                return IsInside(pos, viewLod1, 12, 64) && !IsInside(pos, viewLod0, 8, 32);
+            }  else if (lod == 2) {
+                return IsInside(pos, viewLod2, 16, 128) && !IsInside(pos, viewLod1, 12, 64);
+            }
+
+            return false;
         }
 
         private void RequestLod(
@@ -192,7 +221,6 @@ namespace Game.Worlds {
             int excludeSize,
             int excludeChunkSize
         ) {
-            // +1 de contorno em cada lado.
             for (int y = -1; y <= size; y++)
             for (int z = -1; z <= size; z++)
             for (int x = -1; x <= size; x++) {
@@ -203,18 +231,49 @@ namespace Game.Worlds {
                     continue;
                 }
 
-                if (excludeViewLod.HasValue &&
-                    IsInside(
-                        pos,
-                        excludeViewLod.Value,
-                        excludeSize,
-                        excludeChunkSize
-                    )) {
+                if (excludeViewLod.HasValue && IsInside(pos, excludeViewLod.Value, excludeSize, excludeChunkSize)) {
                     continue;
                 }
 
-                if (!AllChunks[lod].ContainsKey(pos)) {
+                requestedPositions[lod].Add(pos);
+
+                if (!AllChunksData[lod].TryGetValue(pos, out var chunkData)) {
                     Builder.RequestChunk(pos, lod);
+                } else {
+                    chunkData.RequestMesh();
+                }
+            }
+        }
+
+        private void UnloadNotRequiredChunks() {
+            for (int lod = 0; lod < Region.TotalLods; lod++) {
+                var activeDict = AllChunksData[lod];
+                var currentValidSet = requestedPositions[lod];
+
+                foreach (var entry in activeDict) {
+                    var pos = entry.Key;
+                    var chunkData = entry.Value;
+                    if (!currentValidSet.Contains(pos)) {
+                        toRemoveList.Add(pos);
+                        Builder.ReleaseChunk(chunkData.Pos, chunkData.Lod);
+                    }
+                }
+
+                foreach (var pos in toRemoveList) {
+                    activeDict.Remove(pos);
+                }
+                toRemoveList.Clear();
+            }
+        }
+
+        public void UnloadUnusedChunks() {
+            for (int lod = 0; lod < Region.TotalLods; lod++) {
+                var activeDict = AllChunksData[lod];
+
+                foreach (var chunkData in activeDict.Values) {
+                    if (chunkData.Chunk == null) {
+                        Builder.ReleaseChunk(chunkData.Pos, chunkData.Lod);
+                    }
                 }
             }
         }

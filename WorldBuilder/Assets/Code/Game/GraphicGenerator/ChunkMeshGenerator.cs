@@ -26,8 +26,10 @@ namespace Game.GraphicGenerator {
 
 		[SerializeField] private ComputeShader shader;
 		[SerializeField] private Material groundMaterial;
+		[SerializeField] private Material dummyMaterial;
 
 		public Material GroundMaterial => groundMaterial;
+		public Material DummyMaterial => dummyMaterial;
 
 
 		private struct ChunkDataEntry {

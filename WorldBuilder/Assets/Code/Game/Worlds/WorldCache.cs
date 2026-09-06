@@ -5,6 +5,7 @@ using System.Linq;
 using Game.Data;
 using Game.Data.Queues;
 using Game.Worlds.Storage;
+using UnityEngine;
 
 namespace Game.Worlds {
     public class WorldCache {
@@ -238,6 +239,18 @@ namespace Game.Worlds {
             return null;
         }
 
+        public void ReleaseChunkCache(IndexPos chunkIndex, int lod) {
+            var regionIndex = chunkIndex.GetChunkIndex(Region.MaxLod);
+            var local = chunkIndex - regionIndex;
+            int index = Region.GetLocalId(lod, local.x, local.y, local.z);
+            
+            lock (cache) {
+                if (cache.TryGetValue(regionIndex, out var region) && region.chunks[lod] != null) {
+                    ReleaseChunkCache(region.chunks[lod][index]);
+                }
+            }
+        }
+
         public void ReleaseChunkCache(Chunk chunk) {
             var regionIndex = chunk.Pos.GetChunkIndex(Region.MaxLod);
             lock (cache) {
@@ -263,16 +276,33 @@ namespace Game.Worlds {
         public void RequestUnloadRegion(IndexPos regionIndex, int lod) {
             lock (cache) {
                 if (!cache.TryGetValue(regionIndex, out var region) || region.chunks[lod] == null) return;
-                
+
+                int count = 0;
                 var current = new WriteStorageData(true);
                 foreach (var chunk in region.chunks[lod]) {
                     if (chunk.Version != chunk.CurrentVersion) {
+                        count++;
                         current.AddOperation(chunk.Lod, chunk.Pos);
                         chunk.RequestExport(current);
                     }
                 }
 
-                current.SetOnCompleted(() => consumer.Enqueue(new Work(this, regionIndex, current)));
+                if (count == 0) {
+                    
+                    var chunks = region.chunks[lod];
+                    if (chunks != null) {
+                        bool released = chunks.All(chunk => chunk.Released);
+                        if (released) {
+                            region.chunks[lod] = null;
+                        }
+                    }
+
+                    if (region.chunks.All(chs => chs == null)) {
+                        cache.Remove(regionIndex);
+                    }
+                } else {
+                    current.SetOnCompleted(() => consumer.Enqueue(new Work(this, regionIndex, current)));
+                }
             }
         }
 

@@ -1,7 +1,8 @@
+using System;
 using UnityEngine;
 
 namespace Game.Data {
-    public struct IndexPos {
+    public struct IndexPos : IEquatable<IndexPos> {
         public int x;
         public int y;
         public int z;
@@ -28,17 +29,11 @@ namespace Game.Data {
         }
 
         public override bool Equals(object obj) {
-            return obj is IndexPos other && this == other;
+            return obj is IndexPos other && Equals(other);
         }
 
         public override int GetHashCode() {
-            unchecked {
-                int hash = 17;
-                hash = hash * 31 + x;
-                hash = hash * 31 + y;
-                hash = hash * 31 + z;
-                return hash;
-            }
+            return HashCode.Combine(x, y, z);
         }
 
         public static bool operator ==(IndexPos a, IndexPos b) {
@@ -203,6 +198,10 @@ namespace Game.Data {
                 my >= 0 ? y - my : y - snap - my,
                 mz >= 0 ? z - mz : z - snap - mz
             );
+        }
+
+        public bool Equals(IndexPos other) {
+            return x == other.x && y == other.y && z == other.z;
         }
     }
 }

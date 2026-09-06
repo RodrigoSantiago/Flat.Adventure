@@ -99,8 +99,8 @@ namespace Game.Worlds {
             });
         }
         
-        public void ReleaseChunk(Chunk chunk) {
-            Cache.ReleaseChunkCache(chunk);
+        public void ReleaseChunk(IndexPos chunkIndex, int lod) {
+            Cache.ReleaseChunkCache(chunkIndex, lod);
         }
         
         // ---------------------------------

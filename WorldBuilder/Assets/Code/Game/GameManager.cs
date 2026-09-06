@@ -22,10 +22,16 @@ namespace Game {
         private readonly Queue<Action> taskQueue = new();
 
         [SerializeField] private ChunkMeshGenerator meshGenerator;
+        public ChunkMeshGenerator MeshGenerator => meshGenerator;
+        [SerializeField] private Camera playerCamera;
+        public Camera PlayerCamera => playerCamera;
 
         private WorldManager overWorld;
         public WorldManager OverWorld => overWorld;
 
+        public bool[] controlRender = new bool[4];
+        public Mesh smallCube;
+        
         public void Awake() {
             Instance = this;
             mainThread = Thread.CurrentThread;
@@ -51,6 +57,8 @@ namespace Game {
             overWorld.RequestChunks();
             ExecuteSyncQueue();
             ExecuteTaskQueue();
+            overWorld.RenderChunks();
+            overWorld.UnloadUnusedChunks();
         }
 
         public void OnDestroy() {
@@ -59,10 +67,6 @@ namespace Game {
 
         public void PlayerSetView(CvPlayerUnit cvPlayerUnit) {
             overWorld.SetViewPoint((IndexPos)cvPlayerUnit.transform.position);
-        }
-
-        public void RequestMesh(Chunk[] chunk, Action<Mesh> action) {
-            meshGenerator.Remesh(chunk, action);
         }
 
         public void RunSync(Action action) {
