@@ -54,11 +54,9 @@ namespace Game {
         }
 
         public void Update() {
-            overWorld.RequestChunks();
             ExecuteSyncQueue();
             ExecuteTaskQueue();
-            overWorld.RenderChunks();
-            overWorld.UnloadUnusedChunks();
+            overWorld.Update();
         }
 
         public void OnDestroy() {

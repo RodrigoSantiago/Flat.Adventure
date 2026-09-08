@@ -1,5 +1,6 @@
 #pragma kernel BuildVertex
 #pragma kernel BuildMesh
+#pragma kernel BuildBuffer
 
 struct GeneratedVertex {
     int3 position;
@@ -12,6 +13,10 @@ struct GeneratedVertexLow {
     uint2 normal;
     uint2 uv0;
     uint2 uv1;
+};
+struct GeneratedVertexMinimal {
+    uint2 position;
+    uint2 normal;
 };
 
 #define SIZE_1 32
@@ -272,15 +277,10 @@ static const int3 EdgeNeighbors[12][3] = {
     { int3(-1, 0,  0), int3(0,  1,  0), int3(-1, 1,  0) }  // Edge 11
 };
 
-[numthreads(64, 1, 1)]
-void BuildMesh(uint3 id : SV_DispatchThreadID) {
-    const uint index = id.x;
-    if (index >= vertex_count.x) return;
-    
+float3 computeNormal(const GeneratedVertex ver)
+{
     const uint offA = MAX_VOXEL * vertex_count.w;
     const uint offB = MAX_VERTEX * vertex_count.w;
-    
-    GeneratedVertex ver = MeshInput[offB + index];
     
     int edgeAxis = (int)ver.uv1.w;
 
@@ -309,7 +309,19 @@ void BuildMesh(uint3 id : SV_DispatchThreadID) {
         }
     }
 
-    normal = normalize(normal);
+    return normalize(normal);
+}
+
+[numthreads(64, 1, 1)]
+void BuildMesh(uint3 id : SV_DispatchThreadID) {
+    const uint index = id.x;
+    if (index >= vertex_count.x) return;
+    
+    const uint offB = MAX_VERTEX * vertex_count.w;
+    
+    GeneratedVertex ver = MeshInput[offB + index];
+    
+    float3 normal = computeNormal(ver);
     
     GeneratedVertexLow low;
     low.position.x = f32tof16(ver.position.x / 1024.0) | (f32tof16(ver.position.y / 1024.0) << 16);
@@ -322,4 +334,33 @@ void BuildMesh(uint3 id : SV_DispatchThreadID) {
     low.uv1.y = f32tof16(ver.uv0.w == 2 ? 1.0 : 0.0) | (f32tof16(0.0) << 16);
     MeshVertexBuffer[index] = low;
     MeshIndexBuffer[index] = index;
+}
+
+RWStructuredBuffer<GeneratedVertexMinimal> BufferVertexBuffer;
+
+uint EncodePosition(float v) {
+    return (uint)round(v * (65535.0 / 32.0));
+}
+
+[numthreads(64, 1, 1)]
+void BuildBuffer(uint3 id : SV_DispatchThreadID) {
+    const uint index = id.x;
+    if (index >= vertex_count.x) return;
+    
+    const uint offB = MAX_VERTEX * vertex_count.w;
+    
+    GeneratedVertex ver = MeshInput[offB + index];
+    
+    float3 normal = computeNormal(ver);
+    
+    GeneratedVertexMinimal low;
+    low.position.x = EncodePosition(ver.position.x / 1024.0) | (EncodePosition(ver.position.y / 1024.0) << 16);
+    low.position.y = EncodePosition(ver.position.z / 1024.0) |
+          ((uint(ver.uv0.x) | (uint(ver.uv0.y) << 6)) << 16);
+
+    low.normal.x = f32tof16(normal.x) | (f32tof16(normal.y) << 16);
+    low.normal.y = f32tof16(normal.z) |
+          (uint(ver.uv0.z) << 16);
+    
+    BufferVertexBuffer[index] = low;
 }

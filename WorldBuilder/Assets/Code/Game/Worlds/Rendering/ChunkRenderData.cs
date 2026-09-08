@@ -1,5 +1,5 @@
 using Game.Data;
-using UnityEngine;
+using Game.GraphicGenerator;
 
 namespace Game.Worlds.Rendering {
     public class ChunkRenderData {
@@ -7,7 +7,7 @@ namespace Game.Worlds.Rendering {
         private readonly WorldManager manager;
         
         public Chunk Chunk { get; private set; }
-        public Mesh Mesh { get; private set; }
+        public MeshInterface Mesh { get; private set; }
         public bool IsReleased => Chunk == null;
 
         public IndexPos Pos { get; }
@@ -17,7 +17,7 @@ namespace Game.Worlds.Rendering {
         
         private Chunk[] chunks;
         
-        private bool built;
+        public bool ChunkReleased { get; set; }
 
         public ChunkRenderData(WorldManager manager, Chunk chunk) {
             this.manager = manager;
@@ -27,8 +27,15 @@ namespace Game.Worlds.Rendering {
             IsEmpty = chunk.Soil.IsEmpty();
         }
 
+        public void Dispose() {
+            if (Mesh != null) {
+                Mesh.Dispose();
+            }
+        }
+
         public void RefreshChunk(Chunk chunk) {
             Chunk = chunk;
+            ChunkReleased = false;
         }
 
         public void RequestMesh() {

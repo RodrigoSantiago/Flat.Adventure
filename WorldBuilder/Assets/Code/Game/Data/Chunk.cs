@@ -16,7 +16,7 @@ namespace Game.Data {
         public int CurrentVersion { get; set; }
         public int MeshVersion { get; private set; }
         public ChunkSoil Soil { get; private set; }
-        public Mesh SoilMesh { get; set; }
+        public MeshInterface SoilMesh { get; set; }
         public bool Released { get; set; } = true;
 
         public Chunk(IndexPos pos, int lod) {
@@ -91,7 +91,7 @@ namespace Game.Data {
 
         public void RequestExport(WriteStorageData output) {
             if (SoilMesh != null && false) {
-                GraphicsBuffer buffer = SoilMesh.GetVertexBuffer(0);
+                /*GraphicsBuffer buffer = SoilMesh.GetVertexBuffer(0);
 
                 AsyncGPUReadback.Request(buffer, request => {
                     if (request.hasError) {
@@ -106,7 +106,7 @@ namespace Game.Data {
                     buffer.Dispose();
                     
                     GameManager.Instance.RunTask(() => RequestData(output, bytes));
-                });
+                });*/
             } else {
                 GameManager.Instance.RunTask(() => RequestData(output, null));
             }

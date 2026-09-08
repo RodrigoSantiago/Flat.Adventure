@@ -2,6 +2,7 @@ using System;
 using Game.Data;
 using Game.Worlds.Rendering;
 using System.Collections.Generic;
+using Game.GraphicGenerator;
 using UnityEngine;
 using UnityEngine.Rendering;
 
@@ -48,7 +49,7 @@ namespace Game.Worlds {
             return GameManager.Instance.PlayerCamera;
         }
 
-        public void RenderFrame() {
+        public void RenderFrame(HashSet<IndexPos>[] renderedPositions) {
             Camera cam = GetActiveCamera();
             if (cam == null) return;
 
@@ -99,6 +100,8 @@ namespace Game.Worlds {
                 }
 
                 DrawChunk(cmd.chunk, cmd.pos, cmd.visibility);
+                
+                renderedPositions[cmd.lod].Add(cmd.pos);
             }
         }
 
@@ -352,12 +355,20 @@ namespace Game.Worlds {
         }
 
         private void DrawChunk(ChunkRenderData chunk, IndexPos pos, RenderVisibility visibility) {
-            var matrix = Matrix4x4.TRS((Vector3)pos, Quaternion.identity, Vector3.one * (1 << chunk.Lod));
-            var mesh = chunk.Mesh == null ? GameManager.Instance.smallCube : chunk.Mesh;
-            if (visibility == RenderVisibility.VisibleInFrustum) {
-                Graphics.RenderMesh(visibleRenderParams, mesh, 0, matrix);
-            } else if (visibility == RenderVisibility.ShadowOnly) {
-                Graphics.RenderMesh(shadowOnlyRenderParams, mesh, 0, matrix);
+            
+            if (chunk.Mesh == null) {
+                var matrix = Matrix4x4.TRS((Vector3)pos, Quaternion.identity, Vector3.one * (1 << chunk.Lod));
+                if (visibility == RenderVisibility.VisibleInFrustum) {
+                    Graphics.RenderMesh(visibleRenderParams, GameManager.Instance.smallCube, 0, matrix);
+                } else if (visibility == RenderVisibility.ShadowOnly) {
+                    Graphics.RenderMesh(shadowOnlyRenderParams, GameManager.Instance.smallCube, 0, matrix);
+                }
+            } else {
+                if (visibility == RenderVisibility.VisibleInFrustum) {
+                    chunk.Mesh.Render(visibleRenderParams);
+                } else if (visibility == RenderVisibility.ShadowOnly) {
+                    chunk.Mesh.Render(shadowOnlyRenderParams);
+                }
             }
         }
 
@@ -369,7 +380,7 @@ namespace Game.Worlds {
                    pos.z >= min.z && pos.z < max.z;
         }
 
-        public void RequestMesh(Chunk[] chunks, Action<Mesh> action) {
+        public void RequestMesh(Chunk[] chunks, Action<MeshInterface> action) {
             GameManager.Instance.MeshGenerator.Remesh(chunks, action);
         }
     }

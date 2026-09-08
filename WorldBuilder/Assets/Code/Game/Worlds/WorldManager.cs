@@ -4,6 +4,7 @@ using System.Threading;
 using Game.Data;
 using Game.Worlds.Generation;
 using Game.Worlds.Rendering;
+using UnityEngine;
 
 namespace Game.Worlds {
     public class WorldManager {
@@ -29,9 +30,10 @@ namespace Game.Worlds {
         private Dictionary<IndexPos, ChunkRenderData>[] AllChunksData { get; }
 
         private readonly HashSet<IndexPos>[] requestedPositions;
+        private readonly HashSet<IndexPos>[] renderedPositions;
         private readonly List<IndexPos> toRemoveList = new ();
 
-        private Thread mainThread;
+        private float unloadTimer;
         
         public WorldManager(string storage) {
             Storage = storage;
@@ -47,16 +49,26 @@ namespace Game.Worlds {
 
             AllChunksData = new Dictionary<IndexPos, ChunkRenderData>[Region.TotalLods];
             requestedPositions = new HashSet<IndexPos>[Region.TotalLods];
+            renderedPositions = new HashSet<IndexPos>[Region.TotalLods];
 
             for (int i = 0; i < Region.TotalLods; i++) {
                 AllChunksData[i] = new Dictionary<IndexPos, ChunkRenderData>();
                 requestedPositions[i] = new HashSet<IndexPos>();
+                renderedPositions[i] = new HashSet<IndexPos>();
             }
             
             Render = new WorldRender(this);
         }
 
         public void Dispose() {
+            for (int lod = 0; lod < Region.TotalLods; lod++) {
+                var activeDict = AllChunksData[lod];
+
+                foreach (var chunkData in activeDict.Values) {
+                    chunkData.Dispose();
+                }
+            }
+            
             Generator.Dispose();
             Cache.Dispose();
         }
@@ -135,13 +147,26 @@ namespace Game.Worlds {
 
         public void RemoveTeleportPoint(int pointId) {
         }
-        
-        public void RenderChunks() {
-            Render.RenderFrame();
-        }
 
         public void RequestChunk(int lod, IndexPos chunkIndex) {
             Builder.RequestChunk(chunkIndex, lod);
+        }
+
+        public void Update() {
+            RequestChunks();
+            
+            Render.RenderFrame(renderedPositions); // Accumulate [renderedPositions]
+
+            if (Time.time - unloadTimer > 3.0f) {
+                UnloadNotRequiredChunks();
+                foreach (var renderedPosition in renderedPositions) {
+                    renderedPosition.Clear();
+                }
+
+                unloadTimer = Time.time;
+            }
+            
+            ReleaseUnsunedChunkData();
         }
 
         public void RequestChunks() {
@@ -162,6 +187,10 @@ namespace Game.Worlds {
             prevViewLod0 = viewLod0;
             prevViewLod1 = viewLod1;
             prevViewLod2 = viewLod2;
+
+            foreach (var requestedPosition in requestedPositions) {
+                requestedPosition.Clear();
+            }
 
             RequestLod(
                 lod: 0,
@@ -192,12 +221,8 @@ namespace Game.Worlds {
                 excludeSize: 12 - 4,
                 excludeChunkSize: 64
             );
-
-            UnloadNotRequiredChunks();
-
-            for (int i = 0; i < Region.TotalLods; i++) {
-                requestedPositions[i].Clear();
-            }
+            
+            unloadTimer = Time.time;
         }
 
         public bool IsChunkRenderRequired(int lod, IndexPos pos) {
@@ -221,6 +246,8 @@ namespace Game.Worlds {
             int excludeSize,
             int excludeChunkSize
         ) {
+            if (!GameManager.Instance.controlRender[lod]) return;
+            
             for (int y = -1; y <= size; y++)
             for (int z = -1; z <= size; z++)
             for (int x = -1; x <= size; x++) {
@@ -248,14 +275,16 @@ namespace Game.Worlds {
         private void UnloadNotRequiredChunks() {
             for (int lod = 0; lod < Region.TotalLods; lod++) {
                 var activeDict = AllChunksData[lod];
-                var currentValidSet = requestedPositions[lod];
+                var requested = requestedPositions[lod];
+                var rendered = renderedPositions[lod];
 
                 foreach (var entry in activeDict) {
                     var pos = entry.Key;
                     var chunkData = entry.Value;
-                    if (!currentValidSet.Contains(pos)) {
+                    if (!requested.Contains(pos) && !rendered.Contains(pos)) {
                         toRemoveList.Add(pos);
                         Builder.ReleaseChunk(chunkData.Pos, chunkData.Lod);
+                        chunkData.Dispose();
                     }
                 }
 
@@ -266,12 +295,13 @@ namespace Game.Worlds {
             }
         }
 
-        public void UnloadUnusedChunks() {
+        public void ReleaseUnsunedChunkData() {
             for (int lod = 0; lod < Region.TotalLods; lod++) {
                 var activeDict = AllChunksData[lod];
 
                 foreach (var chunkData in activeDict.Values) {
-                    if (chunkData.Chunk == null) {
+                    if (chunkData.Chunk == null && !chunkData.ChunkReleased) {
+                        chunkData.ChunkReleased = true;
                         Builder.ReleaseChunk(chunkData.Pos, chunkData.Lod);
                     }
                 }

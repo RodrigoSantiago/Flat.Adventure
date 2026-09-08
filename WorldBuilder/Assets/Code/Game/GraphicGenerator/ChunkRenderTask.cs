@@ -9,13 +9,13 @@ namespace Game.GraphicGenerator {
         public int Lod { get; private set; }
         public IndexPos Pos { get; private set; }
         public Chunk[] Chunks { get; private set; }
-        public Action<Mesh> Action { get; private set; }
+        public Action<MeshInterface> Action { get; private set; }
 
         public int Count => tasks.Count;
         
         public List<ChunkRenderTask> tasks = new();
 
-        public ChunkRenderTask(int lod, IndexPos pos, Chunk[] chunks, Action<Mesh> action) {
+        public ChunkRenderTask(int lod, IndexPos pos, Chunk[] chunks, Action<MeshInterface> action) {
             Lod = lod;
             Pos = pos;
             Chunks = chunks;

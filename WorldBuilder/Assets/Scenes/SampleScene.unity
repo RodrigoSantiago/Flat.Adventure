@@ -985,7 +985,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Game::Game.GameManager
   meshGenerator: {fileID: 1964588184}
   playerCamera: {fileID: 330585545}
-  controlRender: 01010101
+  controlRender: 01010100
   smallCube: {fileID: -5495902117074765545, guid: b119ab35f8139e24ca8992b513bf3ac4, type: 3}
 --- !u!4 &811553348
 Transform:
@@ -2231,8 +2231,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Game::Code.ChunkMeshGenerator
   shader: {fileID: 7200000, guid: d598e01b93fe47bf85d1ba05a6179da8, type: 3}
-  groundMaterial: {fileID: 2100000, guid: 6dd8868e2b44bf642abf5bc3e98ae0e7, type: 2}
-  dummyMaterial: {fileID: 2100000, guid: 0f35ed96cb07d494dab4f2e392e3b50f, type: 2}
+  groundMeshMaterial: {fileID: 2100000, guid: 8439d3fcf27168a4497aad7e4ec01378, type: 2}
+  dummyMeshMaterial: {fileID: 2100000, guid: 0f35ed96cb07d494dab4f2e392e3b50f, type: 2}
+  groundBufferMaterial: {fileID: 2100000, guid: 6dd8868e2b44bf642abf5bc3e98ae0e7, type: 2}
+  dummyBufferMaterial: {fileID: 2100000, guid: 18d665f4014ac344a9b4bdbbfcaad3cf, type: 2}
 --- !u!4 &1964588185
 Transform:
   m_ObjectHideFlags: 0

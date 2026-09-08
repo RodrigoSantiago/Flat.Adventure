@@ -18,6 +18,8 @@ void Biplanar_float(
     float4 PackUv0,
     float4 PackUv1,
     bool multiTexture,
+    float InRoughness,
+    float InMetallic,
     
     out float3 OutAlbedo,
     out float3 OutNormal,
@@ -121,8 +123,8 @@ void Biplanar_float(
         normalA0 = normalize(PackUv1.x * normalA0 + PackUv1.y * normalA1 + PackUv1.z * normalA2);
         normalB0 = normalize(PackUv1.x * normalB0 + PackUv1.y * normalB1 + PackUv1.z * normalB2);
     }
-    OutRoughness = extraA0.z * w.x + extraB0.z * w.y;
-    OutMetallic = extraA0.w * w.x + extraB0.w * w.y;
+    OutRoughness = saturate(extraA0.z * w.x + extraB0.z * w.y + InRoughness);
+    OutMetallic = saturate(extraA0.w * w.x + extraB0.w * w.y + InMetallic);
 
     // ============================================================
     //          Tangent Space to World Space

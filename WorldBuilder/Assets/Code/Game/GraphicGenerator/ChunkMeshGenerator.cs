@@ -25,12 +25,13 @@ namespace Game.GraphicGenerator {
 		private GraphicsBuffer voxelsCounter;
 
 		[SerializeField] private ComputeShader shader;
-		[SerializeField] private Material groundMaterial;
-		[SerializeField] private Material dummyMaterial;
+		[SerializeField] private Material groundMeshMaterial;
+		[SerializeField] private Material dummyMeshMaterial;
+		[SerializeField] private Material groundBufferMaterial;
+		[SerializeField] private Material dummyBufferMaterial;
 
-		public Material GroundMaterial => groundMaterial;
-		public Material DummyMaterial => dummyMaterial;
-
+		public Material GroundMaterial => MeshInterface.Native ? groundBufferMaterial : groundMeshMaterial;
+		public Material DummyMaterial => MeshInterface.Native ? dummyBufferMaterial : dummyMeshMaterial;
 
 		private struct ChunkDataEntry {
 			public IndexPos pos;
@@ -49,6 +50,7 @@ namespace Game.GraphicGenerator {
 
 		private int buildVertex;
 		private int buildMesh;
+		private int buildBuffer;
 		
 		private static readonly int MeshVertexBuffer = Shader.PropertyToID("MeshVertexBuffer");
 		private static readonly int MeshIndexBuffer = Shader.PropertyToID("MeshIndexBuffer");
@@ -63,7 +65,6 @@ namespace Game.GraphicGenerator {
 		private static readonly int MeshInput = Shader.PropertyToID("MeshInput");
 		private static readonly int MeshCounter = Shader.PropertyToID("MeshCounter");
 		
-		private static readonly int ChunkPos = Shader.PropertyToID("chunk_pos");
 		private static readonly int VertexCount = Shader.PropertyToID("vertex_count");
 		
 		private static readonly int MaxDen = ChunkSoil.Mode.Packed4.DenArraySize; // 16388
@@ -84,6 +85,7 @@ namespace Game.GraphicGenerator {
 		public void Init() {
 			buildVertex = shader.FindKernel("BuildVertex");
 			buildMesh = shader.FindKernel("BuildMesh");
+			buildBuffer = shader.FindKernel("BuildBuffer");
 
 			/*
 			 * Size :
@@ -125,6 +127,9 @@ namespace Game.GraphicGenerator {
 			shader.SetBuffer(buildMesh, MeshInput, vertexBuffer);			// Input from "Build Vertex"(VertexCounter)
 			shader.SetBuffer(buildMesh, MeshCounter, voxelsCounter);		// Input from "Build Vertex"(VoxelsCounter)
 			
+			shader.SetBuffer(buildBuffer, MeshInput, vertexBuffer);			// Input from "Build Vertex"(VertexCounter)
+			shader.SetBuffer(buildBuffer, MeshCounter, voxelsCounter);		// Input from "Build Vertex"(VoxelsCounter)
+			
 			// Reset Values
 			for (int i = 0; i < TaskGroupCount; i++) {
 				vtxCounter[i] = 0;
@@ -153,10 +158,10 @@ namespace Game.GraphicGenerator {
 			var chunks = new Chunk[27];
 			chunks[13] = new Chunk(pos, 0, chunk);
 			chunks[13].CurrentVersion = -1;
-			Remesh(chunks, onChunkRemesh);
+			Remesh(chunks, a => onChunkRemesh.Invoke(a?.Mesh));
 		}
 
-		public void Remesh(Chunk[] chunks, Action<Mesh> action) {
+		public void Remesh(Chunk[] chunks, Action<MeshInterface> action) {
 			var center = chunks[13];
 			var task = new ChunkRenderTask(center.Lod, center.Pos, chunks, action);
 			queue.Accumulate(task);
@@ -205,12 +210,6 @@ namespace Game.GraphicGenerator {
 			int size = ChunkSoil.Size1D + 2;
 			int repeat = (size + 3) / 4;
 			int repeatGroup = (size * workCount + 3) / 4;
-
-			/*string s = "Request [" + taskGroup[0].Lod + "]: ";
-			foreach (var task in taskGroup) {
-				s += "(" + task.Pos + ")";
-			}
-			Debug.Log(s);*/
 			
 			workingTasks += workCount;
 			shader.Dispatch(buildVertex, repeat, repeat, repeatGroup); // (4, 4, 4) Threads
@@ -229,52 +228,19 @@ namespace Game.GraphicGenerator {
 
 				for (int i = 0; i < taskGroup.Count; i++) {
 					int index = i;
-					int indexCount = (int)data[index];
+					int vertexCount = (int)data[index];
+					var task = taskGroup[index];
+					
+					var action = task.Action;
 
-					var action = taskGroup[index].Action;
-
-					if (indexCount == 0) {
+					if (vertexCount == 0) {
 						action?.Invoke(null);
 					} else {
-						ComposeMesh(indexCount, index, action);
+						var mesh = new MeshInterface(task.Pos, task.Lod);
+						mesh.Compose(shader, buildMesh, buildBuffer, vertexCount, index, action);
 					}
 				}
 			});
-		}
-
-		private void ComposeMesh(int vertexCount, int index, Action<Mesh> action) {
-			var mesh = new Mesh();
-			mesh.indexFormat = IndexFormat.UInt32;
-			mesh.indexBufferTarget |= GraphicsBuffer.Target.Structured;
-			mesh.SetVertexBufferParams(vertexCount,
-				new VertexAttributeDescriptor(VertexAttribute.Position, VertexAttributeFormat.Float16, 4),
-				new VertexAttributeDescriptor(VertexAttribute.Normal, VertexAttributeFormat.Float16, 4),
-				new VertexAttributeDescriptor(VertexAttribute.TexCoord0, VertexAttributeFormat.Float16, 4),
-				new VertexAttributeDescriptor(VertexAttribute.TexCoord1, VertexAttributeFormat.Float16, 4)
-			);
-			mesh.SetIndexBufferParams(vertexCount, IndexFormat.UInt32);
-			mesh.subMeshCount = 1;
-			mesh.SetSubMesh(0, new SubMeshDescriptor(0, vertexCount), MeshUpdateFlags.DontRecalculateBounds);
-			mesh.vertexBufferTarget = GraphicsBuffer.Target.Structured;
-
-			mesh.bounds = new Bounds(new Vector3(16, 16, 16), new Vector3(32, 32, 32));
-
-			var meshVertex = mesh.GetVertexBuffer(0);
-			var meshIndex = mesh.GetIndexBuffer();
-
-			try {
-				shader.SetBuffer(buildMesh, MeshVertexBuffer, meshVertex);
-				shader.SetBuffer(buildMesh, MeshIndexBuffer, meshIndex);
-
-				shader.SetInts(VertexCount, vertexCount, 0, 0, index);
-				shader.Dispatch(buildMesh, Mathf.CeilToInt(vertexCount / 64f), 1, 1);
-				
-				action?.Invoke(mesh);
-				
-			} finally {
-				meshVertex.Dispose();
-				meshIndex.Dispose();
-			}
 		}
 
 		private int FindChunkEntry(Chunk chunk, bool skipUpload) {
