@@ -28,6 +28,8 @@ namespace Game.Worlds {
         public WorldRender Render { get; }
 
         private Dictionary<IndexPos, ChunkRenderData>[] AllChunksData { get; }
+        private readonly HashSet<QualityPos> delayedRequest = new();
+        private readonly HashSet<QualityPos> delayedRequestTemp = new();
 
         private readonly HashSet<IndexPos>[] requestedPositions;
         private readonly HashSet<IndexPos>[] renderedPositions;
@@ -46,6 +48,9 @@ namespace Game.Worlds {
             Generator = new WorldGenerator(this);
             Builder = new WorldBuilder(this);
             Builder.OnChunkLoaded = OnChunkLoaded;
+            Builder.OnChunkCorrupted = (pos, lod, err) => {
+                Debug.LogError(err);
+            };
 
             AllChunksData = new Dictionary<IndexPos, ChunkRenderData>[Region.TotalLods];
             requestedPositions = new HashSet<IndexPos>[Region.TotalLods];
@@ -61,6 +66,9 @@ namespace Game.Worlds {
         }
 
         public void Dispose() {
+            Generator.Dispose();
+            Cache.Dispose();
+            
             for (int lod = 0; lod < Region.TotalLods; lod++) {
                 var activeDict = AllChunksData[lod];
 
@@ -68,9 +76,6 @@ namespace Game.Worlds {
                     chunkData.Dispose();
                 }
             }
-            
-            Generator.Dispose();
-            Cache.Dispose();
         }
 
         public void OnChunkLoaded(Chunk chunk) {
@@ -149,11 +154,18 @@ namespace Game.Worlds {
         }
 
         public void RequestChunk(int lod, IndexPos chunkIndex) {
-            Builder.RequestChunk(chunkIndex, lod);
+            delayedRequestTemp.Add(new QualityPos(chunkIndex, lod));
         }
 
         public void Update() {
             RequestChunks();
+            
+            delayedRequest.UnionWith(delayedRequestTemp);
+            delayedRequestTemp.Clear();
+            foreach (var request in delayedRequest) {
+                Builder.RequestChunk(request.pos, request.lod);
+            }
+            delayedRequest.Clear();
             
             Render.RenderFrame(renderedPositions); // Accumulate [renderedPositions]
 
@@ -164,9 +176,18 @@ namespace Game.Worlds {
                 }
 
                 unloadTimer = Time.time;
+                for (int lod = 0; lod < Region.TotalLods; lod++) {
+                    var activeDict = AllChunksData[lod];
+
+                    foreach (var chunkData in activeDict.Values) {
+                        if (chunkData.SoilMesh == null) {
+                            chunkData.RequestMesh();
+                        }
+                    }
+                }
             }
             
-            ReleaseUnsunedChunkData();
+            ReleaseUnusedChunkData();
         }
 
         public void RequestChunks() {
@@ -181,6 +202,7 @@ namespace Game.Worlds {
             if (prevCenter != centerPoint) {
                 Cache.SetPriorityCenter(centerPoint);
                 Generator.SetPriorityCenter(centerPoint);
+                GameManager.Instance.MeshGenerator.SetPriorityCenter(centerPoint);
             }
             
             prevCenter = centerPoint;
@@ -282,9 +304,10 @@ namespace Game.Worlds {
                     var pos = entry.Key;
                     var chunkData = entry.Value;
                     if (!requested.Contains(pos) && !rendered.Contains(pos)) {
-                        toRemoveList.Add(pos);
-                        Builder.ReleaseChunk(chunkData.Pos, chunkData.Lod);
                         chunkData.Dispose();
+                        toRemoveList.Add(pos);
+                        
+                        Builder.ReleaseChunk(chunkData.Pos, chunkData.Lod);
                     }
                 }
 
@@ -295,7 +318,7 @@ namespace Game.Worlds {
             }
         }
 
-        public void ReleaseUnsunedChunkData() {
+        public void ReleaseUnusedChunkData() {
             for (int lod = 0; lod < Region.TotalLods; lod++) {
                 var activeDict = AllChunksData[lod];
 

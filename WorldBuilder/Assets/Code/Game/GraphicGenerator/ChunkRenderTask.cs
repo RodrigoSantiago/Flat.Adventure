@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using Game.Data;
-using UnityEngine;
 
 namespace Game.GraphicGenerator {
     public class ChunkRenderTask : IAccumulateTask<ChunkRenderTask> {
@@ -12,7 +11,8 @@ namespace Game.GraphicGenerator {
         public Action<MeshInterface> Action { get; private set; }
 
         public int Count => tasks.Count;
-        
+        private int compare;
+
         public List<ChunkRenderTask> tasks = new();
 
         public ChunkRenderTask(int lod, IndexPos pos, Chunk[] chunks, Action<MeshInterface> action) {
@@ -21,6 +21,15 @@ namespace Game.GraphicGenerator {
             Chunks = chunks;
             Action = action;
             tasks.Add(this);
+        }
+
+        public void SetSortValue(IndexPos sort) {
+            var d = Pos - sort;
+            compare = d.x * d.x + d.y * d.y + d.z * d.z;
+        }
+
+        public int Compare() {
+            return compare;
         }
 
         public bool IsReplaceable(ChunkRenderTask task) {

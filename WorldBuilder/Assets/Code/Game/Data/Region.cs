@@ -95,5 +95,9 @@ namespace Game.Data {
                    + z / (32 << lod) * LodSize1[lod] 
                    + y / (32 << lod) * LodSize2[lod];
         }
+
+        public static string GenName(IndexPos indexPos) {
+            return indexPos.x + "_" + indexPos.y + "_" + indexPos.z;
+        }
     }
 }

@@ -5,7 +5,6 @@ using System.Linq;
 using Game.Data;
 using Game.Data.Queues;
 using Game.Worlds.Storage;
-using UnityEngine;
 
 namespace Game.Worlds {
     public class WorldCache {
@@ -199,6 +198,7 @@ namespace Game.Worlds {
                         var chunk = region.GetChunkByIndex(update.chunkEntryId);
                         if (chunk.Version < update.version) {
                             chunk.Version = update.version;
+                            chunk.Modified = false;
                         }
                     }
                     
@@ -208,7 +208,14 @@ namespace Game.Worlds {
                         var chunks = region.chunks[i];
                         if (chunks == null) continue;
                         
-                        bool released = chunks.All(chunk => chunk.Released && chunk.CurrentVersion == chunk.Version);
+                        bool released = true;
+                        foreach (var chunk in chunks) {
+                            released = released && (chunk.Released && chunk.CurrentVersion == chunk.Version);
+                            if (chunk.Released) {
+                                chunk.SoilMesh?.RemoveReference();
+                                chunk.SoilMesh = null;
+                            }
+                        }
                         if (released) {
                             region.chunks[i] = null;
                         }
@@ -280,10 +287,10 @@ namespace Game.Worlds {
                 int count = 0;
                 var current = new WriteStorageData(true);
                 foreach (var chunk in region.chunks[lod]) {
-                    if (chunk.Version != chunk.CurrentVersion) {
+                    if (chunk.Version != chunk.CurrentVersion || chunk.Modified) {
                         count++;
                         current.AddOperation(chunk.Lod, chunk.Pos);
-                        chunk.RequestExport(current);
+                        chunk.RequestExportAsync(current);
                     }
                 }
 
@@ -291,7 +298,14 @@ namespace Game.Worlds {
                     
                     var chunks = region.chunks[lod];
                     if (chunks != null) {
-                        bool released = chunks.All(chunk => chunk.Released);
+                        bool released = true;
+                        foreach (var chunk in chunks) {
+                            released = released && (chunk.Released && chunk.CurrentVersion == chunk.Version);
+                            if (chunk.Released) {
+                                chunk.SoilMesh?.RemoveReference();
+                                chunk.SoilMesh = null;
+                            }
+                        }
                         if (released) {
                             region.chunks[lod] = null;
                         }
@@ -325,15 +339,6 @@ namespace Game.Worlds {
                         }
                     }
                 }
-
-                var current = new WriteStorageData(false);
-                foreach (var lod in allLods) {
-                    foreach (var chunk in lod) {
-                        current.AddOperation(chunk.Lod, chunk.Pos);
-                        chunk.RequestExport(current);
-                    }
-                }
-                current.SetOnCompleted(() => consumer.Enqueue(new Work(this, regionIndex, current)));
             }
         }
 

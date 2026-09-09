@@ -1,10 +1,6 @@
 using System;
-using System.Runtime.InteropServices;
-using Code;
 using Game.GraphicGenerator;
 using Game.Worlds.Storage;
-using UnityEngine;
-using UnityEngine.Rendering;
 
 namespace Game.Data {
     public class Chunk {
@@ -17,7 +13,10 @@ namespace Game.Data {
         public int MeshVersion { get; private set; }
         public ChunkSoil Soil { get; private set; }
         public MeshInterface SoilMesh { get; set; }
-        public bool Released { get; set; } = true;
+        public bool Released { get; set; }
+
+        public bool Modified { get; set; }
+        private byte[] soilMeshTempData;
 
         public Chunk(IndexPos pos, int lod) {
             Pos = pos;
@@ -34,6 +33,7 @@ namespace Game.Data {
             Pos = pos;
             Lod = lod;
             Soil = new ChunkSoil(cache.soilDenData, cache.soilMatData);
+            soilMeshTempData = cache.meshData;
             CurrentVersion = cache.version;
             Version = CurrentVersion;
         }
@@ -46,6 +46,26 @@ namespace Game.Data {
                 CurrentVersion = Math.Max(CurrentVersion, lChunk.CurrentVersion);
                 Version = Math.Max(Version, lChunk.Version);
             }
+        }
+
+        public bool CanCreateMesh() {
+            return soilMeshTempData != null;
+        }
+
+        public bool CreateMesh() {
+            if (soilMeshTempData != null) {
+                try {
+                    SoilMesh = new MeshInterface(Pos, Lod, soilMeshTempData);
+                    SoilMesh.AddReference();
+                } catch {
+                    return false;
+                } finally {
+                    soilMeshTempData = null;
+                }
+                
+                return true;
+            }
+            return false;
         }
 
         private static ChunkSoil GenerateLod(Chunk[] chunks) {
@@ -89,24 +109,21 @@ namespace Game.Data {
         // public List<Tree> trees;           // Tree can be visible at any LOD
         // public List<Grass> grass;          // Grass uses a special rendering method
 
-        public void RequestExport(WriteStorageData output) {
-            if (SoilMesh != null && false) {
-                /*GraphicsBuffer buffer = SoilMesh.GetVertexBuffer(0);
+        public ChunkCacheUpdate RequestExport() {
+            var update = new ChunkCacheUpdate();
+            update.chunkEntryId = Region.GetId(Lod, Pos - Pos.GetChunkIndex(Region.MaxLod));
+            update.version = CurrentVersion;
+            update.soilDenData = Soil.ExportDensity();
+            update.soilMatData = Soil.ExportMaterial();
+            update.meshData = SoilMesh?.RequestData();
+            return update;
+        }
 
-                AsyncGPUReadback.Request(buffer, request => {
-                    if (request.hasError) {
-                        buffer.Dispose();
-                        GameManager.Instance.RunTask(() => RequestData(output, null));
-                        return;
-                    }
-
-                    var vertices = request.GetData<GeneratedVertexLow>();
-                    
-                    byte[] bytes = vertices.Reinterpret<byte>(Marshal.SizeOf<GeneratedVertexLow>()).ToArray();
-                    buffer.Dispose();
-                    
-                    GameManager.Instance.RunTask(() => RequestData(output, bytes));
-                });*/
+        public void RequestExportAsync(WriteStorageData output) {
+            if (SoilMesh != null) {
+                SoilMesh.RequestDataAsync(data => {
+                    GameManager.Instance.RunTask(() => RequestData(output, data));
+                });
             } else {
                 GameManager.Instance.RunTask(() => RequestData(output, null));
             }

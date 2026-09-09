@@ -237,7 +237,9 @@ namespace Game.GraphicGenerator {
 						action?.Invoke(null);
 					} else {
 						var mesh = new MeshInterface(task.Pos, task.Lod);
-						mesh.Compose(shader, buildMesh, buildBuffer, vertexCount, index, action);
+						mesh.Compose(shader, buildMesh, buildBuffer, vertexCount, index);
+						
+						action?.Invoke(mesh);
 					}
 				}
 			});
@@ -389,6 +391,10 @@ namespace Game.GraphicGenerator {
 				meshFilter.sharedMesh = cpuMesh;
 				obj.AddComponent<MeshRenderer>();
 			});
+		}
+
+		public void SetPriorityCenter(IndexPos centerPoint) {
+			queue.SetPriorityCenter(centerPoint);
 		}
 	}
 

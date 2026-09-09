@@ -141,7 +141,7 @@ namespace Game.Worlds {
                 
                 if (chunk?.IsEmpty == true) continue;
 
-                if (chunk == null || chunk.Mesh == null) {
+                if (chunk == null || chunk.SoilMesh == null) {
                     TryCollectFallback(pos, lod, lightDir);
                     continue;
                 }
@@ -172,7 +172,7 @@ namespace Game.Worlds {
                     var subPos = missingPos + new IndexPos(x, y, z) * lowerChunkSize;
                     var lowerChunk = worldManager.FindChunkData(lowerLod, subPos);
 
-                    if (lowerChunk != null && (lowerChunk.IsEmpty || lowerChunk.Mesh != null)) {
+                    if (lowerChunk != null && (lowerChunk.IsEmpty || lowerChunk.SoilMesh != null)) {
                         subChunks[index] = lowerChunk;
                         subPositions[index] = subPos;
                         index++;
@@ -233,7 +233,7 @@ namespace Game.Worlds {
 
                 var higherChunk = worldManager.FindChunkData(higherLod, parentPos);
 
-                if (higherChunk != null && (higherChunk.IsEmpty || higherChunk.Mesh != null)) {
+                if (higherChunk != null && (higherChunk.IsEmpty || higherChunk.SoilMesh != null)) {
                     activeFallbackParentPositions.Add(parentPos);
 
                     if (higherChunk.IsEmpty) return;
@@ -270,7 +270,7 @@ namespace Game.Worlds {
                     var subPos = missingPos + new IndexPos(x, y, z) * lowerChunkSize;
                     var lowerChunk = worldManager.FindChunkData(lowerLod, subPos);
 
-                    if (lowerChunk == null || lowerChunk.Mesh == null) continue;
+                    if (lowerChunk == null || lowerChunk.SoilMesh == null) continue;
                     
                     var center = new Vector3(subPos.x + lHalfSize, subPos.y + lHalfSize, subPos.z + lHalfSize);
                     var subVis = EvaluateVisibility(center, lExtents, lightDir);
@@ -356,7 +356,7 @@ namespace Game.Worlds {
 
         private void DrawChunk(ChunkRenderData chunk, IndexPos pos, RenderVisibility visibility) {
             
-            if (chunk.Mesh == null) {
+            if (chunk.SoilMesh == null) {
                 var matrix = Matrix4x4.TRS((Vector3)pos, Quaternion.identity, Vector3.one * (1 << chunk.Lod));
                 if (visibility == RenderVisibility.VisibleInFrustum) {
                     Graphics.RenderMesh(visibleRenderParams, GameManager.Instance.smallCube, 0, matrix);
@@ -365,9 +365,9 @@ namespace Game.Worlds {
                 }
             } else {
                 if (visibility == RenderVisibility.VisibleInFrustum) {
-                    chunk.Mesh.Render(visibleRenderParams);
+                    chunk.SoilMesh.Render(visibleRenderParams);
                 } else if (visibility == RenderVisibility.ShadowOnly) {
-                    chunk.Mesh.Render(shadowOnlyRenderParams);
+                    chunk.SoilMesh.Render(shadowOnlyRenderParams);
                 }
             }
         }

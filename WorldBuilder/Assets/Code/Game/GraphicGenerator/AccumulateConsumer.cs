@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-using UnityEngine;
+using Game.Data;
 
 namespace Game.GraphicGenerator {
     public class AccumulateConsumer<T> where T : IAccumulateTask<T> {
@@ -8,6 +8,8 @@ namespace Game.GraphicGenerator {
         private readonly List<T> taskList = new();
         private readonly List<T> bestTasks = new();
         private readonly HashSet<T> toRemoveSet = new();
+
+        private IndexPos centerPoint;
 
         public AccumulateConsumer(int maxTaskGroup) {
             this.maxTaskGroup = maxTaskGroup;
@@ -20,6 +22,7 @@ namespace Game.GraphicGenerator {
                     return;
                 }
             }
+            task.SetSortValue(centerPoint);
             taskList.Add(task);
         }
 
@@ -27,17 +30,27 @@ namespace Game.GraphicGenerator {
             int count = taskList.Count;
             if (count == 0) return default;
     
-            var first = taskList[0];
+            T first = taskList[0];
+            int firstId = 0;
             if (count == 1) {
                 taskList.RemoveAt(0);
                 return first;
             }
 
-            bestTasks.Clear();
+            for (int i = 1; i < taskList.Count; i++) {
+                if (taskList[i].Compare() < first.Compare()) {
+                    first = taskList[i];
+                    firstId = i;
+                }
+            }
+
             int capacity = maxTaskGroup - first.Count;
 
-            for (int i = 1; i < count; i++) {
+            for (int i = 0; i < count; i++) {
+                if (i == firstId) continue;
+                
                 var candidate = taskList[i];
+                
                 int sim = candidate.Similarity(first);
 
                 if (bestTasks.Count < capacity) {
@@ -68,8 +81,16 @@ namespace Game.GraphicGenerator {
                 toRemoveSet.Add(task);
             }
             taskList.RemoveAll(toRemoveSet.Contains);
+            bestTasks.Clear();
 
             return first;
+        }
+
+        public void SetPriorityCenter(IndexPos centerPoint) {
+            this.centerPoint = centerPoint;
+            foreach (var task in taskList) {
+                task.SetSortValue(centerPoint);
+            }
         }
     }
 }

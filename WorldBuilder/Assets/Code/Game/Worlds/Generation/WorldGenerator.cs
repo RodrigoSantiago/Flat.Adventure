@@ -1,13 +1,16 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using Game.Data;
 using Game.Data.Queues;
+using Game.Worlds.Storage;
 using UnityEngine;
 
 namespace Game.Worlds.Generation {
     public class WorldGenerator {
         
         private readonly TaskConsumer<Work> consumer;
+        private readonly RegionSerialize serializer = new();
 
         private WorldManager Manager { get; }
         private WorldCache Cache => Manager.Cache;
@@ -91,7 +94,35 @@ namespace Game.Worlds.Generation {
             }
 
             var allLods = BuildAllLodsFromBase(regionIndex, chunks);
+            
+            try {
+                ExportToFile(regionIndex, allLods);
+            } catch (Exception e) {
+                Debug.LogError(e);
+            }
+            
             Cache.PutRegion(regionIndex, allLods);
+        }
+
+        private void ExportToFile(IndexPos regionIndex, Chunk[][] allLods) {
+            string path = Manager.Storage + "/" + Region.GenName(regionIndex) + ".region";
+            bool exists = File.Exists(path);
+            
+            var updates = new List<ChunkCacheUpdate>();
+            
+            for (var i = 0; i < allLods.Length; i++) {
+                var lod = allLods[i];
+                foreach (var chunk in lod) {
+                    var update = new ChunkCacheUpdate();
+                    update.chunkEntryId = Region.GetId(i, chunk.Pos - chunk.Pos.GetChunkIndex(Region.MaxLod));
+                    update.version = chunk.CurrentVersion;
+                    update.soilDenData = chunk.Soil.density;
+                    update.soilMatData = chunk.Soil.material;
+                    updates.Add(update);
+                }
+            }
+
+            serializer.Save(path, updates.ToArray(), exists);
         }
         
         private Chunk[][] BuildAllLodsFromBase(IndexPos regionIndex, Chunk[] lod0Chunks) {
