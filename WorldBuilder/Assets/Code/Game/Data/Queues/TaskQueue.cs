@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Game.Data.Queues {
     public class TaskQueue<T> where T : ITaskGroup<T> {
@@ -27,7 +29,7 @@ namespace Game.Data.Queues {
                     foreach (var queueTask in queue) {
                         queueTask.SetSortValue(sortValue);
                     }
-                    Sort();
+                    queue.Sort((a, b) => a.Compare().CompareTo(b.Compare()));
                 }
             }
         }
@@ -51,8 +53,7 @@ namespace Game.Data.Queues {
 
                     if (queue[mid].Compare() <= priority) {
                         low = mid + 1;
-                    }
-                    else {
+                    } else {
                         high = mid;
                     }
                 }
@@ -80,10 +81,16 @@ namespace Game.Data.Queues {
             }
         }
 
-        private void Sort() {
-            queue.Sort((a, b) =>
-                a.Compare().CompareTo(b.Compare())
-            );
+        public List<T> Copy() {
+            lock (queue) {
+                return queue.ToList();
+            }
+        }
+
+        public void RemoveWhere(Func<T,bool> predicate) {
+            lock (queue) {
+                queue.RemoveAll(predicate.Invoke);
+            }
         }
     }
 }

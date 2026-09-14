@@ -8,6 +8,7 @@ namespace Game.GameTest {
         public GameObject cube0;
         public GameObject cube1;
         public GameObject cube2;
+        public GameObject cube3;
 
         private void Update() {
             var pos = IndexPos.FromVector3(transform.position);
@@ -16,6 +17,7 @@ namespace Game.GameTest {
             if (cube0) cube0.transform.position = manager.viewLod0.ToVector3();
             if (cube1) cube1.transform.position = manager.viewLod1.ToVector3();
             if (cube2) cube2.transform.position = manager.viewLod2.ToVector3();
+            if (cube3) cube3.transform.position = manager.viewLod3.ToVector3();
         }
     }
 }

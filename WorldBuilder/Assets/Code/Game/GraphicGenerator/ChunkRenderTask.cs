@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Game.Data;
+using Game.Data.Queues;
 
 namespace Game.GraphicGenerator {
     public class ChunkRenderTask : IAccumulateTask<ChunkRenderTask> {

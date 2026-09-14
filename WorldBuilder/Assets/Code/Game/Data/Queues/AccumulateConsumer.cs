@@ -1,7 +1,6 @@
 using System.Collections.Generic;
-using Game.Data;
 
-namespace Game.GraphicGenerator {
+namespace Game.Data.Queues {
     public class AccumulateConsumer<T> where T : IAccumulateTask<T> {
 
         private readonly int maxTaskGroup;
@@ -9,10 +8,20 @@ namespace Game.GraphicGenerator {
         private readonly List<T> bestTasks = new();
         private readonly HashSet<T> toRemoveSet = new();
 
-        private IndexPos centerPoint;
+        private IndexPos sortValue;
 
         public AccumulateConsumer(int maxTaskGroup) {
             this.maxTaskGroup = maxTaskGroup;
+        }
+
+        public IndexPos SortValue {
+            get => sortValue;
+            set {
+                sortValue = value;
+                foreach (var task in taskList) {
+                    task.SetSortValue(sortValue);
+                }
+            }
         }
 
         public void Accumulate(T task) {
@@ -22,7 +31,7 @@ namespace Game.GraphicGenerator {
                     return;
                 }
             }
-            task.SetSortValue(centerPoint);
+            task.SetSortValue(sortValue);
             taskList.Add(task);
         }
 
@@ -84,13 +93,6 @@ namespace Game.GraphicGenerator {
             bestTasks.Clear();
 
             return first;
-        }
-
-        public void SetPriorityCenter(IndexPos centerPoint) {
-            this.centerPoint = centerPoint;
-            foreach (var task in taskList) {
-                task.SetSortValue(centerPoint);
-            }
         }
     }
 }

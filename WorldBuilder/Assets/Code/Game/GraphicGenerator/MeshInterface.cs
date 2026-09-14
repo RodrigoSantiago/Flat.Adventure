@@ -18,13 +18,17 @@ namespace Game.GraphicGenerator {
 
         public static bool Native { get; set; } = true;
         public Mesh Mesh { get; private set; }
-
+        
+        private MaterialPropertyBlock propertyBlock;
         private GraphicsBuffer buffer;
         private int bufferSize;
 
         private IndexPos pos;
         private int lod;
         private int reference;
+        
+        private bool empty;
+        public bool IsEmpty => empty;
 
         public MeshInterface(IndexPos pos, int lod) {
             this.pos = pos;
@@ -34,10 +38,15 @@ namespace Game.GraphicGenerator {
         public MeshInterface(IndexPos pos, int lod, byte[] data) {
             this.pos = pos;
             this.lod = lod;
-            // Recreate Buffers {}
+            Recreate(data);
         }
 
         public void Compose(ComputeShader shader, int kernelMesh, int kernelBuffer, int vertexCount, int index) {
+            if (vertexCount == 0) {
+                empty = true;
+                return;
+            }
+            
             if (Native) {
                 ComposeBuffer(shader, kernelBuffer, vertexCount, index);
             } else {
@@ -51,8 +60,8 @@ namespace Game.GraphicGenerator {
         
         public void RemoveReference() {
             reference--;
-            if (reference <= 0) {
-                GameManager.Instance.RunSync(Dispose);
+            if (reference <= 0 && !empty) {
+                GameManager.Instance.RunTask(Dispose);
             }
         }
         
@@ -124,7 +133,9 @@ namespace Game.GraphicGenerator {
 
             Dispose();
 
-            if (Native) {
+            if (data.Length == 1) {
+                empty = true;
+            } else if (Native) {
                 RecreateBuffer(data);
             } else {
                 RecreateMesh(data);
@@ -190,9 +201,9 @@ namespace Game.GraphicGenerator {
                 MeshUpdateFlags.DontRecalculateBounds);
         }
 
-        private MaterialPropertyBlock propertyBlock;
-
         public void Render(RenderParams renderParams) {
+            if (empty) return;
+            
             if (Native) {
                 RenderBuffer(renderParams);
             } else {
@@ -205,7 +216,7 @@ namespace Game.GraphicGenerator {
 
             renderParams.matProps = propertyBlock;
             renderParams.worldBounds = new Bounds(
-                new Vector3(16, 16, 16) + (Vector3)pos,
+                new Vector3(16, 16, 16) * (1 << lod) + (Vector3)pos,
                 new Vector3(32, 32, 32) * (1 << lod)
             );
 
@@ -219,16 +230,16 @@ namespace Game.GraphicGenerator {
             Graphics.RenderMesh(renderParams, Mesh, 0, matrix);
         }
 
-        public void RequestDataAsync(Action<byte[]> action) {
+        public AsyncGPUReadbackRequest RequestDataAsync(Action<byte[]> action) {
             if (Native) {
-                RequestBufferDataAsync(action);
+                return RequestBufferDataAsync(action);
             } else {
-                RequestMeshDataAsync(action);
+                return RequestMeshDataAsync(action);
             }
         }
 
-        private void RequestBufferDataAsync(Action<byte[]> action) {
-            AsyncGPUReadback.Request(buffer, request => {
+        private AsyncGPUReadbackRequest RequestBufferDataAsync(Action<byte[]> action) {
+            return AsyncGPUReadback.Request(buffer, request => {
                 if (request.hasError) {
                     action.Invoke(null);
                     return;
@@ -242,10 +253,10 @@ namespace Game.GraphicGenerator {
             });
         }
 
-        private void RequestMeshDataAsync(Action<byte[]> action) {
+        private AsyncGPUReadbackRequest RequestMeshDataAsync(Action<byte[]> action) {
             var gBuffer = Mesh.GetVertexBuffer(0);
 
-            AsyncGPUReadback.Request(gBuffer, request => {
+            return AsyncGPUReadback.Request(gBuffer, request => {
                 if (request.hasError) {
                     gBuffer.Dispose();
                     action.Invoke(null);
@@ -262,6 +273,8 @@ namespace Game.GraphicGenerator {
         }
 
         public byte[] RequestData() {
+            if (empty) return new byte[1];
+            
             if (Native) {
                 return RequestBufferData();
             } else {
@@ -272,7 +285,7 @@ namespace Game.GraphicGenerator {
         private byte[] RequestMeshData() {
             if (Mesh == null) return null;
 
-            byte[] data = new byte[bufferSize * 32];
+            byte[] data = new byte[bufferSize * MeshVertexStride];
             
             var gBuffer = Mesh.GetVertexBuffer(0);
             try {
@@ -287,7 +300,7 @@ namespace Game.GraphicGenerator {
         private byte[] RequestBufferData() {
             if (buffer == null) return null;
 
-            byte[] data = new byte[bufferSize * 4];
+            byte[] data = new byte[bufferSize * BufferStride];
             buffer.GetData(data);
 
             return data;

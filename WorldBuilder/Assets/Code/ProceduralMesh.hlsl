@@ -38,7 +38,7 @@ void GetGeneratedVertex_float(
         DecodePosition(v.data0.x & 0xffff),
         DecodePosition(v.data0.x >> 16),
         DecodePosition(v.data0.y & 0xffff)
-    ) * ChunkPos.w + ChunkPos.xyz;
+    ) * (ChunkPos.w - (0.1 * (ChunkPos.w - 1))) + ChunkPos.xyz;
 
     Normal = float3(
         f16tof32(v.data1.x & 0xffff),

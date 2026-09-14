@@ -33,8 +33,10 @@ struct GeneratedVertexMinimal {
 #define DENSITY 16388
 #define MATERIAL 24580
 
-#define MAX_VERTEX 589560
+//#define MAX_VERTEX 589560
 #define MAX_VOXEL 39304
+
+uint max_vertex;
 
 //
 // BuildVertex
@@ -226,7 +228,7 @@ void BuildVertex(uint3 id : SV_DispatchThreadID) {
     }
     
     const uint offA = MAX_VOXEL * ch;
-    const uint offB = MAX_VERTEX * ch;
+    const uint offB = max_vertex * ch;
     VoxelsCounter[offA + pt.x + (pt.z * EXTRA_1) + (pt.y * EXTRA_2)] = uint2(index, max);
     
     for (i = 0; i < 15; i+= 3) {
@@ -280,7 +282,7 @@ static const int3 EdgeNeighbors[12][3] = {
 float3 computeNormal(const GeneratedVertex ver)
 {
     const uint offA = MAX_VOXEL * vertex_count.w;
-    const uint offB = MAX_VERTEX * vertex_count.w;
+    const uint offB = max_vertex * vertex_count.w;
     
     int edgeAxis = (int)ver.uv1.w;
 
@@ -317,7 +319,7 @@ void BuildMesh(uint3 id : SV_DispatchThreadID) {
     const uint index = id.x;
     if (index >= vertex_count.x) return;
     
-    const uint offB = MAX_VERTEX * vertex_count.w;
+    const uint offB = max_vertex * vertex_count.w;
     
     GeneratedVertex ver = MeshInput[offB + index];
     
@@ -347,7 +349,7 @@ void BuildBuffer(uint3 id : SV_DispatchThreadID) {
     const uint index = id.x;
     if (index >= vertex_count.x) return;
     
-    const uint offB = MAX_VERTEX * vertex_count.w;
+    const uint offB = max_vertex * vertex_count.w;
     
     GeneratedVertex ver = MeshInput[offB + index];
     

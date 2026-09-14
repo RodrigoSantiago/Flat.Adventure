@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using Code;
 using Game.Data;
+using Game.Data.Queues;
 using UnityEngine;
 using UnityEngine.Rendering;
 
@@ -36,7 +37,7 @@ namespace Game.GraphicGenerator {
 		private struct ChunkDataEntry {
 			public IndexPos pos;
 			public int lod;
-			public int version;
+			public long soilVersion;
 			public bool reserved;
 		}
 		
@@ -51,6 +52,7 @@ namespace Game.GraphicGenerator {
 		private int buildVertex;
 		private int buildMesh;
 		private int buildBuffer;
+		private bool disposed;
 		
 		private static readonly int MeshVertexBuffer = Shader.PropertyToID("MeshVertexBuffer");
 		private static readonly int MeshIndexBuffer = Shader.PropertyToID("MeshIndexBuffer");
@@ -71,11 +73,19 @@ namespace Game.GraphicGenerator {
 		private static readonly int MaxMat = ChunkSoil.Mode.Packed6.MatArraySize; // 24580
 
 		private static readonly int NearCount = 27;
-		private static readonly int TaskGroupCount = 8;
-		private static readonly int VertexTotalLength = ChunkSoil.Size4D * 15;	// 3 * 5 = Max Vertex per Voxel
-		private static readonly int VertexLength = ChunkSoil.Size3D * 15;		// 3 * 5 = Max Vertex per Voxel
-		private static readonly int VertexPaddingLength = VertexTotalLength - VertexLength;
-		private static readonly int VoxelTotalLength = ChunkSoil.Size4D;
+		private static readonly int TaskGroupCount = 4;
+		
+		private static readonly int VoxelsLength = ChunkSoil.Size4D;
+		
+		// 3 * 5 = Max Vertex per Voxel
+		private static readonly int LowVertexLength = ChunkSoil.Size3D * 5;
+		private static readonly int LowPaddingLength = (ChunkSoil.Size4D - ChunkSoil.Size3D) * 5;
+		
+		private static readonly int HighVertexLength = ChunkSoil.Size3D * 15;
+		private static readonly int HighPaddingLength = (ChunkSoil.Size4D - ChunkSoil.Size3D) * 15;
+
+		public int MaxVertexCount { get; private set; } = LowVertexLength;
+		private static readonly int MaxVertex = Shader.PropertyToID("max_vertex");
 
 		private void Awake() {
 			Instance = this;
@@ -101,15 +111,26 @@ namespace Game.GraphicGenerator {
 			materialBuffer = new ComputeBuffer(MaxMat * NearCount * TaskGroupCount / sizeof(uint), sizeof(uint), raw);
 			chunkBuffer = new GraphicsBuffer(str, NearCount * TaskGroupCount, sizeof(uint));
 			
-			vertexBuffer = new GraphicsBuffer(str, VertexTotalLength * TaskGroupCount, sizeof(float) * (3 + 3 + 4 + 4));
-			voxelsCounter = new GraphicsBuffer(str, VoxelTotalLength * TaskGroupCount, sizeof(int) * 2);
+			vertexBuffer = new GraphicsBuffer(str, (LowPaddingLength + LowVertexLength) * TaskGroupCount, sizeof(float) * (3 + 3 + 4 + 4));
+			voxelsCounter = new GraphicsBuffer(str, VoxelsLength * TaskGroupCount, sizeof(int) * 2);
 			extraCounter = new GraphicsBuffer(str, TaskGroupCount, sizeof(int));
 			vertexCounter = new GraphicsBuffer(str, TaskGroupCount, sizeof(int));
-
+			
 			triangleTable = new GraphicsBuffer(str, TriangleTable.Table.Length, sizeof(int));
 			triangleTable.SetData(TriangleTable.Table);
+			
+			// Reset Values
+			for (int i = 0; i < TaskGroupCount; i++) {
+				vtxCounter[i] = 0;
+			}
+			for (int i = 0; i < TaskGroupCount; i++) {
+				voxCounter[i] = (uint)(LowVertexLength);
+			}
+		}
 
-			// Step: Build Vertex
+		private void ResetBuilderBuffers() {
+			if (disposed) return;
+
 			// Input
 			shader.SetBuffer(buildVertex, Table, triangleTable);
 			shader.SetBuffer(buildVertex, DensityBuffer, densityBuffer);
@@ -121,25 +142,24 @@ namespace Game.GraphicGenerator {
 			shader.SetBuffer(buildVertex, ExtraCounter, extraCounter);		// Vertex counter for padding
 			shader.SetBuffer(buildVertex, VertexBuffer, vertexBuffer);		// List<GeneratedVertex>
 			shader.SetBuffer(buildVertex, VoxelsCounter, voxelsCounter);	// List<Start Index, Triangle Count>
+		}
 
-			// Step: Build Mesh
-			// Input
-			shader.SetBuffer(buildMesh, MeshInput, vertexBuffer);			// Input from "Build Vertex"(VertexCounter)
-			shader.SetBuffer(buildMesh, MeshCounter, voxelsCounter);		// Input from "Build Vertex"(VoxelsCounter)
+		private void ResetBufferBuffers() {
+			if (disposed) return;
 			
 			shader.SetBuffer(buildBuffer, MeshInput, vertexBuffer);			// Input from "Build Vertex"(VertexCounter)
 			shader.SetBuffer(buildBuffer, MeshCounter, voxelsCounter);		// Input from "Build Vertex"(VoxelsCounter)
+		}
+
+		private void ResetMeshBuffers() {
+			if (disposed) return;
 			
-			// Reset Values
-			for (int i = 0; i < TaskGroupCount; i++) {
-				vtxCounter[i] = 0;
-			}
-			for (int i = 0; i < TaskGroupCount; i++) {
-				voxCounter[i] = (uint)(VertexLength);
-			}
+			shader.SetBuffer(buildMesh, MeshInput, vertexBuffer);			// Input from "Build Vertex"(VertexCounter)
+			shader.SetBuffer(buildMesh, MeshCounter, voxelsCounter);		// Input from "Build Vertex"(VoxelsCounter)
 		}
 
 		public void Release() {
+			disposed = true;
 			triangleTable.Release();
 			densityBuffer.Release();
 			vertexBuffer.Release();
@@ -150,14 +170,33 @@ namespace Game.GraphicGenerator {
 			extraCounter.Release();
 		}
 
+		private bool UpgradeVertexBuffer() {
+			if (MaxVertexCount == HighVertexLength) {
+				return false;
+			}
+			
+			MaxVertexCount = HighVertexLength;
+			
+			var str = GraphicsBuffer.Target.Structured;
+			
+			vertexBuffer.Release();
+			vertexBuffer = new GraphicsBuffer(str, (HighPaddingLength + HighVertexLength) * TaskGroupCount, sizeof(float) * (3 + 3 + 4 + 4));
+			
+			for (int i = 0; i < TaskGroupCount; i++) {
+				voxCounter[i] = (uint)(HighVertexLength);
+			}
+			extraCounter.SetData(voxCounter);
+			
+			return true;
+		}
+
 		private void LateUpdate() {
 			ExecuteQueue();
 		}
 
 		public void SimpleMesh(IndexPos pos, ChunkSoil chunk, Action<Mesh> onChunkRemesh) {
 			var chunks = new Chunk[27];
-			chunks[13] = new Chunk(pos, 0, chunk);
-			chunks[13].CurrentVersion = -1;
+			chunks[13] = new Chunk(pos, 0, chunk, -1);
 			Remesh(chunks, a => onChunkRemesh.Invoke(a?.Mesh));
 		}
 
@@ -212,12 +251,19 @@ namespace Game.GraphicGenerator {
 			int repeatGroup = (size * workCount + 3) / 4;
 			
 			workingTasks += workCount;
+			ResetBuilderBuffers();
+			shader.SetInt(MaxVertex, MaxVertexCount);
 			shader.Dispatch(buildVertex, repeat, repeat, repeatGroup); // (4, 4, 4) Threads
 
 			AsyncGPUReadback.Request(vertexCounter, request => {
 				workingTasks -= workCount;
 				
 				if (request.hasError) {
+					if (UpgradeVertexBuffer()) {
+						ExecuteGroup(taskGroup);
+						return;
+					}
+					
 					foreach (var task in taskGroup) {
 						task.Action?.Invoke(null);
 					}
@@ -225,6 +271,15 @@ namespace Game.GraphicGenerator {
 				}
 
 				var data = request.GetData<uint>();
+				for (int i = 0; i < taskGroup.Count; i++) {
+					int vertexCount = (int)data[i];
+					if (vertexCount > MaxVertexCount) {
+						if (UpgradeVertexBuffer()) {
+							ExecuteGroup(taskGroup);
+							return;
+						}
+					}
+				}
 
 				for (int i = 0; i < taskGroup.Count; i++) {
 					int index = i;
@@ -232,11 +287,16 @@ namespace Game.GraphicGenerator {
 					var task = taskGroup[index];
 					
 					var action = task.Action;
-
 					if (vertexCount == 0) {
-						action?.Invoke(null);
+						var mesh = new MeshInterface(task.Pos, task.Lod, new byte[1]);
+						action?.Invoke(mesh);
 					} else {
 						var mesh = new MeshInterface(task.Pos, task.Lod);
+						if (MeshInterface.Native) {
+							ResetBufferBuffers();
+						} else {
+							ResetMeshBuffers();	
+						}
 						mesh.Compose(shader, buildMesh, buildBuffer, vertexCount, index);
 						
 						action?.Invoke(mesh);
@@ -275,7 +335,7 @@ namespace Game.GraphicGenerator {
 			
 			for (int i = 0; i < entries.Length; i++) {
 				var entry = entries[i];
-				if (entry.lod == chunk.Lod && entry.pos == chunk.Pos && entry.version == chunk.CurrentVersion) {
+				if (entry.lod == chunk.Lod && entry.pos == chunk.Pos && entry.soilVersion == chunk.CurrentSoilVersion) {
 					entry.reserved = true;
 					entries[i] = entry;
 					return i;
@@ -289,7 +349,7 @@ namespace Game.GraphicGenerator {
 				if (!entry.reserved) {
 					entry.lod = chunk.Lod;
 					entry.pos = chunk.Pos;
-					entry.version = chunk.CurrentVersion;
+					entry.soilVersion = chunk.CurrentSoilVersion;
 					entry.reserved = true;
 					entries[i] = entry;
 					densityBuffer.SetData(chunk.Soil.density, 0, MaxDen * i, chunk.Soil.density.Length);
@@ -394,7 +454,7 @@ namespace Game.GraphicGenerator {
 		}
 
 		public void SetPriorityCenter(IndexPos centerPoint) {
-			queue.SetPriorityCenter(centerPoint);
+			queue.SortValue = centerPoint;
 		}
 	}
 

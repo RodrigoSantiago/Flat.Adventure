@@ -28,6 +28,7 @@ namespace Game.Data {
         }
 
         public IndexPos RegionIndex { get; }
+        public readonly int[] count = new int[TotalLods];
         public readonly Chunk[][] chunks = new Chunk[TotalLods][];
 
         public Region(IndexPos regionIndex) {
@@ -43,7 +44,7 @@ namespace Game.Data {
         }
 
         public Chunk GetChunkByPosition(int lod, int x, int y, int z) {
-            return chunks[lod][GetLocalId(lod, x, y, z)];
+            return chunks[lod][GetLocalGroupId(lod, x, y, z)];
         }
 
         public Chunk GetChunkByIndex(int index) {
@@ -66,8 +67,8 @@ namespace Game.Data {
             return id < 0 || id >= TotalChunks ? -1 : LodId[id];
         }
 
-        public static int GetLocalId(int id) {
-            return id < 0 || id >= TotalChunks ? -1 : LocalId[id];
+        public static int GetLocalGroupId(int entryId) {
+            return entryId < 0 || entryId >= TotalChunks ? -1 : LocalId[entryId];
         }
 
         public static IndexPos GetLocalPosition(int lod, int index) {
@@ -78,19 +79,19 @@ namespace Game.Data {
             return new IndexPos(x, y, z) * (ChunkSoil.Size1D * (1 << lod));
         }
 
-        public static int GetId(int lod, int x, int y, int z) {
-            return GetLocalId(lod, x, y, z) + LodCount[lod];
+        public static int GetEntryId(int lod, int x, int y, int z) {
+            return GetLocalGroupId(lod, x, y, z) + LodCount[lod];
         }
 
-        public static int GetId(int lod, IndexPos pos) {
-            return GetLocalId(lod, pos) + LodCount[lod];
+        public static int GetEntryId(int lod, IndexPos pos) {
+            return GetLocalGroupId(lod, pos) + LodCount[lod];
         }
 
-        public static int GetLocalId(int lod, IndexPos pos) {
-            return GetLocalId(lod, pos.x, pos.y, pos.z);
+        public static int GetLocalGroupId(int lod, IndexPos pos) {
+            return GetLocalGroupId(lod, pos.x, pos.y, pos.z);
         }
 
-        public static int GetLocalId(int lod, int x, int y, int z) {
+        public static int GetLocalGroupId(int lod, int x, int y, int z) {
             return   x / (32 << lod) 
                    + z / (32 << lod) * LodSize1[lod] 
                    + y / (32 << lod) * LodSize2[lod];

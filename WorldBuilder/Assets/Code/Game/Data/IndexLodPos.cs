@@ -1,33 +1,33 @@
 using System;
 
 namespace Game.Data {
-    public struct QualityPos : IEquatable<QualityPos> {
+    public struct IndexLodPos : IEquatable<IndexLodPos> {
         public IndexPos pos;
         public int lod;
 
-        public QualityPos(int x, int y, int z, int lod) {
+        public IndexLodPos(int x, int y, int z, int lod) {
             this.pos = new IndexPos(x, y, z);
             this.lod = lod;
         }
 
-        public QualityPos(IndexPos pos, int lod) {
+        public IndexLodPos(IndexPos pos, int lod) {
             this.pos = pos;
             this.lod = lod;
         }
 
-        public bool Equals(QualityPos other) {
+        public bool Equals(IndexLodPos other) {
             return pos == other.pos && lod == other.lod;
         }
 
         public override bool Equals(object obj) {
-            return obj is QualityPos other && Equals(other);
+            return obj is IndexLodPos other && Equals(other);
         }
 
-        public static bool operator ==(QualityPos a, QualityPos b) {
+        public static bool operator ==(IndexLodPos a, IndexLodPos b) {
             return a.lod == b.lod && a.pos == b.pos;
         }
 
-        public static bool operator !=(QualityPos a, QualityPos b) {
+        public static bool operator !=(IndexLodPos a, IndexLodPos b) {
             return a.lod != b.lod || a.pos != b.pos;
         }
 

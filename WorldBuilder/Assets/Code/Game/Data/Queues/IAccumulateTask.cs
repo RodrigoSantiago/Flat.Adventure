@@ -1,6 +1,4 @@
-using Game.Data;
-
-namespace Game.GraphicGenerator {
+namespace Game.Data.Queues {
     public interface IAccumulateTask<T> where T : IAccumulateTask<T> {
         public int Count { get; }
 

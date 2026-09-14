@@ -8,13 +8,26 @@ namespace Game.Worlds.Rendering {
         private readonly WorldManager manager;
         
         public Chunk Chunk { get; private set; }
-        public MeshInterface SoilMesh { get; private set; }
         public bool IsReleased => Chunk == null;
+
+        private MeshInterface soilMesh;
+
+        public MeshInterface SoilMesh {
+            get => soilMesh;
+            private set {
+                if (value != soilMesh) {
+                    soilMesh?.RemoveReference();
+                    soilMesh = value;
+                    soilMesh?.AddReference();
+                }
+            }
+        }
 
         public IndexPos Pos { get; }
         public int Lod { get; }
         public bool IsEmpty { get; private set; }
-        public bool IsBuildRequired { get; private set; }
+        public bool IsMeshBuilding { get; private set; }
+        public bool IsMeshComplete { get; private set; }
         
         private Chunk[] chunks;
 
@@ -27,11 +40,19 @@ namespace Game.Worlds.Rendering {
             Pos = chunk.Pos;
             Lod = chunk.Lod;
             IsEmpty = chunk.Soil.IsEmpty();
+
+            if (GameManager.Instance.DebugChunkPosition) {
+                var obj = new GameObject(Region.GenName(Pos) + "[" + Lod + "]");
+                obj.transform.position = (Vector3)Pos;
+                obj.transform.localScale = Vector3.one * (1 << Lod);
+                var box = obj.AddComponent<BoxCollider>();
+                box.center = new Vector3(16, 16, 16);
+                box.size = new Vector3(32, 32, 32);
+            } 
         }
 
         public void Dispose() {
             disposed = true;
-            SoilMesh?.RemoveReference();
             SoilMesh = null;
             Chunk = null;
         }
@@ -42,22 +63,29 @@ namespace Game.Worlds.Rendering {
         }
 
         public void RequestMesh() {
-            if (IsBuildRequired || !manager.IsChunkRenderRequired(Lod, Pos)) return;
+            if (IsMeshComplete || IsMeshBuilding || !manager.IsChunkRenderRequired(Lod, Pos)) return;
 
             if (Chunk != null && Chunk.SoilMesh != null) {
-                IsBuildRequired = true;
+                Debug.Log("Chunk.SoilMesh");
+                
                 SoilMesh = Chunk.SoilMesh;
-                SoilMesh.AddReference();
+                PostMesh();
                 return;
             } 
+            
             if (Chunk != null && Chunk.CanCreateMesh()) {
-                IsBuildRequired = true;
+                Debug.Log("CanCreateMesh");
+                
+                IsMeshBuilding = true;
                 GameManager.Instance.RunTask(() => {
+                    if (disposed) return;
+                    
                     if (Chunk.CreateMesh() || Chunk.SoilMesh != null) {
                         SoilMesh = Chunk.SoilMesh;
-                        SoilMesh.AddReference();
+                        PostMesh();
                     } else {
-                        IsBuildRequired = false;
+                        Debug.Log("Failed");
+                        IsMeshBuilding = false;
                         RequestMesh();
                     }
                 });
@@ -94,50 +122,59 @@ namespace Game.Worlds.Rendering {
                 return;
             }
 
-            IsBuildRequired = true;
             chunks[13] = Chunk;
+            long version = Chunk?.CurrentSoilVersion ?? 0;
             
+            IsMeshBuilding = true;
             manager.Render.RequestMesh(chunks, (mesh) => {
+                Debug.Log("RequestMesh");
+                
+                if (disposed) {
+                    mesh?.Dispose();
+                    return;
+                }
+                
                 if (mesh == null) {
                     IsEmpty = true;
+                    Debug.Log("Null Mesh");
+                    
                 } else {
-                    if (disposed) {
-                        mesh.Dispose();
-                    } else {
-                        SoilMesh = mesh;
-                        SoilMesh.AddReference();
-                        if (Chunk != null) {
-                            Chunk.SoilMesh = mesh;
-                            Chunk.SoilMesh.AddReference();
-                            Chunk.Modified = true;
-                        }
+                    SoilMesh = mesh;
+                    if (Chunk != null) {
+                        Chunk.EditChunkMesh(version, mesh);
                     }
                 }
                 
-                for (int y = -1; y <= 1; y++)
-                for (int z = -1; z <= 1; z++)
-                for (int x = -1; x <= 1; x++) {
-                    var pos = Pos + new IndexPos(x, y, z) * (32 << Lod);
-                    if (pos.x < 0 || pos.y < 0 || pos.z < 0) continue;
-                    
-                    var near = manager.FindChunkData(Lod, pos);
-                    if (near != null) {
-                        near.ReleaseData();
-                    }
-                }
+                PostMesh();
             });
             
             chunks = null;
         }
 
-        private void ReleaseData() {
+        private void PostMesh() {
+            IsMeshComplete = true;
+            
+            for (int y = -1; y <= 1; y++)
+            for (int z = -1; z <= 1; z++)
+            for (int x = -1; x <= 1; x++) {
+                var pos = Pos + new IndexPos(x, y, z) * (32 << Lod);
+                if (pos.x < 0 || pos.y < 0 || pos.z < 0) continue;
+                    
+                var near = manager.FindChunkData(Lod, pos);
+                if (near != null) {
+                    near.ReleaseData();
+                }
+            }
+        }
+
+        public void ReleaseData() {
             if (Chunk != null && !IsDataRequired()) { 
                 Chunk = null;
             }
         }
 
         private bool IsDataRequired() {
-            if (manager.IsChunkRenderRequired(Lod, Pos) && !IsBuildRequired) return true;
+            if (manager.IsChunkRenderRequired(Lod, Pos) && !IsMeshComplete) return true;
             
             for (int y = -1; y <= 1; y++)
             for (int z = -1; z <= 1; z++)
@@ -151,7 +188,7 @@ namespace Game.Worlds.Rendering {
                     }
                     
                     var near = manager.FindChunkData(Lod, pos);
-                    if (near == null || !near.IsBuildRequired) {
+                    if (near == null || !near.IsMeshBuilding) {
                         return true;
                     }
                 }

@@ -2,9 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Game.Data;
+using Game.Worlds.Exceptions;
 using Game.Worlds.Generation;
 using Game.Worlds.Storage;
 using UnityEngine;
+using WorldCache = Game.Worlds.CacheManagement.WorldCache;
 
 namespace Game.Worlds {
     
@@ -13,7 +15,7 @@ namespace Game.Worlds {
         public Action<Chunk> OnChunkLoaded { get; set; }
         public Action<IndexPos, int, Exception> OnChunkCorrupted { get; set; }
 
-        private readonly Dictionary<QualityPos, RegionRequest> requests = new();
+        private readonly Dictionary<IndexLodPos, RegionRequest> requests = new();
         
         private WorldManager Manager { get; }
         private WorldCache Cache => Manager.Cache;
@@ -34,9 +36,7 @@ namespace Game.Worlds {
             }
 
             public void Add(IndexPos chunkIndex) {
-                if (!requiredChunks.Add(chunkIndex)) {
-                    Debug.Log("repeated");
-                }
+                requiredChunks.Add(chunkIndex);
             }
 
             public void Remove(IndexPos chunkIndex) {
@@ -45,9 +45,18 @@ namespace Game.Worlds {
 
             public bool IsEmpty => requiredChunks.Count == 0;
         }
+        
+        private bool cancelled;
+        
+        public void Cancel() {
+            cancelled = true;
+            requests.Clear();
+        }
 
         private void OnRequestDone(RegionRequest request, bool allowNewRequest) {
-            requests.Remove(new QualityPos(request.regionIndex, request.lod));
+            if (cancelled) return;
+            
+            requests.Remove(new IndexLodPos(request.regionIndex, request.lod));
             
             request.requiredChunks.RemoveWhere(chunkIndex => {
                 var chunk = Cache.LoadChunkCache(chunkIndex, request.lod);
@@ -69,7 +78,9 @@ namespace Game.Worlds {
         }
 
         private void OnRequestFail(RegionRequest request, Exception error, bool allowNewRequest) {
-            requests.Remove(new QualityPos(request.regionIndex, request.lod));
+            if (cancelled) return;
+            
+            requests.Remove(new IndexLodPos(request.regionIndex, request.lod));
             if (allowNewRequest) {
                 RequestUnknown(request.requiredChunks.First(), request.lod, request.requiredChunks);
             } else {
@@ -80,9 +91,11 @@ namespace Game.Worlds {
         }
 
         public void RequestChunk(IndexPos chunkIndex, int lod) {
+            if (cancelled) return;
+            
             var regionIndex = chunkIndex.GetChunkIndex(Region.MaxLod);
-            var chunkPos = new QualityPos(chunkIndex, lod);
-            var regionPos = new QualityPos(regionIndex, lod);
+            var chunkPos = new IndexLodPos(chunkIndex, lod);
+            var regionPos = new IndexLodPos(regionIndex, lod);
 
             var chunk = Cache.LoadChunkCache(chunkIndex, lod);
             if (chunk != null) {
@@ -106,8 +119,10 @@ namespace Game.Worlds {
                             } else if (error is CacheCorrupted) {
                                 // If network => request
                                 // If local => Show Error, Avoid showing multiple errors modals at the same time
+                                Debug.Log("CacheCorrupted");
                                 GameManager.Instance.RunSync(() => OnRequestFail(request, error, false));
                             } else {
+                                Debug.Log("Error");
                                 GameManager.Instance.RunSync(() => OnRequestFail(request, error, false));
                             }
                         });
@@ -119,7 +134,7 @@ namespace Game.Worlds {
 
         private void RequestUnknown(IndexPos chunkIndex, int lod, IEnumerable<IndexPos> requiredChunks = null) {
             var regionIndex = chunkIndex.GetChunkIndex(Region.MaxLod);
-            var regionPos = new QualityPos(regionIndex, lod);
+            var regionPos = new IndexLodPos(regionIndex, lod);
             
             if (!requests.TryGetValue(regionPos, out var request)) {
                 request = new RegionRequest(lod, regionIndex);

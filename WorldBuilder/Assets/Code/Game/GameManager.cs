@@ -29,9 +29,14 @@ namespace Game {
         private WorldManager overWorld;
         public WorldManager OverWorld => overWorld;
 
+        public bool frustumOcclusion;
         public bool[] controlRender = new bool[4];
         public Mesh smallCube;
-        
+
+        private long hashVersion = 1;
+        private long GetHashVersion => ++hashVersion;
+        public bool DebugChunkPosition;
+
         public void Awake() {
             Instance = this;
             mainThread = Thread.CurrentThread;
@@ -55,12 +60,14 @@ namespace Game {
 
         public void Update() {
             ExecuteSyncQueue();
-            ExecuteTaskQueue();
+            ExecuteTaskQueue(1000 / GameSpeed);
             overWorld.Update();
         }
 
         public void OnDestroy() {
-            overWorld.Dispose();
+            overWorld.SaveAndExit();
+            ExecuteSyncQueue();
+            ExecuteTaskQueue(-1);
         }
 
         public void PlayerSetView(CvPlayerUnit cvPlayerUnit) {
@@ -83,9 +90,7 @@ namespace Game {
             }
         }
 
-        private void ExecuteTaskQueue() {
-            int maxTime = 1000 / GameSpeed;
-
+        private void ExecuteTaskQueue(long maxTime) {
             DateTime start = DateTime.Now;
 
             Action action;
@@ -97,7 +102,7 @@ namespace Game {
                 action.Invoke();
 
                 var period = DateTime.Now - start;
-                if (period.Milliseconds > maxTime) {
+                if (maxTime > -1 && period.Milliseconds > maxTime) {
                     break;
                 }
 

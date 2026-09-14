@@ -26,23 +26,11 @@ namespace Game.Worlds {
         private readonly ChunkRenderData[] subChunks = new ChunkRenderData[8];
         private readonly IndexPos[] subPositions = new IndexPos[8];
         
-        private readonly RenderParams visibleRenderParams;
-        private readonly RenderParams shadowOnlyRenderParams;
+        private RenderParams visibleRenderParams;
+        private RenderParams shadowOnlyRenderParams;
 
         public WorldRender(WorldManager worldManager) {
             this.worldManager = worldManager;
-            
-            visibleRenderParams = new RenderParams(GameManager.Instance.MeshGenerator.GroundMaterial) {
-                layer = 0,
-                receiveShadows = true,
-                shadowCastingMode = ShadowCastingMode.On
-            };
-
-            shadowOnlyRenderParams = new RenderParams(GameManager.Instance.MeshGenerator.DummyMaterial) {
-                layer = 0,
-                receiveShadows = false,
-                shadowCastingMode = ShadowCastingMode.ShadowsOnly
-            };
         }
 
         public Camera GetActiveCamera() {
@@ -55,6 +43,18 @@ namespace Game.Worlds {
 
             GeometryUtility.CalculateFrustumPlanes(cam, frustumPlanes);
             cachedShadowDistance = QualitySettings.shadowDistance;
+            
+            visibleRenderParams = new RenderParams(GameManager.Instance.MeshGenerator.GroundMaterial) {
+                layer = 0,
+                receiveShadows = true,
+                shadowCastingMode = ShadowCastingMode.On
+            };
+
+            shadowOnlyRenderParams = new RenderParams(GameManager.Instance.MeshGenerator.DummyMaterial) {
+                layer = 0,
+                receiveShadows = false,
+                shadowCastingMode = ShadowCastingMode.ShadowsOnly
+            };
             
             pendingCommands.Clear();
             activeFallbackParentPositions.Clear();
@@ -87,10 +87,21 @@ namespace Game.Worlds {
                 lod: 2,
                 viewLod: worldManager.viewLod2,
                 chunkSize: 128,
-                size: 16,
+                size: 14,
                 excludeViewLod: worldManager.viewLod1,
                 excludeSize: 12,
                 excludeChunkSize: 64,
+                lightDir: lightDir
+            );
+
+            CollectLodRegionCylinder(
+                lod: 3,
+                viewLod: worldManager.viewLod3,
+                chunkSize: 256,
+                size: 16,
+                excludeViewLod: worldManager.viewLod2,
+                excludeSize: 14,
+                excludeChunkSize: 128,
                 lightDir: lightDir
             );
 
@@ -129,6 +140,64 @@ namespace Game.Worlds {
                 if (pos.x < 0 || pos.y < 0 || pos.z < 0) continue;
 
                 if (excludeViewLod.HasValue && IsInside(pos, excludeViewLod.Value, excludeSize, excludeChunkSize)) {
+                    continue;
+                }
+
+                var center = new Vector3(pos.x + halfSize, pos.y + halfSize, pos.z + halfSize);
+                var visibility = EvaluateVisibility(center, extents, lightDir);
+
+                if (visibility == RenderVisibility.Hidden) continue;
+                    
+                var chunk = worldManager.FindChunkData(lod, pos);
+                
+                if (chunk?.IsEmpty == true) continue;
+
+                if (chunk == null || chunk.SoilMesh == null) {
+                    TryCollectFallback(pos, lod, lightDir);
+                    continue;
+                }
+
+                pendingCommands.Add(new RenderCommand {
+                    chunk = chunk,
+                    pos = pos,
+                    lod = lod,
+                    visibility = visibility
+                });
+            }
+        }
+
+        private void CollectLodRegionCylinder(
+            int lod,
+            IndexPos viewLod,
+            int chunkSize,
+            int size,
+            IndexPos? excludeViewLod,
+            int excludeSize,
+            int excludeChunkSize,
+            Vector3 lightDir
+        ) {
+            if (!GameManager.Instance.controlRender[lod]) return;
+            
+            float cx = size * 0.5f;
+            float cz = size * 0.5f;
+            float r2 = (size * 0.5f + 0.01f) * (size * 0.5f + 0.01f);
+            
+            float halfSize = chunkSize * 0.5f;
+            var extents = new Vector3(halfSize, halfSize, halfSize);
+
+            for (int y = 0; y < 7; y++)
+            for (int z = 0; z < size; z++)
+            for (int x = 0; x < size; x++) {
+
+                var pos = viewLod + new IndexPos(x, y, z) * chunkSize;
+
+                if (pos.x < 0 || pos.y < 0 || pos.z < 0) continue;
+
+                if (excludeViewLod.HasValue && IsInside(pos, excludeViewLod.Value, excludeSize, excludeChunkSize)) {
+                    continue;
+                }
+
+                if ((cx - x) * (cx - x) + (cz - z) * (cz - z) > r2) {
                     continue;
                 }
 
@@ -314,7 +383,7 @@ namespace Game.Worlds {
         }
 
         private RenderVisibility EvaluateVisibility(Vector3 center, Vector3 extents, Vector3 lightDir) {
-            if (TestAABBFast(center, extents)) {
+            if (TestAABBFast(center, extents) || !GameManager.Instance.frustumOcclusion) {
                 return RenderVisibility.VisibleInFrustum;
             }
 

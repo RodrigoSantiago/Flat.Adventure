@@ -1,6 +1,6 @@
 using System;
+using System.Collections.Generic;
 using System.Threading;
-using System.Threading.Tasks;
 
 namespace Game.Data.Queues {
     public class TaskConsumer<T> where T : ITaskGroup<T> {
@@ -27,26 +27,42 @@ namespace Game.Data.Queues {
             }
         }
 
-        public void Dispose() {
+        public List<T> Dispose() {
+            List<T> works;
             Thread joinThread;
             lock (queue) {
-                if (!running) return;
+                if (!running) return new List<T>();
                 
                 running = false;
                 joinThread = localThread;
                 localThread = null;
-                
+
+                works = queue.Copy();
                 queue.Clear();
                 Monitor.PulseAll(queue);
             }
 
             joinThread?.Join();
+
+            return works;
         }
         
         public void Enqueue(T task) {
             lock (queue) {
                 queue.Enqueue(task);
                 Monitor.PulseAll(queue);
+            }
+        }
+        
+        public void CancelWhere(Func<T, bool> predicate) {
+            lock (queue) {
+                queue.RemoveWhere(predicate);
+            }
+        }
+        
+        public void CancelAll() {
+            lock (queue) {
+                queue.Clear();
             }
         }
 
@@ -81,9 +97,7 @@ namespace Game.Data.Queues {
             }
         }
         
-        private async void RetryLater(T task) {
-            await Task.Delay(TimeSpan.FromSeconds(0.1f));
-            
+        private void RetryLater(T task) {
             lock (queue) {
                 if (!running) return;
                 

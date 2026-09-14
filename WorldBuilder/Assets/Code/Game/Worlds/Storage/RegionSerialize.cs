@@ -9,7 +9,7 @@ namespace Game.Worlds.Storage {
 
     public class RegionSerialize {
 
-        private static readonly int EntryOffset = sizeof(long) * 2 + sizeof(int) * 5;
+        private static readonly int EntryOffset = sizeof(long) * 5 + sizeof(int) * 4;
         private static readonly int HeaderOffset = (sizeof(int) + EntryOffset * Region.TotalChunks) * 2 + 4;
         private static readonly float MaxSpaceWaste = 2.50f;
 
@@ -27,14 +27,49 @@ namespace Game.Worlds.Storage {
             }
         }
 
-        private struct ChunkEntry {
+        private struct ChunkEntry : IEquatable<ChunkEntry> {
             public long offset;
             public long length;
-            public int version;
+            public long version;
+            public long meshVersion;
+            public long soilVersion;
             public int soilDenLength;
             public int soilMatLength;
             public int meshLength;
             public int listLength;
+
+            public static bool operator ==(ChunkEntry a, ChunkEntry b) {
+                return a.Equals(b);
+            }
+
+            public static bool operator !=(ChunkEntry a, ChunkEntry b) {
+                return !a.Equals(b);
+            }
+
+            public bool Equals(ChunkEntry other) {
+                return offset == other.offset && length == other.length && version == other.version 
+                       && meshVersion == other.meshVersion && soilVersion == other.soilVersion 
+                       && soilDenLength == other.soilDenLength && soilMatLength == other.soilMatLength 
+                       && meshLength == other.meshLength && listLength == other.listLength;
+            }
+
+            public override bool Equals(object obj) {
+                return obj is ChunkEntry other && Equals(other);
+            }
+
+            public override int GetHashCode() {
+                var hashCode = new HashCode();
+                hashCode.Add(offset);
+                hashCode.Add(length);
+                hashCode.Add(version);
+                hashCode.Add(meshVersion);
+                hashCode.Add(soilVersion);
+                hashCode.Add(soilDenLength);
+                hashCode.Add(soilMatLength);
+                hashCode.Add(meshLength);
+                hashCode.Add(listLength);
+                return hashCode.ToHashCode();
+            }
         }
 
         private readonly IStreamTransfer streamTransfer;
@@ -81,11 +116,14 @@ namespace Game.Worlds.Storage {
                     var allChunks = ReadChunkUpdateRaw(iStream, originalHeader, -1);
                     
                     foreach (var chunk in compressedInputChunks) {
-                        allChunks[chunk.chunkEntryId].version = chunk.version;
-                        allChunks[chunk.chunkEntryId].soilDenData = chunk.soilDenData;
-                        allChunks[chunk.chunkEntryId].soilMatData = chunk.soilMatData;
-                        allChunks[chunk.chunkEntryId].meshData = chunk.meshData;
-                        allChunks[chunk.chunkEntryId].listData = chunk.listData;
+                        var chunkUpdate = allChunks[chunk.chunkEntryId];
+                        chunkUpdate.version = chunk.version;
+                        chunkUpdate.meshVersion = chunk.meshVersion;
+                        chunkUpdate.soilVersion = chunk.soilVersion;
+                        chunkUpdate.soilDenData = chunk.soilDenData;
+                        chunkUpdate.soilMatData = chunk.soilMatData;
+                        chunkUpdate.meshData = chunk.meshData;
+                        chunkUpdate.listData = chunk.listData;
                     }
 
                     compressedInputChunks = allChunks;
@@ -129,13 +167,13 @@ namespace Game.Worlds.Storage {
                 var entry = header.entries[chunk.chunkEntryId];
                 
                 if (chunk.TotalLength == 0) {
-                    entry = new ChunkEntry {
-                        version = chunk.version
-                    };
+                    entry = new ChunkEntry();
                 } else {
-                    entry.version = chunk.version;
                     entry.length = chunk.TotalLength;
                     entry.offset = FindFreeSpace(occupied, chunk.TotalLength);
+                    entry.version = chunk.version;
+                    entry.meshVersion = chunk.meshVersion;
+                    entry.soilVersion = chunk.soilVersion;
                     entry.soilDenLength = chunk.soilDenData?.Length ?? 0;
                     entry.soilMatLength = chunk.soilMatData?.Length ?? 0;
                     entry.meshLength = chunk.meshData?.Length ?? 0;
@@ -162,13 +200,13 @@ namespace Game.Worlds.Storage {
             foreach (var chunk in chunks) {
                 var entry = header.entries[chunk.chunkEntryId];
                 if (chunk.TotalLength == 0) {
-                    entry = new ChunkEntry {
-                        version = chunk.version
-                    };
+                    entry = new ChunkEntry();
                 } else {
-                    entry.version = chunk.version;
                     entry.length = chunk.TotalLength;
                     entry.offset = lastOffset;
+                    entry.version = chunk.version;
+                    entry.meshVersion = chunk.meshVersion;
+                    entry.soilVersion = chunk.soilVersion;
                     entry.soilDenLength = chunk.soilDenData?.Length ?? 0;
                     entry.soilMatLength = chunk.soilMatData?.Length ?? 0;
                     entry.meshLength = chunk.meshData?.Length ?? 0;
@@ -235,13 +273,7 @@ namespace Game.Worlds.Storage {
             if (a.version != b.version) return false;
 
             for (int i = 0; i < a.entries.Length; i++) {
-                if (a.entries[i].offset != b.entries[i].offset ||
-                    a.entries[i].length != b.entries[i].length ||
-                    a.entries[i].version != b.entries[i].version ||
-                    a.entries[i].soilDenLength != b.entries[i].soilDenLength ||
-                    a.entries[i].soilMatLength != b.entries[i].soilMatLength ||
-                    a.entries[i].meshLength != b.entries[i].meshLength ||
-                    a.entries[i].listLength != b.entries[i].listLength) {
+                if (a.entries[i] == b.entries[i]) {
                     return false;
                 }
             }
@@ -257,7 +289,9 @@ namespace Game.Worlds.Storage {
                 var entry = new ChunkEntry {
                     offset = ReadLong(headerBuffer, ref cursor),
                     length = ReadLong(headerBuffer, ref cursor),
-                    version = ReadInt(headerBuffer, ref cursor),
+                    version = ReadLong(headerBuffer, ref cursor),
+                    meshVersion = ReadLong(headerBuffer, ref cursor),
+                    soilVersion = ReadLong(headerBuffer, ref cursor),
                     soilDenLength = ReadInt(headerBuffer, ref cursor),
                     soilMatLength = ReadInt(headerBuffer, ref cursor),
                     meshLength = ReadInt(headerBuffer, ref cursor),
@@ -295,7 +329,9 @@ namespace Game.Worlds.Storage {
             foreach (var entry in header.entries) {
                 WriteLong(headerBuffer, ref cursor, entry.offset);
                 WriteLong(headerBuffer, ref cursor, entry.length);
-                WriteInt(headerBuffer, ref cursor, entry.version);
+                WriteLong(headerBuffer, ref cursor, entry.version);
+                WriteLong(headerBuffer, ref cursor, entry.meshVersion);
+                WriteLong(headerBuffer, ref cursor, entry.soilVersion);
                 WriteInt(headerBuffer, ref cursor, entry.soilDenLength);
                 WriteInt(headerBuffer, ref cursor, entry.soilMatLength);
                 WriteInt(headerBuffer, ref cursor, entry.meshLength);
@@ -364,27 +400,21 @@ namespace Game.Worlds.Storage {
             for (int i = 0; i < header.entries.Length; i++) {
                 var entry = header.entries[i];
                 int lod = Region.GetLod(i);
-                if (!Region.IsRequired(lod, requiredLods) || entry.version == 0) continue;
+                if (!Region.IsRequired(lod, requiredLods) || 
+                    entry.version == 0 || 
+                    entry.soilDenLength <= 0 || 
+                    entry.soilMatLength <= 0) continue;
                 
-                var cache = new ChunkCacheUpdate {
-                    chunkEntryId = i,
-                    version = entry.version
+                var cache = new ChunkCacheUpdate(i) {
+                    version = entry.version,
+                    meshVersion = entry.meshVersion,
+                    soilVersion = entry.soilVersion
                 };
                 
-                if (entry.soilDenLength > 0 || 
-                    entry.soilMatLength > 0 || 
-                    entry.meshLength > 0 ||
-                    entry.listLength > 0) {
-                    stream.Seek(entry.offset, SeekOrigin.Begin);
-                }
+                stream.Seek(entry.offset, SeekOrigin.Begin);
 
-                if (entry.soilDenLength > 0) {
-                    cache.soilDenData = ReadAndDecompressBuffer(stream, entry.soilDenLength);
-                }
-
-                if (entry.soilMatLength > 0) {
-                    cache.soilMatData = ReadAndDecompressBuffer(stream, entry.soilMatLength);
-                }
+                cache.soilDenData = ReadAndDecompressBuffer(stream, entry.soilDenLength);
+                cache.soilMatData = ReadAndDecompressBuffer(stream, entry.soilMatLength);
 
                 if (entry.meshLength > 0) {
                     cache.meshData = ReadAndDecompressBuffer(stream, entry.meshLength);
@@ -404,29 +434,23 @@ namespace Game.Worlds.Storage {
             for (int i = 0; i < header.entries.Length; i++) {
                 var entry = header.entries[i];
                 int lod = Region.GetLod(i);
-                if (!Region.IsRequired(lod, requiredLods) || entry.version == 0) continue;
+                if (!Region.IsRequired(lod, requiredLods) || 
+                    entry.version == 0 || 
+                    entry.soilDenLength <= 0 || 
+                    entry.soilMatLength <= 0) continue;
                 
-                var cache = new ChunkCacheUpdate {
-                    chunkEntryId = i,
-                    version = entry.version
+                var cache = new ChunkCacheUpdate(i) {
+                    version = entry.version,
+                    meshVersion = entry.meshVersion,
+                    soilVersion = entry.soilVersion
                 };
                 
-                if (entry.soilDenLength > 0 || 
-                    entry.soilMatLength > 0 || 
-                    entry.meshLength > 0 ||
-                    entry.listLength > 0) {
-                    stream.Seek(entry.offset, SeekOrigin.Begin);
-                }
+                stream.Seek(entry.offset, SeekOrigin.Begin);
 
-                if (entry.soilDenLength > 0) {
-                    cache.soilDenData = new byte[entry.soilDenLength];
-                    ReadData(stream, cache.soilDenData, 0, entry.soilDenLength);
-                }
-
-                if (entry.soilMatLength > 0) {
-                    cache.soilMatData = new byte[entry.soilMatLength];
-                    ReadData(stream, cache.soilMatData, 0, entry.soilMatLength);
-                }
+                cache.soilDenData = new byte[entry.soilDenLength];
+                ReadData(stream, cache.soilDenData, 0, entry.soilDenLength);
+                cache.soilMatData = new byte[entry.soilMatLength];
+                ReadData(stream, cache.soilMatData, 0, entry.soilMatLength);
 
                 if (entry.meshLength > 0) {
                     cache.meshData = new byte[entry.meshLength];
@@ -466,9 +490,10 @@ namespace Game.Worlds.Storage {
 
             for (int i = 0; i < updates.Length; i++) {
                 var orig = updates[i];
-                compressedList[i] = new ChunkCacheUpdate {
-                    chunkEntryId = orig.chunkEntryId,
+                compressedList[i] = new ChunkCacheUpdate(orig.chunkEntryId) {
                     version = orig.version,
+                    meshVersion = orig.meshVersion,
+                    soilVersion = orig.soilVersion,
                     soilDenData = CompressBuffer(orig.soilDenData),
                     soilMatData = CompressBuffer(orig.soilMatData),
                     meshData = CompressBuffer(orig.meshData),

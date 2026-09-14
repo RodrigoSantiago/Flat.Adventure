@@ -66,10 +66,11 @@ public class RegionSerializeTests {
 
     [Test]
     public void Save_NewFile_WithOnlyOneDataType_Works() {
-        var chunk = new ChunkCacheUpdate {
-            chunkEntryId = 0,
+        var chunk = new ChunkCacheUpdate(0) {
             version = 123,
-            soilDenData = Bytes(100, 1)
+            soilVersion = 1234,
+            soilDenData = Bytes(100, 1),
+            soilMatData = Bytes(100, 2)
         };
 
         _serializer.Save("region.dat", new[] { chunk }, false);
@@ -79,8 +80,9 @@ public class RegionSerializeTests {
         var actual = loaded.Single(x => x.chunkEntryId == 0);
 
         Assert.That(actual.version, Is.EqualTo(123));
+        Assert.That(actual.soilVersion, Is.EqualTo(123));
         CollectionAssert.AreEqual(chunk.soilDenData, actual.soilDenData);
-        Assert.That(actual.soilMatData, Is.Null);
+        CollectionAssert.AreEqual(chunk.soilMatData, actual.soilMatData);
         Assert.That(actual.meshData, Is.Null);
         Assert.That(actual.listData, Is.Null);
     }
@@ -201,8 +203,7 @@ public class RegionSerializeTests {
 
         _serializer.Save("region.dat", new[] { original }, false);
 
-        var deleted = new ChunkCacheUpdate {
-            chunkEntryId = 0,
+        var deleted = new ChunkCacheUpdate(0) {
             version = 2
         };
 
@@ -309,8 +310,7 @@ public class RegionSerializeTests {
             ChunkCacheUpdate update;
 
             if (remove) {
-                update = new ChunkCacheUpdate {
-                    chunkEntryId = id,
+                update = new ChunkCacheUpdate(id) {
                     version = operation + 1
                 };
             } else {
@@ -765,15 +765,16 @@ public class RegionSerializeTests {
     private static ChunkCacheUpdate CreateChunk(
         int id,
         int version,
-        int soilDenLength = 0,
-        int soilMatLength = 0,
+        int soilDenLength = 1,
+        int soilMatLength = 1,
         int meshLength = 0,
         int listLength = 0) {
-        return new ChunkCacheUpdate {
-            chunkEntryId = id,
+        return new ChunkCacheUpdate (id) {
             version = version,
-            soilDenData = soilDenLength > 0 ? GeneratePattern(soilDenLength, (byte)(id + 1)) : null,
-            soilMatData = soilMatLength > 0 ? GeneratePattern(soilMatLength, (byte)(id + 11)) : null,
+            soilVersion = version,
+            meshVersion = meshLength > 0 ? version : 0,
+            soilDenData = GeneratePattern(soilDenLength, (byte)(id + 1)),
+            soilMatData = GeneratePattern(soilMatLength, (byte)(id + 11)),
             meshData = meshLength > 0 ? GeneratePattern(meshLength, (byte)(id + 21)) : null,
             listData = listLength > 0 ? GeneratePattern(listLength, (byte)(id + 31)) : null
         };
@@ -782,16 +783,17 @@ public class RegionSerializeTests {
     private static ChunkCacheUpdate CreateRandomChunk(int id, int version, int maxSize, Random random = null) {
         random ??= new Random(id * 1000003 + version);
 
-        int soilDen = random.Next(0, maxSize + 1);
-        int soilMat = random.Next(0, maxSize + 1);
+        int soilDen = random.Next(1, maxSize + 1);
+        int soilMat = random.Next(1, maxSize + 1);
         int mesh = random.Next(0, maxSize + 1);
         int list = random.Next(0, maxSize + 1);
 
-        return new ChunkCacheUpdate {
-            chunkEntryId = id,
+        return new ChunkCacheUpdate(id) {
             version = version,
-            soilDenData = soilDen == 0 ? null : RandomBytes(soilDen, random),
-            soilMatData = soilMat == 0 ? null : RandomBytes(soilMat, random),
+            soilVersion = version,
+            meshVersion = mesh == 0 ? 0 : version,
+            soilDenData = RandomBytes(soilDen, random),
+            soilMatData = RandomBytes(soilMat, random),
             meshData = mesh == 0 ? null : RandomBytes(mesh, random),
             listData = list == 0 ? null : RandomBytes(list, random)
         };
@@ -829,6 +831,8 @@ public class RegionSerializeTests {
     private static void AssertChunkEqual(ChunkCacheUpdate expected, ChunkCacheUpdate actual) {
         Assert.That(actual.chunkEntryId, Is.EqualTo(expected.chunkEntryId));
         Assert.That(actual.version, Is.EqualTo(expected.version));
+        Assert.That(actual.soilVersion, Is.EqualTo(expected.soilVersion));
+        Assert.That(actual.meshVersion, Is.EqualTo(expected.meshVersion));
         CollectionAssert.AreEqual(expected.soilDenData, actual.soilDenData);
         CollectionAssert.AreEqual(expected.soilMatData, actual.soilMatData);
         CollectionAssert.AreEqual(expected.meshData, actual.meshData);
