@@ -84,7 +84,7 @@ namespace Game.GraphicGenerator {
 		private static readonly int HighVertexLength = ChunkSoil.Size3D * 15;
 		private static readonly int HighPaddingLength = (ChunkSoil.Size4D - ChunkSoil.Size3D) * 15;
 
-		public int MaxVertexCount { get; private set; } = LowVertexLength;
+		public int MaxVertexCount { get; private set; } = LowVertexLength + LowPaddingLength;
 		private static readonly int MaxVertex = Shader.PropertyToID("max_vertex");
 
 		private void Awake() {
@@ -111,7 +111,7 @@ namespace Game.GraphicGenerator {
 			materialBuffer = new ComputeBuffer(MaxMat * NearCount * TaskGroupCount / sizeof(uint), sizeof(uint), raw);
 			chunkBuffer = new GraphicsBuffer(str, NearCount * TaskGroupCount, sizeof(uint));
 			
-			vertexBuffer = new GraphicsBuffer(str, (LowPaddingLength + LowVertexLength) * TaskGroupCount, sizeof(float) * (3 + 3 + 4 + 4));
+			vertexBuffer = new GraphicsBuffer(str, MaxVertexCount * TaskGroupCount, sizeof(float) * (3 + 3 + 4 + 4));
 			voxelsCounter = new GraphicsBuffer(str, VoxelsLength * TaskGroupCount, sizeof(int) * 2);
 			extraCounter = new GraphicsBuffer(str, TaskGroupCount, sizeof(int));
 			vertexCounter = new GraphicsBuffer(str, TaskGroupCount, sizeof(int));
@@ -171,16 +171,17 @@ namespace Game.GraphicGenerator {
 		}
 
 		private bool UpgradeVertexBuffer() {
-			if (MaxVertexCount == HighVertexLength) {
+			Debug.Log("UpgradeVertexBuffer");
+			if (MaxVertexCount == HighPaddingLength + HighVertexLength) {
 				return false;
 			}
 			
-			MaxVertexCount = HighVertexLength;
+			MaxVertexCount = HighPaddingLength + HighVertexLength;
 			
 			var str = GraphicsBuffer.Target.Structured;
 			
 			vertexBuffer.Release();
-			vertexBuffer = new GraphicsBuffer(str, (HighPaddingLength + HighVertexLength) * TaskGroupCount, sizeof(float) * (3 + 3 + 4 + 4));
+			vertexBuffer = new GraphicsBuffer(str, MaxVertexCount * TaskGroupCount, sizeof(float) * (3 + 3 + 4 + 4));
 			
 			for (int i = 0; i < TaskGroupCount; i++) {
 				voxCounter[i] = (uint)(HighVertexLength);

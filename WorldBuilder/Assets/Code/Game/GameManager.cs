@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Threading;
 using Code;
 using Game.Data;
+using Game.DebugUtils;
 using Game.Entities.Player;
 using Game.GraphicGenerator;
 using Game.Worlds;
@@ -58,10 +59,19 @@ namespace Game {
             }
         }
 
+        private int a = 0;
         public void Update() {
+            var syncs = DateTime.Now;
             ExecuteSyncQueue();
+            var tasks = DateTime.Now;
             ExecuteTaskQueue(1000 / GameSpeed);
+            GameDebug.AddMetric("Syncs", tasks - syncs);
+            GameDebug.AddMetric("Tasks", DateTime.Now - tasks);
             overWorld.Update();
+            if (++a == 10) {
+                GameDebug.LodMetrics();
+                a = 0;
+            }
         }
 
         public void OnDestroy() {

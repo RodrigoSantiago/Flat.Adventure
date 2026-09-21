@@ -4,7 +4,6 @@ using System.Linq;
 using Game.Data;
 using Game.Worlds.Exceptions;
 using Game.Worlds.Generation;
-using Game.Worlds.Storage;
 using UnityEngine;
 using WorldCache = Game.Worlds.CacheManagement.WorldCache;
 
@@ -111,19 +110,19 @@ namespace Game.Worlds {
 
                     Cache.RequestLoadRegion(regionIndex, lod,
                         () => {
-                            GameManager.Instance.RunSync(() => OnRequestDone(request, true));
+                            GameManager.Instance.RunTask(() => OnRequestDone(request, true));
                         },
                         (error) => {
                             if (error is CacheNotFound) {
-                                GameManager.Instance.RunSync(() => OnRequestDone(request, true));
+                                GameManager.Instance.RunTask(() => OnRequestDone(request, true));
                             } else if (error is CacheCorrupted) {
                                 // If network => request
                                 // If local => Show Error, Avoid showing multiple errors modals at the same time
                                 Debug.Log("CacheCorrupted");
-                                GameManager.Instance.RunSync(() => OnRequestFail(request, error, false));
+                                GameManager.Instance.RunTask(() => OnRequestFail(request, error, false));
                             } else {
                                 Debug.Log("Error");
-                                GameManager.Instance.RunSync(() => OnRequestFail(request, error, false));
+                                GameManager.Instance.RunTask(() => OnRequestFail(request, error, false));
                             }
                         });
                 }
@@ -142,7 +141,7 @@ namespace Game.Worlds {
 
                 // If network => request.requiredChunks
                 Generator.EnqueueRegion(regionIndex, () => {
-                    GameManager.Instance.RunSync(() => OnRequestDone(request, false));
+                    GameManager.Instance.RunTask(() => OnRequestDone(request, false));
                 });
             }
 

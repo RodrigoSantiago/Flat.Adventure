@@ -66,21 +66,17 @@ namespace Game.Worlds.Rendering {
             if (IsMeshComplete || IsMeshBuilding || !manager.IsChunkRenderRequired(Lod, Pos)) return;
 
             if (Chunk != null && Chunk.SoilMesh != null) {
-                Debug.Log("Chunk.SoilMesh");
-                
                 SoilMesh = Chunk.SoilMesh;
                 PostMesh();
                 return;
             } 
             
             if (Chunk != null && Chunk.CanCreateMesh()) {
-                Debug.Log("CanCreateMesh");
-                
                 IsMeshBuilding = true;
                 GameManager.Instance.RunTask(() => {
-                    if (disposed) return;
+                    if (disposed || !manager.IsChunkRenderRequired(Lod, Pos)) return;
                     
-                    if (Chunk.CreateMesh() || Chunk.SoilMesh != null) {
+                    if (Chunk != null && (Chunk.CreateMesh() || Chunk.SoilMesh != null)) {
                         SoilMesh = Chunk.SoilMesh;
                         PostMesh();
                     } else {
@@ -127,8 +123,6 @@ namespace Game.Worlds.Rendering {
             
             IsMeshBuilding = true;
             manager.Render.RequestMesh(chunks, (mesh) => {
-                Debug.Log("RequestMesh");
-                
                 if (disposed) {
                     mesh?.Dispose();
                     return;
@@ -171,6 +165,7 @@ namespace Game.Worlds.Rendering {
             if (Chunk != null && !IsDataRequired()) { 
                 Chunk = null;
             }
+            // todo - chunk not requeired tao segurando meshs???
         }
 
         private bool IsDataRequired() {

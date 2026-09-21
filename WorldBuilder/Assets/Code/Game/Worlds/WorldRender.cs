@@ -1,10 +1,12 @@
 using System;
+using System.Collections;
 using Game.Data;
 using Game.Worlds.Rendering;
 using System.Collections.Generic;
 using Game.GraphicGenerator;
 using UnityEngine;
 using UnityEngine.Rendering;
+using UnityEngine.Rendering.Universal;
 
 namespace Game.Worlds {
     public class WorldRender {
@@ -21,10 +23,6 @@ namespace Game.Worlds {
         }
 
         private readonly List<RenderCommand> pendingCommands = new ();
-        private readonly HashSet<IndexPos> activeFallbackParentPositions = new ();
-
-        private readonly ChunkRenderData[] subChunks = new ChunkRenderData[8];
-        private readonly IndexPos[] subPositions = new IndexPos[8];
         
         private RenderParams visibleRenderParams;
         private RenderParams shadowOnlyRenderParams;
@@ -37,12 +35,14 @@ namespace Game.Worlds {
             return GameManager.Instance.PlayerCamera;
         }
 
-        public void RenderFrame(HashSet<IndexPos>[] renderedPositions) {
+        public void RenderFrame() {
             Camera cam = GetActiveCamera();
             if (cam == null) return;
 
             GeometryUtility.CalculateFrustumPlanes(cam, frustumPlanes);
-            cachedShadowDistance = QualitySettings.shadowDistance;
+            
+            var urp = (UniversalRenderPipelineAsset)GraphicsSettings.currentRenderPipeline;
+            cachedShadowDistance = urp != null ? urp.shadowDistance : QualitySettings.shadowDistance;
             
             visibleRenderParams = new RenderParams(GameManager.Instance.MeshGenerator.GroundMaterial) {
                 layer = 0,
@@ -55,324 +55,138 @@ namespace Game.Worlds {
                 receiveShadows = false,
                 shadowCastingMode = ShadowCastingMode.ShadowsOnly
             };
-            
-            pendingCommands.Clear();
-            activeFallbackParentPositions.Clear();
 
             var lightDir = RenderSettings.sun != null ? RenderSettings.sun.transform.forward : Vector3.down;
 
-            CollectLodRegion(
-                lod: 0,
-                viewLod: worldManager.viewLod0,
-                chunkSize: 32,
-                size: 8,
-                excludeViewLod: null,
-                excludeSize: 0,
-                excludeChunkSize: 0,
-                lightDir: lightDir
-            );
-
-            CollectLodRegion(
-                lod: 1,
-                viewLod: worldManager.viewLod1,
-                chunkSize: 64,
-                size: 12,
-                excludeViewLod: worldManager.viewLod0,
-                excludeSize: 8,
-                excludeChunkSize: 32,
-                lightDir: lightDir
-            );
-
-            CollectLodRegion(
-                lod: 2,
-                viewLod: worldManager.viewLod2,
-                chunkSize: 128,
-                size: 14,
-                excludeViewLod: worldManager.viewLod1,
-                excludeSize: 12,
-                excludeChunkSize: 64,
-                lightDir: lightDir
-            );
-
-            CollectLodRegionCylinder(
-                lod: 3,
-                viewLod: worldManager.viewLod3,
-                chunkSize: 256,
-                size: 16,
-                excludeViewLod: worldManager.viewLod2,
-                excludeSize: 14,
-                excludeChunkSize: 128,
-                lightDir: lightDir
-            );
-
+            int lod = 3;
+            int size = (32 << lod);
+            var config = worldManager.lodConfig[3];
+            for (int y = 0; y < config.Height; y++)
+            for (int z = 0; z < config.Size; z++)
+            for (int x = 0; x < config.Size; x++) {
+                var pos = config.ViewLod + new IndexPos(x, y, z) * size;
+                RenderRegion(lod, pos, pendingCommands, lightDir);
+            }
+            
             foreach (var cmd in pendingCommands) {
-                if (IsCoveredByActiveFallback(cmd.pos, cmd.lod)) {
-                    continue;
+                if (GameManager.Instance.controlRender[cmd.chunk.Lod]) {
+                    DrawChunk(cmd.chunk, cmd.pos, cmd.visibility);
                 }
-
-                DrawChunk(cmd.chunk, cmd.pos, cmd.visibility);
-                
-                renderedPositions[cmd.lod].Add(cmd.pos);
             }
+            pendingCommands.Clear();
         }
 
-        private void CollectLodRegion(
-            int lod,
-            IndexPos viewLod,
-            int chunkSize,
-            int size,
-            IndexPos? excludeViewLod,
-            int excludeSize,
-            int excludeChunkSize,
-            Vector3 lightDir
-        ) {
-            if (!GameManager.Instance.controlRender[lod]) return;
-            
-            float halfSize = chunkSize * 0.5f;
-            var extents = new Vector3(halfSize, halfSize, halfSize);
-
-            for (int y = 0; y < size; y++)
-            for (int z = 0; z < size; z++)
-            for (int x = 0; x < size; x++) {
-
-                var pos = viewLod + new IndexPos(x, y, z) * chunkSize;
-
-                if (pos.x < 0 || pos.y < 0 || pos.z < 0) continue;
-
-                if (excludeViewLod.HasValue && IsInside(pos, excludeViewLod.Value, excludeSize, excludeChunkSize)) {
-                    continue;
-                }
-
-                var center = new Vector3(pos.x + halfSize, pos.y + halfSize, pos.z + halfSize);
-                var visibility = EvaluateVisibility(center, extents, lightDir);
-
-                if (visibility == RenderVisibility.Hidden) continue;
-                    
-                var chunk = worldManager.FindChunkData(lod, pos);
-                
-                if (chunk?.IsEmpty == true) continue;
-
-                if (chunk == null || chunk.SoilMesh == null) {
-                    TryCollectFallback(pos, lod, lightDir);
-                    continue;
-                }
-
-                pendingCommands.Add(new RenderCommand {
-                    chunk = chunk,
-                    pos = pos,
-                    lod = lod,
-                    visibility = visibility
-                });
-            }
-        }
-
-        private void CollectLodRegionCylinder(
-            int lod,
-            IndexPos viewLod,
-            int chunkSize,
-            int size,
-            IndexPos? excludeViewLod,
-            int excludeSize,
-            int excludeChunkSize,
-            Vector3 lightDir
-        ) {
-            if (!GameManager.Instance.controlRender[lod]) return;
-            
-            float cx = size * 0.5f;
-            float cz = size * 0.5f;
-            float r2 = (size * 0.5f + 0.01f) * (size * 0.5f + 0.01f);
-            
-            float halfSize = chunkSize * 0.5f;
-            var extents = new Vector3(halfSize, halfSize, halfSize);
-
-            for (int y = 0; y < 7; y++)
-            for (int z = 0; z < size; z++)
-            for (int x = 0; x < size; x++) {
-
-                var pos = viewLod + new IndexPos(x, y, z) * chunkSize;
-
-                if (pos.x < 0 || pos.y < 0 || pos.z < 0) continue;
-
-                if (excludeViewLod.HasValue && IsInside(pos, excludeViewLod.Value, excludeSize, excludeChunkSize)) {
-                    continue;
-                }
-
-                if ((cx - x) * (cx - x) + (cz - z) * (cz - z) > r2) {
-                    continue;
-                }
-
-                var center = new Vector3(pos.x + halfSize, pos.y + halfSize, pos.z + halfSize);
-                var visibility = EvaluateVisibility(center, extents, lightDir);
-
-                if (visibility == RenderVisibility.Hidden) continue;
-                    
-                var chunk = worldManager.FindChunkData(lod, pos);
-                
-                if (chunk?.IsEmpty == true) continue;
-
-                if (chunk == null || chunk.SoilMesh == null) {
-                    TryCollectFallback(pos, lod, lightDir);
-                    continue;
-                }
-
-                pendingCommands.Add(new RenderCommand {
-                    chunk = chunk,
-                    pos = pos,
-                    lod = lod,
-                    visibility = visibility
-                });
-            }
-        }
+        private List<ChunkRenderData> tempCollectChunks = new ();
         
-        private void TryCollectFallback(IndexPos missingPos, int lod, Vector3 lightDir) {
-            // ------------------------------------------------------------------------
-            // Lower LOD (lod - 1)
-            // ------------------------------------------------------------------------
-            if (lod > 0) {
-                int lowerLod = lod - 1;
-                int lowerChunkSize = 32 << lowerLod;
-                bool foundAllSubChunks = true;
+        public void CollectFrame(HashSet<IndexPos>[] renderedPositions) {
+            int lod = 3;
+            int size = (32 << lod);
+            var config = worldManager.lodConfig[3];
+            for (int y = 0; y < config.Height; y++)
+            for (int z = 0; z < config.Size; z++)
+            for (int x = 0; x < config.Size; x++) {
+                var pos = config.ViewLod + new IndexPos(x, y, z) * size;
+                if (!config.IsInside(pos)) continue;
+                
+                CollectRegion(lod, pos, tempCollectChunks);
+            }
 
-                int index = 0;
+            foreach (var chunk in tempCollectChunks) {
+                renderedPositions[chunk.Lod].Add(chunk.Pos);
+            }
+            tempCollectChunks.Clear();
+        }
 
-                for (int x = 0; x < 2 && foundAllSubChunks; x++)
-                for (int y = 0; y < 2 && foundAllSubChunks; y++)
-                for (int z = 0; z < 2 && foundAllSubChunks; z++) {
-                    var subPos = missingPos + new IndexPos(x, y, z) * lowerChunkSize;
-                    var lowerChunk = worldManager.FindChunkData(lowerLod, subPos);
+        private bool RenderRegion(int lod, IndexPos pos, List<RenderCommand> chunks, Vector3 lightDir) {
+            int lSize = (32 << lod);
+            int lHSize = lSize >> 1;
+            var visibility = EvaluateVisibility((Vector3)(pos + lHSize), new Vector3(lHSize, lHSize, lHSize), lightDir);
+            
+            if (visibility == RenderVisibility.Hidden) return true;
+            
+            var chunk = worldManager.FindChunkData(lod, pos);
+            bool highLodFound = (chunk != null && (chunk.IsEmpty || chunk.SoilMesh != null));
+            bool findLowerLods = lod > 0 
+                                 && (!highLodFound || (worldManager.lodConfig[lod - 1].IsInside(pos, lSize)))
+                                 && worldManager.HasAnyChunkData(pos);
 
-                    if (lowerChunk != null && (lowerChunk.IsEmpty || lowerChunk.SoilMesh != null)) {
-                        subChunks[index] = lowerChunk;
-                        subPositions[index] = subPos;
-                        index++;
-                    } else {
-                        foundAllSubChunks = false;
-                    }
-                }
-
-                if (foundAllSubChunks) {
-                    float lHalfSize = lowerChunkSize * 0.5f;
-                    var lExtents = new Vector3(lHalfSize, lHalfSize, lHalfSize);
-
-                    for (int i = 0; i < 8; i++) {
-                        var subChunk = subChunks[i];
-                        if (subChunk.IsEmpty) continue;
-
-                        var subPos = subPositions[i];
-                        var center = new Vector3(subPos.x + lHalfSize, subPos.y + lHalfSize, subPos.z + lHalfSize);
-                        var subVis = EvaluateVisibility(center, lExtents, lightDir);
-
-                        if (subVis != RenderVisibility.Hidden) {
-                            pendingCommands.Add(new RenderCommand {
-                                chunk = subChunk,
-                                pos = subPos,
-                                lod = lowerLod,
-                                visibility = subVis
-                            });
+            if (findLowerLods) {
+                int bkp = chunks.Count;
+                int size = (32 << (lod - 1));
+                bool lCompete = true;
+                for (int y = 0; y < 2; y++)
+                for (int z = 0; z < 2; z++)
+                for (int x = 0; x < 2; x++) {
+                    bool complete = RenderRegion(lod - 1, pos + new IndexPos(x, y, z) * size, chunks, lightDir);
+                    if (!complete) {
+                        lCompete = false;
+                        if (highLodFound) {
+                            y = z = 2;
+                            break;
                         }
                     }
-
-                    for (int i = 0; i < subChunks.Length; i++) {
-                        subChunks[i] = null;
-                    }
-                    return;
-                } else {
-                    for (int i = 0; i < subChunks.Length; i++) {
-                        subChunks[i] = null;
-                    }
                 }
+
+                if (lCompete || !highLodFound) {
+                    return lCompete;
+                }
+                chunks.RemoveRange(bkp, chunks.Count - bkp);
+            } 
+            
+            if (highLodFound) {
+                if (!chunk.IsEmpty) {
+                    chunks.Add(new RenderCommand {
+                        chunk = chunk,
+                        pos = pos,
+                        lod = lod,
+                        visibility = visibility
+                    });
+                }
+
+                return true;
             }
-
-            // ------------------------------------------------------------------------
-            // Higher LOD (lod + 1)
-            // ------------------------------------------------------------------------
-            if (lod < Region.TotalLods - 1) {
-                int higherLod = lod + 1;
-                int higherChunkSize = 32 << higherLod;
-
-                IndexPos parentPos = new IndexPos(
-                    Mathf.FloorToInt((float)missingPos.x / higherChunkSize) * higherChunkSize,
-                    Mathf.FloorToInt((float)missingPos.y / higherChunkSize) * higherChunkSize,
-                    Mathf.FloorToInt((float)missingPos.z / higherChunkSize) * higherChunkSize
-                );
-
-                if (activeFallbackParentPositions.Contains(parentPos)) {
-                    return;
-                }
-
-                var higherChunk = worldManager.FindChunkData(higherLod, parentPos);
-
-                if (higherChunk != null && (higherChunk.IsEmpty || higherChunk.SoilMesh != null)) {
-                    activeFallbackParentPositions.Add(parentPos);
-
-                    if (higherChunk.IsEmpty) return;
-                    
-                    float hHalfSize = higherChunkSize * 0.5f;
-                    var hExtents = new Vector3(hHalfSize, hHalfSize, hHalfSize);
-                    var center = new Vector3(parentPos.x + hHalfSize, parentPos.y + hHalfSize, parentPos.z + hHalfSize);
-
-                    var higherVis = EvaluateVisibility(center, hExtents, lightDir);
-                    if (higherVis != RenderVisibility.Hidden) {
-                        pendingCommands.Add(new RenderCommand {
-                            chunk = higherChunk,
-                            pos = parentPos,
-                            lod = higherLod,
-                            visibility = higherVis
-                        });
-                    }
-                    return;
-                }
-            }
-
-            // ------------------------------------------------------------------------
-            // Fallback for incomplete Sub-chunks
-            // ------------------------------------------------------------------------
-            if (lod > 0) {
-                int lowerLod = lod - 1;
-                int lowerChunkSize = 32 << lowerLod;
-                float lHalfSize = lowerChunkSize * 0.5f;
-                var lExtents = new Vector3(lHalfSize, lHalfSize, lHalfSize);
-
-                for (int x = 0; x < 2; x++)
-                for (int y = 0; y < 2; y++)
-                for (int z = 0; z < 2; z++) {
-                    var subPos = missingPos + new IndexPos(x, y, z) * lowerChunkSize;
-                    var lowerChunk = worldManager.FindChunkData(lowerLod, subPos);
-
-                    if (lowerChunk == null || lowerChunk.SoilMesh == null) continue;
-                    
-                    var center = new Vector3(subPos.x + lHalfSize, subPos.y + lHalfSize, subPos.z + lHalfSize);
-                    var subVis = EvaluateVisibility(center, lExtents, lightDir);
-
-                    if (subVis != RenderVisibility.Hidden) {
-                        pendingCommands.Add(new RenderCommand {
-                            chunk = lowerChunk,
-                            pos = subPos,
-                            lod = lowerLod,
-                            visibility = subVis
-                        });
-                    }
-                }
-            }
+            
+            return false;
         }
 
-        private bool IsCoveredByActiveFallback(IndexPos pos, int currentLod) {
-            if (activeFallbackParentPositions.Count == 0) return false;
+        private bool CollectRegion(int lod, IndexPos pos, List<ChunkRenderData> chunks) {
+            int lSize = (32 << lod);
+            
+            var chunk = worldManager.FindChunkData(lod, pos);
+            bool highLodFound = (chunk != null && (chunk.IsEmpty || chunk.SoilMesh != null));
+            bool findLowerLods = lod > 0 
+                                 && (!highLodFound || (worldManager.lodConfig[lod - 1].IsInside(pos, lSize)))
+                                 && worldManager.HasAnyChunkData(pos);
 
-            for (int higherLod = currentLod + 1; higherLod < Region.TotalLods; higherLod++) {
-                int higherChunkSize = 32 << higherLod;
-
-                IndexPos parentPos = new IndexPos(
-                    Mathf.FloorToInt((float)pos.x / higherChunkSize) * higherChunkSize,
-                    Mathf.FloorToInt((float)pos.y / higherChunkSize) * higherChunkSize,
-                    Mathf.FloorToInt((float)pos.z / higherChunkSize) * higherChunkSize
-                );
-
-                if (activeFallbackParentPositions.Contains(parentPos)) {
-                    return true;
+            if (findLowerLods) {
+                int bkp = chunks.Count;
+                int size = (32 << (lod - 1));
+                bool lCompete = true;
+                for (int y = 0; y < 2; y++)
+                for (int z = 0; z < 2; z++)
+                for (int x = 0; x < 2; x++) {
+                    bool complete = CollectRegion(lod - 1, pos + new IndexPos(x, y, z) * size, chunks);
+                    if (!complete) {
+                        lCompete = false;
+                        if (highLodFound) {
+                            y = z = 2;
+                            break;
+                        }
+                    }
                 }
-            }
 
+                if (lCompete || !highLodFound) {
+                    return lCompete;
+                }
+                chunks.RemoveRange(bkp, chunks.Count - bkp);
+                
+            } 
+            
+            if (highLodFound) {
+                chunks.Add(chunk);
+                return true;
+            }
+            
             return false;
         }
 
@@ -388,7 +202,7 @@ namespace Game.Worlds {
             }
 
             if (cachedShadowDistance > 0f) {
-                var shadowOffset = -lightDir * (cachedShadowDistance * 0.5f);
+                var shadowOffset = lightDir * (cachedShadowDistance * 0.5f);
                 var shadowCenter = center + shadowOffset;
                 
                 var shadowExtents = extents + new Vector3(
@@ -424,7 +238,7 @@ namespace Game.Worlds {
         }
 
         private void DrawChunk(ChunkRenderData chunk, IndexPos pos, RenderVisibility visibility) {
-            
+            if (chunk.IsEmpty) return;
             if (chunk.SoilMesh == null) {
                 var matrix = Matrix4x4.TRS((Vector3)pos, Quaternion.identity, Vector3.one * (1 << chunk.Lod));
                 if (visibility == RenderVisibility.VisibleInFrustum) {
@@ -439,14 +253,6 @@ namespace Game.Worlds {
                     chunk.SoilMesh.Render(shadowOnlyRenderParams);
                 }
             }
-        }
-
-        private bool IsInside(IndexPos pos, IndexPos min, int size, int chunkSize) {
-            var max = min + new IndexPos(size, size, size) * chunkSize;
-
-            return pos.x >= min.x && pos.x < max.x &&
-                   pos.y >= min.y && pos.y < max.y &&
-                   pos.z >= min.z && pos.z < max.z;
         }
 
         public void RequestMesh(Chunk[] chunks, Action<MeshInterface> action) {
