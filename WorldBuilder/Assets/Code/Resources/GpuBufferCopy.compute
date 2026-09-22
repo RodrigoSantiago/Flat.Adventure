@@ -1,0 +1,27 @@
+#pragma kernel CopyBuffer
+#pragma kernel CopyTail
+
+StructuredBuffer<uint4> Src;
+RWStructuredBuffer<uint4> Dst;
+
+uint srcOffset;
+uint dstOffset;
+uint length;
+uint groupsX;
+
+[numthreads(256, 1, 1)]
+void CopyBuffer(uint3 id : SV_DispatchThreadID) {
+    uint threadIndex = id.x + id.y * groupsX * 256;
+    uint index = threadIndex * 4;
+
+    Dst[dstOffset + index + 0] = Src[srcOffset + index + 0];
+    Dst[dstOffset + index + 1] = Src[srcOffset + index + 1];
+    Dst[dstOffset + index + 2] = Src[srcOffset + index + 2];
+    Dst[dstOffset + index + 3] = Src[srcOffset + index + 3];
+}
+
+[numthreads(4, 1, 1)]
+void CopyTail(uint3 id : SV_DispatchThreadID) {
+    if (id.x < length)
+        Dst[dstOffset + id.x] = Src[srcOffset + id.x];
+}
