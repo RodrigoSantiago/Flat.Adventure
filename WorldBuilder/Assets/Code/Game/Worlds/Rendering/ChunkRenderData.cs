@@ -97,7 +97,7 @@ namespace Game.Worlds.Rendering {
             for (int x = -1; x <= 1; x++) {
                 int index = i++;
                 var pos = Pos + new IndexPos(x, y, z) * (32 << Lod);
-                if (pos.x < 0 || pos.y < 0 || pos.z < 0) {
+                if (pos.x < 0 || pos.y < 0 || pos.z < 0 || pos.y >= Region.MaxHeight) {
                     chunks[index] = null;
                 } else {
                     var near = manager.FindChunkData(Lod, pos);
@@ -152,7 +152,7 @@ namespace Game.Worlds.Rendering {
             for (int z = -1; z <= 1; z++)
             for (int x = -1; x <= 1; x++) {
                 var pos = Pos + new IndexPos(x, y, z) * (32 << Lod);
-                if (pos.x < 0 || pos.y < 0 || pos.z < 0) continue;
+                if (pos.x < 0 || pos.y < 0 || pos.z < 0 || pos.y >= Region.MaxHeight) continue;
                     
                 var near = manager.FindChunkData(Lod, pos);
                 if (near != null) {
@@ -177,15 +177,16 @@ namespace Game.Worlds.Rendering {
                 if (x == 0 && y == 0 && z == 0) continue;
                 
                 var pos = Pos + new IndexPos(x, y, z) * (32 << Lod);
-                if (pos.x >= 0 && pos.y >= 0 && pos.z >= 0) {
-                    if (!manager.IsChunkRenderRequired(Lod, pos)) {
-                        continue;
-                    }
+                
+                if (pos.x < 0 || pos.y < 0 || pos.z < 0 || pos.y >= Region.MaxHeight) continue;
+                
+                if (!manager.IsChunkRenderRequired(Lod, pos)) {
+                    continue;
+                }
                     
-                    var near = manager.FindChunkData(Lod, pos);
-                    if (near == null || !near.IsMeshBuilding) {
-                        return true;
-                    }
+                var near = manager.FindChunkData(Lod, pos);
+                if (near == null || !near.IsMeshBuilding) {
+                    return true;
                 }
             }
             

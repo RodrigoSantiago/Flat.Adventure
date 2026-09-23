@@ -8,6 +8,7 @@ struct GeneratedVertex {
 
 StructuredBuffer<GeneratedVertex> MeshVertexBuffer;
 float4 ChunkPos;
+uint BufferOffset;
 
 float DecodePosition(uint v) {
     return float(v) * (32.0 / 65535.0);
@@ -19,7 +20,7 @@ void GetGeneratedVertex_float(
     out float3 Normal,
     out float4 UV0,
     out float4 UV1) {
-    GeneratedVertex v = MeshVertexBuffer[VertexID];
+    GeneratedVertex v = MeshVertexBuffer[BufferOffset + VertexID];
 
     Position = float3(
         DecodePosition(v.data0.x & 0xffff),

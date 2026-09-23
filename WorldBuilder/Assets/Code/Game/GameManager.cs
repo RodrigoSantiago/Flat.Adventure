@@ -33,7 +33,8 @@ namespace Game {
         public bool frustumOcclusion;
         public bool[] controlRender = new bool[4];
         public Mesh smallCube;
-
+        public Material smallCubeMat;
+        
         private long hashVersion = 1;
         private long GetHashVersion => ++hashVersion;
         public bool DebugChunkPosition;
@@ -54,7 +55,7 @@ namespace Game {
             // Setup Player
             foreach (var player in GameData.Instance.players) {
                 var cvPlayer = new GameObject("Player").AddComponent<CvPlayerUnit>().Setup();
-                cvPlayer.transform.position = new Vector3(2048, 2048, 2048);
+                cvPlayer.transform.position = new Vector3(2048, 512, 2048);
                 PlayerSetView(cvPlayer);
             }
         }
@@ -78,6 +79,7 @@ namespace Game {
             overWorld.SaveAndExit();
             ExecuteSyncQueue();
             ExecuteTaskQueue(-1);
+            GraphicsBufferAllocator.Allocator.Dispose();
         }
 
         public void PlayerSetView(CvPlayerUnit cvPlayerUnit) {

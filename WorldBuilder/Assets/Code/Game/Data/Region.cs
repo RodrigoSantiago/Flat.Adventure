@@ -4,6 +4,8 @@ namespace Game.Data {
     public class Region {
         public const int TotalLods = 4;
         public const int MaxLod = 3; // [0 1 2 3]
+
+        public const int MaxHeight = 1024;
         
         public static readonly int[] LodSize1 = {8, 4, 2, 1};
         public static readonly int[] LodSize2 = {64, 16, 4, 1};

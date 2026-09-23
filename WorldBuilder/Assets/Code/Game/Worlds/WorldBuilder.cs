@@ -71,7 +71,7 @@ namespace Game.Worlds {
                     RequestUnknown(request.requiredChunks.First(), request.lod, request.requiredChunks);
                 } else {
                     // Unexpected 
-                    Debug.Log("Unexpected");
+                    Debug.Log("Unexpected " + request.lod + " " + string.Join(", ", request.requiredChunks.Select(r => r.ToString())));
                 }
             }
         }

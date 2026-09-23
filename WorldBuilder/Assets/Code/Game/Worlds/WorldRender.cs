@@ -24,11 +24,18 @@ namespace Game.Worlds {
 
         private readonly List<RenderCommand> pendingCommands = new ();
         
+        private MeshRenderBuffer visibleRenderBuffer = new();
+        private MeshRenderBuffer shadowOnlyRenderBuffer = new();
         private RenderParams visibleRenderParams;
         private RenderParams shadowOnlyRenderParams;
 
         public WorldRender(WorldManager worldManager) {
             this.worldManager = worldManager;
+        }
+
+        public void Dispose() {
+            visibleRenderBuffer.Dispose();
+            shadowOnlyRenderBuffer.Dispose();
         }
 
         public Camera GetActiveCamera() {
@@ -49,12 +56,14 @@ namespace Game.Worlds {
                 receiveShadows = true,
                 shadowCastingMode = ShadowCastingMode.On
             };
+            visibleRenderBuffer.Begin(visibleRenderParams);
 
             shadowOnlyRenderParams = new RenderParams(GameManager.Instance.MeshGenerator.DummyMaterial) {
                 layer = 0,
                 receiveShadows = false,
                 shadowCastingMode = ShadowCastingMode.ShadowsOnly
             };
+            shadowOnlyRenderBuffer.Begin(shadowOnlyRenderParams);
 
             var lightDir = RenderSettings.sun != null ? RenderSettings.sun.transform.forward : Vector3.down;
 
@@ -73,6 +82,9 @@ namespace Game.Worlds {
                     DrawChunk(cmd.chunk, cmd.pos, cmd.visibility);
                 }
             }
+            visibleRenderBuffer.Commit();
+            shadowOnlyRenderBuffer.Commit();
+            
             pendingCommands.Clear();
         }
 
@@ -248,9 +260,9 @@ namespace Game.Worlds {
                 }
             } else {
                 if (visibility == RenderVisibility.VisibleInFrustum) {
-                    chunk.SoilMesh.Render(visibleRenderParams);
+                    chunk.SoilMesh.Render(visibleRenderBuffer);
                 } else if (visibility == RenderVisibility.ShadowOnly) {
-                    chunk.SoilMesh.Render(shadowOnlyRenderParams);
+                    chunk.SoilMesh.Render(shadowOnlyRenderBuffer);
                 }
             }
         }

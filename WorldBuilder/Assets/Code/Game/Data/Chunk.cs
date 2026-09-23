@@ -124,7 +124,7 @@ namespace Game.Data {
                 try {
                     SoilMesh = new MeshInterface(Pos, Lod, SoilMeshTempData);
                     SoilMesh.AddReference();
-                } catch {
+                } catch (Exception e) {
                     return false;
                 } finally {
                     SoilMeshTempData = null;

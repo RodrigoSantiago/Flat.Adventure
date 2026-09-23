@@ -11,7 +11,7 @@ using UnityEngine;
 using WorldCache = Game.Worlds.CacheManagement.WorldCache;
 
 namespace Game.Worlds {
-    public partial class WorldManager {
+    public class WorldManager {
 
         public IndexPos centerPoint;
         public IndexPos view;
@@ -96,6 +96,7 @@ namespace Game.Worlds {
             }
 
             Cache.ConsumeAndDispose();
+            Render.Dispose();
         }
 
         public void OnChunkLoaded(Chunk chunk) {
@@ -299,7 +300,7 @@ namespace Game.Worlds {
 
                 var pos = config.ViewLod + new IndexPos(x, y, z) * config.ChunkSize;
 
-                if (pos.x < 0 || pos.y < 0 || pos.z < 0) {
+                if (pos.x < 0 || pos.y < 0 || pos.z < 0 || pos.y >= Region.MaxHeight) {
                     continue;
                 }
 

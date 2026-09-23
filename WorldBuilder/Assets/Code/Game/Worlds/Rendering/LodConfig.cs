@@ -1,3 +1,4 @@
+using System;
 using Game.Data;
 
 namespace Game.Worlds.Rendering {
@@ -24,6 +25,7 @@ namespace Game.Worlds.Rendering {
             cx = ViewLod.x + (size * 0.5f) * ChunkSize;
             cz = ViewLod.z + (size * 0.5f) * ChunkSize;
             Max = ViewLod + new IndexPos(size, height, size) * ChunkSize;
+            Max.y = Math.Min(Max.y, Region.MaxHeight);
         }
 
         public bool IsInside(IndexPos pos) {
