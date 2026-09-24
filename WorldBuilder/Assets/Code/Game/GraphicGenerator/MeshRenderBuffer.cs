@@ -1,5 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Runtime.InteropServices;
+using System.Threading;
+using Game.Data;
 using UnityEngine;
 
 namespace Game.GraphicGenerator {
@@ -7,15 +11,33 @@ namespace Game.GraphicGenerator {
         private sealed class Group {
             public GraphicsBuffer SourceBuffer;
             public MaterialPropertyBlock props = new MaterialPropertyBlock();
-
-            public int StartCommand;
-            public int CommandCount;
+            public List<Command> commands = new();
         }
 
+        private struct Command {
+            public ChunkPos posLod;
+            public int elementsOffset;
+            public int elementsSize;
+
+            public Command(ChunkPos posLod, int elementsOffset, int elementsSize) {
+                this.posLod = posLod;
+                this.elementsOffset = elementsOffset;
+                this.elementsSize = elementsSize;
+            }
+        }
+        
+        [StructLayout(LayoutKind.Sequential)]
+        struct ChunkPos {
+            public uint xy;
+            public uint z;
+            public uint lod;
+            public uint offset;
+        }
+        
         private readonly Dictionary<GraphicsBuffer, Group> groups = new();
 
         // CPU data.
-        private Vector4[] posLodData = Array.Empty<Vector4>();
+        private ChunkPos[] posLodData = Array.Empty<ChunkPos>();
         private GraphicsBuffer.IndirectDrawArgs[] argsData = Array.Empty<GraphicsBuffer.IndirectDrawArgs>();
 
         // GPU data.
@@ -23,77 +45,74 @@ namespace Game.GraphicGenerator {
         private GraphicsBuffer argsBuffer;
 
         private int posLodCapacity;
-        private int posLodCount;
-
         private int argsCapacity;
-        private int argsCount;
 
         private RenderParams renderParams;
         public RenderParams Params => renderParams;
 
         public void Begin(RenderParams renderParams) {
             this.renderParams = renderParams;
-
-            posLodCount = 0;
-            argsCount = 0;
-
-            foreach (Group group in groups.Values) {
-                group.StartCommand = 0;
-                group.CommandCount = 0;
-            }
         }
 
-        public void Add(Vector4 posLod, GraphicsBuffer buffer, int elementsOffset, int elementsSize) {
+        public void Add(IndexPos pos, int lod, GraphicsBuffer buffer, int elementsOffset, int elementsSize) {
             if (!groups.TryGetValue(buffer, out var group)) {
                 group = new Group {
-                    SourceBuffer = buffer,
-                    StartCommand = argsCount
+                    SourceBuffer = buffer
                 };
 
                 groups.Add(buffer, group);
             }
 
-            int instanceId = posLodCount++;
-
-            EnsurePosLodCapacity(posLodCount);
-            EnsureArgsCapacity(argsCount + 1);
-
-            posLodData[instanceId] = posLod;
-
-            argsData[argsCount] =
-                new GraphicsBuffer.IndirectDrawArgs {
-                    vertexCountPerInstance = (uint)elementsSize,
-                    instanceCount = 1,
-                    startVertex = (uint)elementsOffset,
-                    startInstance = (uint)instanceId
-                };
-
-            argsCount++;
-            group.CommandCount++;
+            var packed = new ChunkPos {
+               xy = (uint)(pos.x | (pos.y << 16)),
+               z = (uint)pos.z,
+               lod = (uint)(1 << lod),
+               offset = (uint)elementsOffset
+            };
+            group.commands.Add(new Command(packed, elementsOffset, elementsSize));
         }
-
+        
         public void Commit() {
-            if (argsCount == 0) return;
+            int total = groups.Values.Sum(g => g.commands.Count);
+            if (total == 0) return;
+            
+            EnsureArgsCapacity(total);
+            EnsurePosLodCapacity(total);
 
-            posLodBuffer.SetData(posLodData, 0, 0, posLodCount);
-            argsBuffer.SetData(argsData, 0, 0, argsCount);
-
+            int index = 0;
             foreach (Group group in groups.Values) {
-                if (group.CommandCount == 0)
-                    continue;
+                foreach (var command in group.commands) {
+                    argsData[index] = new GraphicsBuffer.IndirectDrawArgs {
+                        startVertex = 0,
+                        vertexCountPerInstance = (uint)(command.elementsSize),
+                        instanceCount = 1,
+                        startInstance = 0
+                    };
+                    posLodData[index] = command.posLod;
+                    index++;
+                }
+            }
 
-                // group.props.SetBuffer("PosLodBuffer", posLodBuffer);
-                // group.props.SetBuffer("SourceBuffer", group.SourceBuffer);
+            posLodBuffer.SetData(posLodData, 0, 0, total);
+            argsBuffer.SetData(argsData, 0, 0, total);
+
+            int startCommand = 0;
+            foreach (Group group in groups.Values) {
+                group.props.SetBuffer("ChunkPosBuffer", posLodBuffer);
+                group.props.SetBuffer("MeshVertexBuffer", group.SourceBuffer);
 
                 renderParams.matProps = group.props;
-
+                
                 Graphics.RenderPrimitivesIndirect(
-                    in renderParams,
+                    renderParams,
                     MeshTopology.Triangles,
                     argsBuffer,
-                    group.CommandCount,
-                    group.StartCommand);
+                    group.commands.Count,
+                    startCommand);
+                startCommand += group.commands.Count;
             }
+            
+            groups.Clear();
         }
 
         private void EnsurePosLodCapacity(int required) {
@@ -145,14 +164,11 @@ namespace Game.GraphicGenerator {
 
             groups.Clear();
 
-            posLodData = Array.Empty<Vector4>();
+            posLodData = Array.Empty<ChunkPos>();
             argsData = Array.Empty<GraphicsBuffer.IndirectDrawArgs>();
 
             posLodCapacity = 0;
-            posLodCount = 0;
-
             argsCapacity = 0;
-            argsCount = 0;
         }
 
         public void Dispose() {

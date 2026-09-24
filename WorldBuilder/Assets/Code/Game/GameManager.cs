@@ -31,6 +31,7 @@ namespace Game {
         public WorldManager OverWorld => overWorld;
 
         public bool frustumOcclusion;
+        public bool terrainShadow = true;
         public bool[] controlRender = new bool[4];
         public Mesh smallCube;
         public Material smallCubeMat;

@@ -344,6 +344,8 @@ uint EncodePosition(float v) {
     return (uint)round(v * (65535.0 / 32.0));
 }
 
+uint BufferOffset;
+
 [numthreads(64, 1, 1)]
 void BuildBuffer(uint3 id : SV_DispatchThreadID) {
     const uint index = id.x;
@@ -364,5 +366,5 @@ void BuildBuffer(uint3 id : SV_DispatchThreadID) {
     low.normal.y = f32tof16(normal.z) |
           (uint(ver.uv0.z) << 16);
     
-    BufferVertexBuffer[index] = low;
+    BufferVertexBuffer[BufferOffset + index] = low;
 }

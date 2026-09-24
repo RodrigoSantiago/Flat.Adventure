@@ -6,7 +6,7 @@ namespace Game.GraphicGenerator {
         public static readonly MemoryAllocator<GraphicsBuffer> Allocator = new(
             size => new GraphicsBuffer(GraphicsBuffer.Target.Structured, size, 16), 
             128, 
-            128 * 1024 * 1024 / 16);
+            256 * 1024 * 1024 / 16);
         // public static readonly EasyAllocator Allocator = new();
     }
 

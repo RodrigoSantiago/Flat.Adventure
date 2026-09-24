@@ -3,6 +3,8 @@ using System.Runtime.InteropServices;
 using Game.Data;
 using Game.Utils;
 using Unity.Collections;
+using Unity.Collections.LowLevel.Unsafe;
+using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Rendering;
 
@@ -90,6 +92,7 @@ namespace Game.GraphicGenerator {
             propertyBlock.SetInt(BufferOffset, allocation.Index);
 
             shader.SetBuffer(kernel, BufferVertexBuffer, allocation.Source);
+            shader.SetInt(BufferOffset, allocation.Index);
 
             shader.SetInts(VertexCount, vertexCount, 1, 0, index);
             shader.Dispatch(kernel, Mathf.CeilToInt(vertexCount / 64f), 1, 1);
@@ -150,8 +153,14 @@ namespace Game.GraphicGenerator {
 
             elements = data.Length / BufferStride;
             allocation = GraphicsBufferAllocator.Allocator.Alloc(elements);
-
-            allocation.Source.SetData(data, 0, allocation.Index * 16, allocation.Count * 16);
+            
+            var values = MemoryMarshal.Cast<byte, uint4>(data).ToArray();
+            allocation.Source.SetData(
+                values,
+                0, 
+                allocation.Index,
+                allocation.Count
+            );
 
             propertyBlock = new MaterialPropertyBlock();
             propertyBlock.SetBuffer(MeshVertexBuffer, allocation.Source);
@@ -214,14 +223,15 @@ namespace Game.GraphicGenerator {
         private void RenderBuffer(MeshRenderBuffer renderBuffer) {
             if (allocation == null) return;
 
-            var renderParams = renderBuffer.Params;
+            /*var renderParams = renderBuffer.Params;
             renderParams.matProps = propertyBlock;
             renderParams.worldBounds = new Bounds(
                 new Vector3(16, 16, 16) * (1 << lod) + (Vector3)pos,
                 new Vector3(32, 32, 32) * (1 << lod)
             );
 
-            Graphics.RenderPrimitives(renderParams, MeshTopology.Triangles, elements);
+            Graphics.RenderPrimitives(renderParams, MeshTopology.Triangles, elements);*/
+            renderBuffer.Add(pos, lod, allocation.Source, allocation.Index, allocation.Count);
         }
         
         private void RenderMesh(MeshRenderBuffer renderBuffer) {

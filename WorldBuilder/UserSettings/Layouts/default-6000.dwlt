@@ -19,7 +19,7 @@ MonoBehaviour:
     width: 1920
     height: 997
   m_ShowMode: 4
-  m_Title: Scene
+  m_Title: Hierarchy
   m_RootView: {fileID: 2}
   m_MinSize: {x: 875, y: 300}
   m_MaxSize: {x: 10000, y: 10000}
@@ -1196,9 +1196,9 @@ MonoBehaviour:
   m_AudioPlay: 0
   m_DebugDrawModesUseInteractiveLightBakingData: 0
   m_Position:
-    m_Target: {x: 3286.2637, y: -769.7986, z: 1827.6707}
+    m_Target: {x: 2030.1554, y: 535.5865, z: 2047.572}
     speed: 2
-    m_Value: {x: 3286.2637, y: -769.7986, z: 1827.6707}
+    m_Value: {x: 2031.143, y: 533.4713, z: 2037.8868}
   m_RenderMode: 0
   m_CameraMode:
     drawMode: 0
@@ -1245,13 +1245,13 @@ MonoBehaviour:
     m_gridOpacity: 0.5
     m_NearestPlaneToHandleMode: 0
   m_Rotation:
-    m_Target: {x: -0.21134785, y: -0.78588325, z: 0.4467216, w: -0.37174597}
+    m_Target: {x: 0.29933733, y: 0.2691248, z: -0.08834916, w: 0.9111621}
     speed: 2
-    m_Value: {x: 0.21134785, y: 0.78588325, z: -0.4467216, w: 0.37174597}
+    m_Value: {x: -0.28141344, y: -0.32467052, z: 0.10176608, w: -0.89726794}
   m_Size:
-    m_Target: 1738.6683
+    m_Target: 4.043281
     speed: 2
-    m_Value: 1738.6683
+    m_Value: 6.402182
   m_Ortho:
     m_Target: 0
     speed: 2
@@ -1334,7 +1334,7 @@ MonoBehaviour:
     m_SkipHidden: 0
     m_SearchArea: 1
     m_Folders:
-    - Packages/com.unity.render-pipelines.universal/Runtime
+    - Assets/Settings
     m_Globs: []
     m_ProductIds: 
     m_AnyWithAssetOrigin: 0
@@ -1356,18 +1356,18 @@ MonoBehaviour:
       m_Data: 0
     m_ExpandedIDs:
     - m_Data: 0
-    - m_Data: 49792
-    - m_Data: 49794
-    - m_Data: 49796
-    - m_Data: 49798
-    - m_Data: 49800
-    - m_Data: 49802
     - m_Data: 49804
     - m_Data: 49806
     - m_Data: 49808
     - m_Data: 49810
     - m_Data: 49812
     - m_Data: 49814
+    - m_Data: 49816
+    - m_Data: 49818
+    - m_Data: 49820
+    - m_Data: 49822
+    - m_Data: 49824
+    - m_Data: 49826
     m_RenameOverlay:
       m_UserAcceptedRename: 0
       m_Name: 
@@ -1395,25 +1395,25 @@ MonoBehaviour:
       m_Icon: {fileID: 0}
       m_ResourceFile: 
   m_AssetTreeState:
-    scrollPos: {x: 0, y: 2011}
+    scrollPos: {x: 0, y: 0}
     m_SelectedIDs:
-    - m_Data: 45884
+    - m_Data: -42030
     m_LastClickedID:
-      m_Data: 45884
+      m_Data: 0
     m_ExpandedIDs:
     - m_Data: 0
-    - m_Data: 49792
-    - m_Data: 49794
-    - m_Data: 49796
-    - m_Data: 49798
-    - m_Data: 49800
-    - m_Data: 49802
     - m_Data: 49804
     - m_Data: 49806
     - m_Data: 49808
     - m_Data: 49810
     - m_Data: 49812
     - m_Data: 49814
+    - m_Data: 49816
+    - m_Data: 49818
+    - m_Data: 49820
+    - m_Data: 49822
+    - m_Data: 49824
+    - m_Data: 49826
     m_RenameOverlay:
       m_UserAcceptedRename: 0
       m_Name: 
@@ -1442,9 +1442,9 @@ MonoBehaviour:
       m_ResourceFile: 
   m_ListAreaState:
     m_SelectedInstanceIDs:
-    - m_Data: 45884
+    - m_Data: -42030
     m_LastClickedEntityId:
-      m_Data: 45884
+      m_Data: -42030
     m_HadKeyboardFocusLastEvent: 0
     m_ExpandedInstanceIDs: []
     m_RenameOverlay:
@@ -1523,6 +1523,7 @@ MonoBehaviour:
         m_Data: 0
       m_ExpandedIDs:
       - m_Data: -1322
+      - m_Data: 49514
       m_RenameOverlay:
         m_UserAcceptedRename: 0
         m_Name: 
