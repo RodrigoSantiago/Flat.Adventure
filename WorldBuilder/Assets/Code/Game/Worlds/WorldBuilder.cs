@@ -141,6 +141,9 @@ namespace Game.Worlds {
                 // If network => request.requiredChunks
                 WorldGenerator.Instance.EnqueueRegion(Manager, regionIndex, () => {
                     GameManager.Instance.RunTask(() => OnRequestDone(request, false));
+                }, (e) => {
+                    Debug.Log("WorldGenerator Failed " + Region.GenName(regionIndex));
+                    Debug.LogError(e);
                 });
             }
 

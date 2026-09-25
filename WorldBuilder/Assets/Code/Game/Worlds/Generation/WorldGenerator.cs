@@ -56,18 +56,22 @@ namespace Game.Worlds.Generation {
             public void SetSuccess() {
                 IsCompleted = true;
                 foreach (var listener in listeners) {
-                    listener.OnSuccess();
+                    listener.OnSuccess?.Invoke();
                 }
             }
 
             public void SetError(Exception message) {
                 IsCompleted = true;
                 foreach (var listener in listeners) {
-                    listener.OnError(message);
+                    listener.OnError?.Invoke(message);
                 }
             }
         }
 
+
+        const int CHUNK_SIZE_DEN = 16388;
+        const int CHUNK_SIZE_MAT = 24580;
+        const int MAT_OFFSET = (585 * CHUNK_SIZE_DEN);
         
         [SerializeField] private ComputeShader shader;
         private ComputeBuffer voxelBuffer;
@@ -77,6 +81,7 @@ namespace Game.Worlds.Generation {
         private bool dispose;
         private static readonly int VoxelBuffer = Shader.PropertyToID("VoxelBuffer");
         private static readonly int ChunkPos = Shader.PropertyToID("ChunkPos");
+        private static readonly int IndexPos = Shader.PropertyToID("IndexPos");
 
         private void Awake() {
             Instance = this;
@@ -89,7 +94,7 @@ namespace Game.Worlds.Generation {
             shader = Resources.Load<ComputeShader>("WorldGen");
             generate = shader.FindKernel("Generate");
             
-            int voxels = ChunkSoil.Size3D * Region.TotalChunks * 2;
+            int voxels = 585 * CHUNK_SIZE_DEN + 585 * CHUNK_SIZE_MAT;
             voxelBuffer = new ComputeBuffer(voxels / sizeof(uint), sizeof(uint), ComputeBufferType.Raw);
         }
 
@@ -129,8 +134,7 @@ namespace Game.Worlds.Generation {
             try {
                 var data = request.GetData<byte>();
                 int dOffset = 0;
-                int mOffset = data.Length / 2;
-                int len = ChunkSoil.Size3D;
+                int mOffset = MAT_OFFSET;
 
                 for (int lod = 0; lod < Region.TotalLods; lod++) {
                     int count = Region.LodSize3[lod];
@@ -141,17 +145,19 @@ namespace Game.Worlds.Generation {
 
                     int localLod = lod;
                     Parallel.For(0, count, i => {
-                        int offset = i * len;
-
-                        var soil = ChunkSoil.CreateFromRaw(
-                            GetPiece(data, lodMOffset + offset, len),
-                            GetPiece(data, lodDOffset + offset, len), null, 64);
-
+                        int offsetD = i * CHUNK_SIZE_DEN;
+                        int offsetM = i * CHUNK_SIZE_MAT;
+                        var den = GetPiece(data, lodDOffset + offsetD, CHUNK_SIZE_DEN).ToArray();
+                        var mat = GetPiece(data, lodMOffset + offsetM, CHUNK_SIZE_MAT).ToArray();
+                        den[0] = 3;
+                        mat[0] = 4;
+                        
+                        var soil = new ChunkSoil(den, mat);
                         chunks[i] = new Chunk(work.Pos + Region.GetLocalPosition(localLod, i), localLod, soil, 1);
                     });
 
-                    dOffset += count * len;
-                    mOffset += count * len;
+                    dOffset += count * CHUNK_SIZE_DEN;
+                    mOffset += count * CHUNK_SIZE_MAT;
 
                     work.Manager.Cache.PutRegion(work.Pos, chunks);
                 }
@@ -172,7 +178,7 @@ namespace Game.Worlds.Generation {
             consumer.SortValue = center;
         }
 
-        public void EnqueueRegion(WorldManager manager, IndexPos regionIndex, Action onGenerated, Action<Exception> onError = null) {
+        public void EnqueueRegion(WorldManager manager, IndexPos regionIndex, Action onGenerated, Action<Exception> onError) {
             consumer.Enqueue(new Work(this, manager, regionIndex, new TaskListener(onGenerated, onError)));
         }
     }

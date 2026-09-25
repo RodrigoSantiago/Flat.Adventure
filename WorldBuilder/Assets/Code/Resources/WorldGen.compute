@@ -2,20 +2,9 @@
 
 RWStructuredBuffer<uint> VoxelBuffer;
 
-#define CHUNK_SIZE (32 * 32 * 32)
-#define CHUNK_SIZE_LOD0 (CHUNK_SIZE * 8 * 8 * 8)
-#define CHUNK_SIZE_LOD1 (CHUNK_SIZE * 4 * 4 * 4)
-#define CHUNK_SIZE_LOD2 (CHUNK_SIZE * 2 * 2 * 2)
-#define CHUNK_SIZE_LOD3 (CHUNK_SIZE)
-
-#define DensityBufferLod0 (0)
-#define DensityBufferLod1 (CHUNK_SIZE_LOD0 + DensityBufferLod0)
-#define DensityBufferLod2 (CHUNK_SIZE_LOD1 + DensityBufferLod1)
-#define DensityBufferLod3 (CHUNK_SIZE_LOD2 + DensityBufferLod2)
-#define MaterialBufferLod0 (CHUNK_SIZE_LOD3 + DensityBufferLod3)
-#define MaterialBufferLod1 (CHUNK_SIZE_LOD0 + MaterialBufferLod0)
-#define MaterialBufferLod2 (CHUNK_SIZE_LOD1 + MaterialBufferLod1)
-#define MaterialBufferLod3 (CHUNK_SIZE_LOD2 + MaterialBufferLod2)
+#define CHUNK_SIZE_DEN (16388 / 4)
+#define CHUNK_SIZE_MAT (24580 / 4)
+#define MAT_OFFSET (585 * CHUNK_SIZE_DEN)
 
 uint4 BufferStride;
 float4 ChunkPos;
@@ -33,33 +22,123 @@ static const float CubeDensity[] = {
     0.80, 0.85, 0.90, 0.95, 1.00, 2.00 // [Special Case]
 };
 
-uint GetVoxelIndex(uint3 pos, uint lod) {
-    uint localIndex = pos.x % 32
-                    + pos.z % 32 * 32
-                    + pos.y % 32 * 1024;
+static const uint lodChunkIndexOffset[] = {0, 512, 576, 584}; 
+
+void GetVoxelIndex(uint3 pos, uint lod, out uint localIndex, out uint chunkIndex) {
+    const uint3 lPos = pos >> lod;
+    localIndex =  (lPos.x & 31)
+               + ((lPos.z & 31) << 5)
+               + ((lPos.y & 31) << 10);
     
-    uint chunkIndex = pos.x / 32
-                    + pos.z / 32 * (8 >> lod)
-                    + pos.y / 32 * (8 >> lod) * (8 >> lod);
-    
-    return localIndex + (chunkIndex * CHUNK_SIZE);
+    chunkIndex = (lPos.x >> 5)
+               + (lPos.z >> 5) * (8 >> lod)
+               + (lPos.y >> 5) * (8 >> lod) * (8 >> lod)
+               + lodChunkIndexOffset[lod];
 }
 
-void StoreByte(uint byteIndex, uint value) {
-    const uint address = (byteIndex / 4);
-    const uint byteOffset = (byteIndex % 4) * 8;
-    
-    const uint clearMask = ~(0xFFu << byteOffset);
-    const uint shiftedValue = (value & 0xFFu) << byteOffset;
-    
-    InterlockedAnd(VoxelBuffer[address], clearMask);
-    InterlockedOr(VoxelBuffer[address], shiftedValue);
+void StoreDenByte(uint localIndex, uint chunkIndex, uint val) {
+    const uint chunkAddress = CHUNK_SIZE_DEN * chunkIndex;
+    const uint bitOffset = 8 + localIndex * 4;
+
+    const uint address = chunkAddress + bitOffset / 32;
+    const uint shift = bitOffset % 32;
+
+    const uint clearMask = ~(0xFu << shift);
+    const uint shiftedValue = (val & 0xFu) << shift;
+
+    uint original_value;
+    uint out_value = VoxelBuffer[address];
+
+    do
+    {
+        original_value = out_value;
+        uint replace_value = (original_value & clearMask) | shiftedValue;
+
+        InterlockedCompareExchange(
+            VoxelBuffer[address],
+            original_value,
+            replace_value,
+            out_value
+        );
+
+    } while (original_value != out_value);
+}
+
+void StoreMatByte(uint localIndex, uint chunkIndex, uint val) {
+    const uint chunkAddress = MAT_OFFSET + CHUNK_SIZE_MAT * chunkIndex;
+    const uint bitOffset = 8 + localIndex * 6;
+
+    const uint address = chunkAddress + bitOffset / 32;
+    const uint shift = bitOffset % 32;
+
+    const uint maskedValue = val & 0x3Fu;
+
+    if (shift <= 26) {
+        const uint clearMask = ~(0x3Fu << shift);
+        const uint shiftedValue = maskedValue << shift;
+
+        uint original_value;
+        uint out_value = VoxelBuffer[address];
+        do
+        {
+            original_value = out_value;
+            const uint replace_value = (original_value & clearMask) | shiftedValue;
+
+            InterlockedCompareExchange(
+                VoxelBuffer[address],
+                original_value,
+                replace_value,
+                out_value
+            );
+        } while (original_value != out_value);
+    } else {
+        const uint firstBits = 32 - shift;
+        const uint secondBits = 6 - firstBits;
+
+        const uint firstMask = ((1u << firstBits) - 1u) << shift;
+        const uint firstValue = (maskedValue & ((1u << firstBits) - 1u)) << shift;
+
+        uint original_value;
+        uint out_value = VoxelBuffer[address];
+        do
+        {
+            original_value = out_value;
+            const uint replace_value = (original_value & ~firstMask) | firstValue;
+
+            InterlockedCompareExchange(
+                VoxelBuffer[address],
+                original_value,
+                replace_value,
+                out_value
+            );
+        } while (original_value != out_value);
+
+        const uint secondMask = (1u << secondBits) - 1u;
+        const uint secondValue = maskedValue >> firstBits;
+
+        out_value = VoxelBuffer[address + 1];
+
+        do
+        {
+            original_value = out_value;
+            const uint replace_value = (original_value & ~secondMask) | secondValue;
+
+            InterlockedCompareExchange(
+                VoxelBuffer[address + 1],
+                original_value,
+                replace_value,
+                out_value
+            );
+        } while (original_value != out_value);
+    }
 }
 
 [numthreads(8, 8, 8)]
 void Generate(uint3 id : SV_DispatchThreadID) {
     const uint3 pos = id + (uint3)ChunkPos.xyz;
-    const uint voxelIndex = GetVoxelIndex(id, 0);
+    
+    uint localIndex0, chunkIndex0;
+    GetVoxelIndex(id, 0, localIndex0, chunkIndex0);
     
     float density = 0.0;
     uint material = 0;
@@ -74,32 +153,35 @@ void Generate(uint3 id : SV_DispatchThreadID) {
     }
 
     const uint densityQuantized = QuantizeDensity(density);
-    StoreByte(DensityBufferLod0 + voxelIndex, densityQuantized);
-    StoreByte(MaterialBufferLod0 + voxelIndex, material);
+    StoreDenByte(localIndex0, chunkIndex0, densityQuantized);
+    StoreMatByte(localIndex0, chunkIndex0, material);
 
     const float sDensity = CubeDensity[densityQuantized] - 0.5;
     
     if ((id.x & 1) == 0 && (id.y & 1) == 0 && (id.z & 1) == 0) {
-        const uint lodIndex = GetVoxelIndex(id >> 1, 1);
+        uint localIndex1, chunkIndex1;
+        GetVoxelIndex(id, 1, localIndex1, chunkIndex1);
         const float lodDensity = saturate(0.5 + sDensity * 2.0);
 
-        StoreByte(DensityBufferLod1 + lodIndex, QuantizeDensity(lodDensity));
-        StoreByte(MaterialBufferLod1 + lodIndex, material);
+        StoreDenByte(localIndex1, chunkIndex1, QuantizeDensity(lodDensity));
+        StoreMatByte(localIndex1, chunkIndex1, material);
     }
 
     if ((id.x & 3) == 0 && (id.y & 3) == 0 && (id.z & 3) == 0) {
-        const uint lodIndex = GetVoxelIndex(id >> 2, 2);
+        uint localIndex2, chunkIndex2;
+        GetVoxelIndex(id, 2, localIndex2, chunkIndex2);
         const float lodDensity = saturate(0.5 + sDensity * 4.0);
 
-        StoreByte(DensityBufferLod2 + lodIndex, QuantizeDensity(lodDensity));
-        StoreByte(MaterialBufferLod2 + lodIndex, material);
+        StoreDenByte(localIndex2, chunkIndex2, QuantizeDensity(lodDensity));
+        StoreMatByte(localIndex2, chunkIndex2, material);
     }
 
     if ((id.x & 7) == 0 && (id.y & 7) == 0 && (id.z & 7) == 0) {
-        const uint lodIndex = GetVoxelIndex(id >> 3, 3);
+        uint localIndex3, chunkIndex3;
+        GetVoxelIndex(id, 3, localIndex3, chunkIndex3);
         const float lodDensity = saturate(0.5 + sDensity * 8.0);
 
-        StoreByte(DensityBufferLod3 + lodIndex, QuantizeDensity(lodDensity));
-        StoreByte(MaterialBufferLod3 + lodIndex, material);
+        StoreDenByte(localIndex3, chunkIndex3, QuantizeDensity(lodDensity));
+        StoreMatByte(localIndex3, chunkIndex3, material);
     }
 }
