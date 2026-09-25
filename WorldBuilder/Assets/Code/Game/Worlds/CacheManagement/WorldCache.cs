@@ -25,7 +25,7 @@ namespace Game.Worlds.CacheManagement {
             Manager = manager;
             cacheDirectory = Manager.Storage;
 
-            consumer = new TaskConsumer<CacheWork>();
+            consumer = new TaskConsumer<CacheWork>("World-Cache-" + manager.Name);
             consumer.Init();
         }
 

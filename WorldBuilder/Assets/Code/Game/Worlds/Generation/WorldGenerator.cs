@@ -1,39 +1,38 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 using System.Threading.Tasks;
 using Game.Data;
 using Game.Data.Queues;
-using Game.Worlds.Storage;
+using Unity.Collections;
+using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine;
-using WorldCache = Game.Worlds.CacheManagement.WorldCache;
+using UnityEngine.Rendering;
 
 namespace Game.Worlds.Generation {
-    public class WorldGenerator {
-        
-        private readonly TaskConsumer<Work> consumer;
-        private readonly RegionSerialize serializer = new();
-
-        private WorldManager Manager { get; }
-        private WorldCache Cache => Manager.Cache;
+    public class WorldGenerator : MonoBehaviour {
+        public static WorldGenerator Instance { get; private set; }
         
         private class Work : ITaskGroup<Work> {
-            public int Attempts { get; set; }
             
-            private WorldGenerator generator;
-            private IndexPos regionIndex;
-            private List<Action> listeners = new();
+            public IndexPos Pos { get; }
             private int compare;
 
-            public Work(WorldGenerator generator, IndexPos regionIndex, Action listener) {
-                this.generator = generator;
-                this.regionIndex = regionIndex;
-                listeners.Add(listener);
+            public WorldGenerator Generator { get; }
+            public WorldManager Manager { get; }
+            
+            public int Attempts { get; set; }
+            public bool IsCompleted { get; private set; }
+            private readonly List<TaskListener> listeners;
+
+            public Work(WorldGenerator generator, WorldManager manager, IndexPos pos, TaskListener listener) {
+                Generator = generator;
+                Manager = manager;
+                Pos = pos;
+                listeners = new List<TaskListener> { listener };
             }
 
             public void SetSortValue(IndexPos sort) {
-                var d = regionIndex - sort;
+                var d = Pos - sort;
                 compare = d.x * d.x + d.y * d.y + d.z * d.z;
             }
 
@@ -42,7 +41,7 @@ namespace Game.Worlds.Generation {
             }
 
             public bool Group(Work task) {
-                if (task.regionIndex == regionIndex) {
+                if (task.Pos == Pos) {
                     listeners.AddRange(task.listeners);
                     return true;
                 }
@@ -51,162 +50,130 @@ namespace Game.Worlds.Generation {
             }
 
             public void Execute() {
-                generator.GenerateRegionInternal(regionIndex);
+                Generator.Generate(this);
             }
-
+            
             public void SetSuccess() {
+                IsCompleted = true;
                 foreach (var listener in listeners) {
-                    listener.Invoke();
+                    listener.OnSuccess();
                 }
             }
 
-            public void SetError(Exception e) {
-                Debug.LogError("Failed to generate chunk [" + regionIndex + "]: " + e);
+            public void SetError(Exception message) {
+                IsCompleted = true;
+                foreach (var listener in listeners) {
+                    listener.OnError(message);
+                }
             }
         }
 
-        public WorldGenerator(WorldManager manager) {
-            Manager = manager;
-            consumer = new TaskConsumer<Work>();
-            consumer.Init();
+        
+        [SerializeField] private ComputeShader shader;
+        private ComputeBuffer voxelBuffer;
+        private int generate;
+        
+        private ManualConsumer<Work> consumer;
+        private bool dispose;
+        private static readonly int VoxelBuffer = Shader.PropertyToID("VoxelBuffer");
+        private static readonly int ChunkPos = Shader.PropertyToID("ChunkPos");
+
+        private void Awake() {
+            Instance = this;
+            Init();
+        }
+
+        public void Init() {
+            consumer = new ManualConsumer<Work>("World-Generator");
+            
+            shader = Resources.Load<ComputeShader>("WorldGen");
+            generate = shader.FindKernel("Generate");
+            
+            int voxels = ChunkSoil.Size3D * Region.TotalChunks * 2;
+            voxelBuffer = new ComputeBuffer(voxels / sizeof(uint), sizeof(uint), ComputeBufferType.Raw);
+        }
+
+        public void OnDestroy() {
+            voxelBuffer.Dispose();
+            dispose = true;
+        }
+
+        public void Update() {
+            consumer.Consume();
+        }
+        
+        private void Generate(Work work) {
+            shader.SetBuffer(generate, VoxelBuffer, voxelBuffer);
+            shader.SetVector(ChunkPos, (Vector3)work.Pos);
+
+            var now = DateTime.Now;
+            int size = 8 * 4;
+            shader.Dispatch(generate, size, size, size);
+            
+            AsyncGPUReadback.Request(voxelBuffer, request => {
+                var now2 = DateTime.Now;
+                OnRequestDone(work, request);
+                var now3 = DateTime.Now;
+                Debug.Log("GPU: " + (now2 - now) + " -- CPU: " + (now3 - now2));
+            });
+        }
+
+        private void OnRequestDone(Work work, AsyncGPUReadbackRequest request) {
+            if (dispose) return;
+                
+            if (request.hasError) {
+                work.SetError(new Exception("Failed to generate"));
+                return;
+            }
+
+            try {
+                var data = request.GetData<byte>();
+                int dOffset = 0;
+                int mOffset = data.Length / 2;
+                int len = ChunkSoil.Size3D;
+
+                for (int lod = 0; lod < Region.TotalLods; lod++) {
+                    int count = Region.LodSize3[lod];
+                    var chunks = new Chunk[count];
+
+                    int lodDOffset = dOffset;
+                    int lodMOffset = mOffset;
+
+                    int localLod = lod;
+                    Parallel.For(0, count, i => {
+                        int offset = i * len;
+
+                        var soil = ChunkSoil.CreateFromRaw(
+                            GetPiece(data, lodMOffset + offset, len),
+                            GetPiece(data, lodDOffset + offset, len), null, 64);
+
+                        chunks[i] = new Chunk(work.Pos + Region.GetLocalPosition(localLod, i), localLod, soil, 1);
+                    });
+
+                    dOffset += count * len;
+                    mOffset += count * len;
+
+                    work.Manager.Cache.PutRegion(work.Pos, chunks);
+                }
+
+                work.SetSuccess();
+            } catch (Exception e) {
+                work.SetError(e);
+            }
+        }
+        
+        private ReadOnlySpan<byte> GetPiece(NativeArray<byte> data, int start, int length) {
+            unsafe {
+                return new ReadOnlySpan<byte>((byte*)data.GetUnsafeReadOnlyPtr() + start, length);
+            }
         }
 
         public void SetPriorityCenter(IndexPos center) {
             consumer.SortValue = center;
         }
 
-        public void Dispose() {
-            consumer.Dispose();
-        }
-
-        public void EnqueueRegion(IndexPos regionIndex, Action onGenerated) {
-            consumer.Enqueue(new Work(this, regionIndex, onGenerated));
-        }
-
-        [ThreadStatic] private static byte[] t_matBuffer;
-        [ThreadStatic] private static byte[] t_denBuffer;
-
-        private void GenerateRegionInternal(IndexPos regionIndex) {
-            int totalLod0Chunks = Region.LodSize3[0];
-            int gridDimL0 = Region.LodSize1[0];
-            var lod0Chunks = new Chunk[totalLod0Chunks];
-            
-            Parallel.For(0, gridDimL0, y => {
-                t_matBuffer ??= new byte[ChunkSoil.Size3D];
-                t_denBuffer ??= new byte[ChunkSoil.Size3D];
-
-                for (int z = 0; z < gridDimL0; z++) {
-                    for (int x = 0; x < gridDimL0; x++) {
-                        int index = x + (z * gridDimL0) + (y * gridDimL0 * gridDimL0);
-                        
-                        var pos = new IndexPos(
-                            regionIndex.x + (x * 32),
-                            regionIndex.y + (y * 32),
-                            regionIndex.z + (z * 32)
-                        );
-
-                        var soil = GenerateSoil(pos, t_matBuffer, t_denBuffer);
-                        lod0Chunks[index] = new Chunk(pos, 0, soil, 1);
-                    }
-                }
-            });
-
-            var allLods = BuildAllLodsFromBase(regionIndex, lod0Chunks);
-            
-            Cache.PutRegion(regionIndex, allLods.SelectMany(lod => lod));
-        }
-        
-        private void ExportToFile(IndexPos regionIndex, Chunk[][] allLods) {
-            string path = Manager.Storage + "/" + Region.GenName(regionIndex) + ".region";
-            bool exists = File.Exists(path);
-            
-            var updates = new List<ChunkCacheUpdate>();
-            
-            foreach (var lod in allLods) {
-                foreach (var chunk in lod) {
-                    var update = new ChunkCacheUpdate(chunk.EntryId);
-                    chunk.ExportData(update);
-                    updates.Add(update);
-                }
-            }
-
-            serializer.Save(path, updates.ToArray(), exists);
-        }
-        
-        private Chunk[][] BuildAllLodsFromBase(IndexPos regionIndex, Chunk[] lod0Chunks) {
-            var allChunks = new Chunk[Region.TotalLods][];
-            allChunks[0] = lod0Chunks;
-            
-            var subSetSoilBuffer = new ChunkSoil[512];
-            
-            for (int lod = 1; lod <= Region.MaxLod; lod++) {
-                int lodStep = 1 << lod; // 2, 4, 8
-                int gridDim = Region.LodSize1[lod]; // 4, 2, 1
-                int totalLodChunks = Region.LodSize3[lod]; // 64, 8, 1
-
-                allChunks[lod] = new Chunk[totalLodChunks];
-
-                for (int y = 0; y < gridDim; y++) 
-                for (int z = 0; z < gridDim; z++) 
-                for (int x = 0; x < gridDim; x++) {
-            
-                    int localId = x + (z * gridDim) + (y * gridDim * gridDim);
-                    IndexPos worldPos = regionIndex + Region.GetLocalPosition(lod, localId);
-                    
-                    long maxVersion = FillLodSubBlock(lod0Chunks, subSetSoilBuffer, x, y, z, lodStep);
-
-                    ChunkSoil soil = ChunkSoil.DownsampleFromLod0(subSetSoilBuffer, lodStep);
-
-                    allChunks[lod][localId] = new Chunk(worldPos, lod, soil, maxVersion);
-                }
-            }
-
-            return allChunks;
-        }
-
-        private static long FillLodSubBlock(Chunk[] chunks, ChunkSoil[] targetBuffer, int lodX, int lodY, int lodZ, int lodStep) {
-            int baseChunkX = lodX * lodStep;
-            int baseChunkY = lodY * lodStep;
-            int baseChunkZ = lodZ * lodStep;
-
-            long maxVersion = 0;
-            int idx = 0;
-
-            for (int cy = 0; cy < lodStep; cy++)
-            for (int cz = 0; cz < lodStep; cz++)
-            for (int cx = 0; cx < lodStep; cx++) {
-                int lod0Index = (baseChunkX + cx) | ((baseChunkZ + cz) << 3) | ((baseChunkY + cy) << 6);
-        
-                var chunk = chunks[lod0Index];
-                targetBuffer[idx++] = chunk.Soil;
-
-                if (chunk.CurrentVersion > maxVersion) {
-                    maxVersion = chunk.CurrentVersion;
-                }
-            }
-
-            return maxVersion;
-        }
-        
-        private ChunkSoil GenerateSoil(IndexPos pos, byte[] mat, byte[] den) {
-
-            byte[] palette = {0, 1};
-            int n = 0;
-            for (int y = 0; y < 32; y++) 
-            for (int z = 0; z < 32; z++)
-            for (int x = 0; x < 32; x++) {
-                var p = pos + new IndexPos(x, y, z);
-                if (x >= 8 && x < 24 && y >= 8 && y < 24 && z >= 8 && z < 24) {
-                    den[n] = 14;
-                    mat[n] = 1;
-                } else {
-                    den[n] = 0;
-                    mat[n] = 0;
-                }
-                n++;
-            }
-
-            return ChunkSoil.CreateFromRaw(mat, den, palette, 2);
+        public void EnqueueRegion(WorldManager manager, IndexPos regionIndex, Action onGenerated, Action<Exception> onError = null) {
+            consumer.Enqueue(new Work(this, manager, regionIndex, new TaskListener(onGenerated, onError)));
         }
     }
 }

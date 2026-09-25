@@ -101,6 +101,8 @@ namespace Game.Worlds.CacheManagement {
             listeners = new List<TaskListener> { listener };
         }
 
+        public bool IsCompleted { get; set; }
+
         public void SetSortValue(IndexPos sort) {
             var d = RegionIndex - sort;
             compare = d.x * d.x + d.y * d.y + d.z * d.z;
@@ -115,12 +117,14 @@ namespace Game.Worlds.CacheManagement {
         public abstract void Execute();
 
         public void SetSuccess() {
+            IsCompleted = true;
             foreach (var listener in listeners) {
                 listener.OnSuccess();
             }
         }
 
         public void SetError(Exception message) {
+            IsCompleted = true;
             foreach (var listener in listeners) {
                 listener.OnError(message);
             }

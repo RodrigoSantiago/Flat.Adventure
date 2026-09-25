@@ -29,8 +29,8 @@ namespace Game.Worlds {
         public IndexPos prevViewLod3;
 
         public string Storage { get; }
+        public string Name { get; }
         public WorldCache Cache { get; }
-        public WorldGenerator Generator { get; }
         public WorldBuilder Builder { get; }
         public WorldRender Render { get; }
 
@@ -45,7 +45,8 @@ namespace Game.Worlds {
 
         private float unloadTimer;
         
-        public WorldManager(string storage) {
+        public WorldManager(string name, string storage) {
+            Name = name;
             Storage = storage;
             
             if (!Directory.Exists(storage)) {
@@ -53,7 +54,6 @@ namespace Game.Worlds {
             }
 
             Cache = new WorldCache(this);
-            Generator = new WorldGenerator(this);
             Builder = new WorldBuilder(this);
             Builder.OnChunkLoaded = OnChunkLoaded;
             Builder.OnChunkCorrupted = (pos, lod, err) => {
@@ -79,7 +79,6 @@ namespace Game.Worlds {
         }
 
         public void SaveAndExit() {
-            Generator.Dispose();
             Builder.Cancel();
             
             for (int lod = 0; lod < Region.TotalLods; lod++) {
@@ -99,6 +98,8 @@ namespace Game.Worlds {
             Render.Dispose();
         }
 
+        private Dictionary<IndexPos, GameObject> debViews = new Dictionary<IndexPos, GameObject>();
+
         public void OnChunkLoaded(Chunk chunk) {
             if (!AllChunksData[chunk.Lod].TryGetValue(chunk.Pos, out var chunkData)) {
                 chunkData = new ChunkRenderData(this, chunk);
@@ -109,6 +110,16 @@ namespace Game.Worlds {
                 AnyChunksData[reg]++;
             } else {
                 chunkData.RefreshChunk(chunk);
+            }
+
+            if (GameManager.Instance.debugRegions && !debViews.ContainsKey(chunk.Pos.GetChunkIndex(Region.MaxLod))) {
+                var reg = chunk.Pos.GetChunkIndex(Region.MaxLod);
+                var obj = new GameObject(Region.GenName(reg));
+                var col = obj.AddComponent<BoxCollider>();
+                col.center = new Vector3(128, 128, 128);
+                col.size = new Vector3(256, 256, 256);
+                obj.transform.position = (Vector3)reg;
+                debViews[reg] = obj;
             }
                 
             for (int x = -1; x <= 1; x++)
@@ -138,6 +149,12 @@ namespace Game.Worlds {
         }
 
         public void SetViewPoint(IndexPos point) {
+            if (point.y < 64) {
+                point.y = 64;
+            }
+            if (point.y >= 960) {
+                point.y = 960 - 1;
+            }
             centerPoint = point;
             
             int chunkSize = 32;
@@ -148,6 +165,8 @@ namespace Game.Worlds {
                 center.y < viewCenter.y || center.y >= viewCenter.y + 4 ||
                 center.z < viewCenter.z || center.z >= viewCenter.z + 4) {
                 viewCenter = center.RoundSnapTo(2) - 2;
+                if (viewCenter.y < 2) viewCenter.y = 2;
+                if (viewCenter.y > 26) viewCenter.y = 26;
             }
 
             var lod0 = viewCenter - 2;
@@ -157,14 +176,16 @@ namespace Game.Worlds {
                 lod0.y < viewCenter1.y || lod0.y + 8 > viewCenter1.y + 16 ||
                 lod0.z < viewCenter1.z || lod0.z + 8 > viewCenter1.z + 16) {
                 viewCenter1 = center.RoundSnapTo(8) - 8;
+                if (viewCenter1.y < 0) viewCenter1.y = 0;
+                if (viewCenter1.y > 16) viewCenter1.y = 16;
             }
 
             var lod1 = viewCenter1 - 4;
 
             var viewCenter2 = viewLod2 / chunkSize + 4;
+            viewCenter2.y = -4;
             if (lod1.x < viewCenter2.x || lod1.x + 24 > viewCenter2.x + 48 ||
-                lod1.y < viewCenter2.y || lod1.y + 24 > viewCenter2.y + 48 ||
-                lod1.z < viewCenter2.z || lod1.z + 24 > viewCenter2.z + 48) {
+                lod1.y < viewCenter2.y || lod1.y + 24 > viewCenter2.y + 48) {
                 viewCenter2 = center.RoundSnapTo(24) - 28;
             }
 
@@ -177,11 +198,11 @@ namespace Game.Worlds {
             viewLod3 = viewLod1 - (52 * chunkSize);
             viewLod3.y = viewLod2.y - (chunkSize * 4);
             viewLod3 = viewLod3.RoundSnapTo(256);
-
+            
             lodConfig[0] = new LodConfig(viewLod0, 32, 8, 8, false);
             lodConfig[1] = new LodConfig(viewLod1, 64, 12, 12, false);
-            lodConfig[2] = new LodConfig(viewLod2, 128, 14, 14, false);
-            lodConfig[3] = new LodConfig(viewLod3, 256, 16, 7, true);
+            lodConfig[2] = new LodConfig(viewLod2, 128, 14, 12, false);
+            lodConfig[3] = new LodConfig(viewLod3, 256, 16, 6, true);
         }
 
         public void AddTeleportPoint(int pointId, IndexPos point) {
@@ -195,10 +216,8 @@ namespace Game.Worlds {
         }
 
         public void Update() {
-            var requestChunks = DateTime.Now;
             RequestChunks();
             
-            var delayedQuest = DateTime.Now;
             delayedRequest.UnionWith(delayedRequestTemp);
             delayedRequestTemp.Clear();
             foreach (var request in delayedRequest) {
@@ -206,7 +225,6 @@ namespace Game.Worlds {
             }
             delayedRequest.Clear();
             
-            var renderFrame = DateTime.Now;
             Render.RenderFrame();
 
             if (Time.time - unloadTimer > 3.0f) {
@@ -229,12 +247,7 @@ namespace Game.Worlds {
                 unloadTimer = Time.time;
             }
             
-            var releaseUnused = DateTime.Now;
             ReleaseUnusedChunkData();
-            GameDebug.AddMetric("Request", delayedQuest - requestChunks);
-            GameDebug.AddMetric("Delayed", renderFrame - delayedQuest);
-            GameDebug.AddMetric("Render", releaseUnused - renderFrame);
-            GameDebug.AddMetric("Release", DateTime.Now - releaseUnused);
         }
 
         public void RequestChunks() {
@@ -251,7 +264,7 @@ namespace Game.Worlds {
 
             if (prevCenter != centerPoint) {
                 Cache.SetPriorityCenter(centerPoint);
-                Generator.SetPriorityCenter(centerPoint);
+                GameManager.Instance.WorldGenerator.SetPriorityCenter(centerPoint);
                 GameManager.Instance.MeshGenerator.SetPriorityCenter(centerPoint);
             }
             

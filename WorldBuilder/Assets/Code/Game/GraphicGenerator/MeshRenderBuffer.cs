@@ -9,19 +9,21 @@ using UnityEngine;
 namespace Game.GraphicGenerator {
     public class MeshRenderBuffer : IDisposable {
         private sealed class Group {
-            public GraphicsBuffer SourceBuffer;
-            public MaterialPropertyBlock props = new MaterialPropertyBlock();
-            public List<Command> commands = new();
+            public readonly GraphicsBuffer sourceBuffer;
+            public readonly MaterialPropertyBlock props = new();
+            public readonly List<Command> commands = new();
+
+            public Group(GraphicsBuffer sourceBuffer) {
+                this.sourceBuffer = sourceBuffer;
+            }
         }
 
         private struct Command {
             public ChunkPos posLod;
-            public int elementsOffset;
             public int elementsSize;
 
-            public Command(ChunkPos posLod, int elementsOffset, int elementsSize) {
+            public Command(ChunkPos posLod, int elementsSize) {
                 this.posLod = posLod;
-                this.elementsOffset = elementsOffset;
                 this.elementsSize = elementsSize;
             }
         }
@@ -48,18 +50,19 @@ namespace Game.GraphicGenerator {
         private int argsCapacity;
 
         private RenderParams renderParams;
+        private static readonly int ChunkPosBuffer = Shader.PropertyToID("ChunkPosBuffer");
+        private static readonly int MeshVertexBuffer = Shader.PropertyToID("MeshVertexBuffer");
+        
         public RenderParams Params => renderParams;
 
         public void Begin(RenderParams renderParams) {
             this.renderParams = renderParams;
+            groups.Clear();
         }
 
         public void Add(IndexPos pos, int lod, GraphicsBuffer buffer, int elementsOffset, int elementsSize) {
             if (!groups.TryGetValue(buffer, out var group)) {
-                group = new Group {
-                    SourceBuffer = buffer
-                };
-
+                group = new Group(buffer);
                 groups.Add(buffer, group);
             }
 
@@ -69,7 +72,7 @@ namespace Game.GraphicGenerator {
                lod = (uint)(1 << lod),
                offset = (uint)elementsOffset
             };
-            group.commands.Add(new Command(packed, elementsOffset, elementsSize));
+            group.commands.Add(new Command(packed, elementsSize));
         }
         
         public void Commit() {
@@ -95,11 +98,13 @@ namespace Game.GraphicGenerator {
 
             posLodBuffer.SetData(posLodData, 0, 0, total);
             argsBuffer.SetData(argsData, 0, 0, total);
+        }
 
+        public void Render() {
             int startCommand = 0;
             foreach (Group group in groups.Values) {
-                group.props.SetBuffer("ChunkPosBuffer", posLodBuffer);
-                group.props.SetBuffer("MeshVertexBuffer", group.SourceBuffer);
+                group.props.SetBuffer(ChunkPosBuffer, posLodBuffer);
+                group.props.SetBuffer(MeshVertexBuffer, group.sourceBuffer);
 
                 renderParams.matProps = group.props;
                 
@@ -111,8 +116,6 @@ namespace Game.GraphicGenerator {
                     startCommand);
                 startCommand += group.commands.Count;
             }
-            
-            groups.Clear();
         }
 
         private void EnsurePosLodCapacity(int required) {

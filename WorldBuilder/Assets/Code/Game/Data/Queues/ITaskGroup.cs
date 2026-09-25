@@ -3,6 +3,7 @@ using System;
 namespace Game.Data.Queues {
     public interface ITaskGroup<T> where T : ITaskGroup<T> {
         public int Attempts { get; set; }
+        public bool IsCompleted { get; }
 
         public void SetSortValue(IndexPos sort);
         public int Compare();

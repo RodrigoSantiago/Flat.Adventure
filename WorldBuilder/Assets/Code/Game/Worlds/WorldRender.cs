@@ -26,9 +26,11 @@ namespace Game.Worlds {
 
         private readonly List<RenderCommand> pendingCommands = new ();
         
-        private MeshRenderBuffer visibleRenderBuffer = new();
+        private MeshRenderBuffer completeRenderBuffer = new();
+        private MeshRenderBuffer colorOnlyRenderBuffer = new();
         private MeshRenderBuffer shadowOnlyRenderBuffer = new();
-        private RenderParams visibleRenderParams;
+        private RenderParams completeRenderParams;
+        private RenderParams colorOnlyRenderParams;
         private RenderParams shadowOnlyRenderParams;
 
         public WorldRender(WorldManager worldManager) {
@@ -39,7 +41,8 @@ namespace Game.Worlds {
         }
 
         public void Dispose() {
-            visibleRenderBuffer.Dispose();
+            completeRenderBuffer.Dispose();
+            colorOnlyRenderBuffer.Dispose();
             shadowOnlyRenderBuffer.Dispose();
         }
 
@@ -68,22 +71,31 @@ namespace Game.Worlds {
                             cam.nearClipPlane,
                             cachedShadowDistance
                         ) * cam.worldToCameraMatrix, frustumShadowPlanes[i]);
-                    ExpandFrustum(frustumShadowPlanes[i], (32 << i) * 1.5f);
+                    ExpandFrustum(frustumShadowPlanes[i], (32 << i));
                 }
             }
-
-            visibleRenderParams = new RenderParams(GameManager.Instance.MeshGenerator.GroundMaterial) {
-                layer = 0,
+            
+            int terrainLayer = LayerMask.NameToLayer("TerrainChunk");
+            completeRenderParams = new RenderParams(GameManager.Instance.MeshGenerator.GroundMaterial) {
+                layer = terrainLayer,
                 receiveShadows = true,
-                shadowCastingMode = cachedShadowDistance == 0 ? ShadowCastingMode.Off : ShadowCastingMode.On,
+                shadowCastingMode = ShadowCastingMode.On,
                 worldBounds = new Bounds(Vector3.zero, Vector3.one * 100000)
             };
-            visibleRenderBuffer.Begin(visibleRenderParams);
+            completeRenderBuffer.Begin(completeRenderParams);
+            
+            colorOnlyRenderParams = new RenderParams(GameManager.Instance.MeshGenerator.GroundMaterial) {
+                layer = terrainLayer,
+                receiveShadows = true,
+                shadowCastingMode = ShadowCastingMode.Off,
+                worldBounds = new Bounds(Vector3.zero, Vector3.one * 100000)
+            };
+            colorOnlyRenderBuffer.Begin(colorOnlyRenderParams);
 
             shadowOnlyRenderParams = new RenderParams(GameManager.Instance.MeshGenerator.DummyMaterial) {
-                layer = 0,
+                layer = terrainLayer,
                 receiveShadows = false,
-                shadowCastingMode = ShadowCastingMode.ShadowsOnly,
+                shadowCastingMode = GameManager.Instance.debugShadow ? ShadowCastingMode.On : ShadowCastingMode.ShadowsOnly,
                 worldBounds = new Bounds(Vector3.zero, Vector3.one * 100000)
             };
             shadowOnlyRenderBuffer.Begin(shadowOnlyRenderParams);
@@ -105,9 +117,18 @@ namespace Game.Worlds {
                     DrawChunk(cmd.chunk, cmd.pos, cmd.visibility);
                 }
             }
-            visibleRenderBuffer.Commit();
+            completeRenderBuffer.Commit();
+            colorOnlyRenderBuffer.Commit();
             shadowOnlyRenderBuffer.Commit();
-            
+            completeRenderBuffer.Render();
+            if (GameManager.Instance.terrainColorOnly) {
+                colorOnlyRenderBuffer.Render();
+            }
+
+            if (GameManager.Instance.terrainShadow) {
+                shadowOnlyRenderBuffer.Render();
+            }
+
             pendingCommands.Clear();
         }
 
@@ -121,7 +142,7 @@ namespace Game.Worlds {
             for (int z = 0; z < config.Size; z++)
             for (int x = 0; x < config.Size; x++) {
                 var pos = config.ViewLod + new IndexPos(x, y, z) * size;
-                if (!config.IsInside(pos)) continue;
+                if (pos.y >= Region.MaxHeight || !config.IsInside(pos)) continue;
                 
                 CollectRegion(lod, pos, tempCollectChunks);
             }
@@ -228,13 +249,22 @@ namespace Game.Worlds {
         private enum RenderVisibility {
             Hidden,
             ShadowOnly,
-            VisibleInFrustum
+            ColorOnly,
+            Complete
         }
 
         private RenderVisibility EvaluateVisibility(Vector3 center, Vector3 size, int lod) {
-            if (!GameManager.Instance.frustumOcclusion || 
-                GeometryUtility.TestPlanesAABB(frustumPlanes, new Bounds(center, size))) {
-                return RenderVisibility.VisibleInFrustum;
+            if (!GameManager.Instance.frustumOcclusion) return RenderVisibility.Complete;
+
+            var bounds = new Bounds(center, size);
+            if (GeometryUtility.TestPlanesAABB(frustumPlanes, bounds)) {
+                if (cachedShadowDistance > 0f) {
+                    if (RayIntersectsFrustum(center, lightDir, frustumShadowPlanes[lod])) {
+                        return RenderVisibility.Complete;
+                    }
+                }
+
+                return RenderVisibility.ColorOnly;
             }
 
             if (cachedShadowDistance > 0f) {
@@ -257,7 +287,7 @@ namespace Game.Worlds {
                 float denominator = Vector3.Dot(normal, direction);
                 float originDistance = Vector3.Dot(normal, origin) + planeDistance;
 
-                if (Mathf.Abs(denominator) < 1e-6f) {
+                if (denominator > -1e-6f && denominator < 1e-6f) {
                     if (originDistance < 0f) {
                         return false;
                     }
@@ -294,14 +324,21 @@ namespace Game.Worlds {
             if (chunk.IsEmpty) return;
             if (chunk.SoilMesh == null) {
                 var matrix = Matrix4x4.TRS((Vector3)pos, Quaternion.identity, Vector3.one * (1 << chunk.Lod));
-                if (visibility == RenderVisibility.VisibleInFrustum) {
-                    Graphics.RenderMesh(visibleRenderParams, GameManager.Instance.smallCube, 0, matrix);
+                if (visibility == RenderVisibility.Complete) {
+                    Graphics.RenderMesh(completeRenderParams, GameManager.Instance.smallCube, 0, matrix);
                 } else if (visibility == RenderVisibility.ShadowOnly) {
                     Graphics.RenderMesh(shadowOnlyRenderParams, GameManager.Instance.smallCube, 0, matrix);
                 }
             } else {
-                if (visibility == RenderVisibility.VisibleInFrustum) {
-                    chunk.SoilMesh.Render(visibleRenderBuffer);
+                if (visibility == RenderVisibility.Complete) {
+                    chunk.SoilMesh.Render(completeRenderBuffer);
+                } else if (visibility == RenderVisibility.ColorOnly) {
+
+                    if (GameManager.Instance.terrainColorOnly) {
+                        chunk.SoilMesh.Render(colorOnlyRenderBuffer);
+                    } else {
+                        chunk.SoilMesh.Render(completeRenderBuffer);
+                    }
                 } else if (visibility == RenderVisibility.ShadowOnly) {
                     chunk.SoilMesh.Render(shadowOnlyRenderBuffer);
                 }

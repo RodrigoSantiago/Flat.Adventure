@@ -8,6 +8,11 @@ namespace Game.Data.Queues {
         private volatile bool running;
         private Thread localThread;
         private readonly TaskQueue<T> queue = new();
+        private string name;
+
+        public TaskConsumer(string name) {
+            this.name = name;
+        }
 
         public IndexPos SortValue {
             get => queue.SortValue;
@@ -21,7 +26,9 @@ namespace Game.Data.Queues {
                 running = true;
                 
                 localThread = new Thread(QueueLoop) {
-                    IsBackground = true
+                    IsBackground = true,
+                    Priority = ThreadPriority.Lowest,
+                    Name = name
                 };
                 localThread.Start();
             }

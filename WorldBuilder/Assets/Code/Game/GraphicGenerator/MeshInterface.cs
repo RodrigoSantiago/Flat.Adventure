@@ -25,7 +25,6 @@ namespace Game.GraphicGenerator {
         public Mesh Mesh { get; private set; }
         public bool IsEmpty { get; private set; }
         
-        private MaterialPropertyBlock propertyBlock;
         private Allocation<GraphicsBuffer> allocation;
         private int elements;
 
@@ -78,18 +77,11 @@ namespace Game.GraphicGenerator {
                 UnityEngine.Object.Destroy(Mesh);
                 Mesh = null;
             }
-
-            propertyBlock = null;
         }
         
         private void ComposeBuffer(ComputeShader shader, int kernel, int vertexCount, int index) {
             elements = vertexCount;
             allocation = GraphicsBufferAllocator.Allocator.Alloc(elements);
-            
-            propertyBlock = new MaterialPropertyBlock();
-            propertyBlock.SetBuffer(MeshVertexBuffer, allocation.Source);
-            propertyBlock.SetVector(ChunkPos, new Vector4(pos.x, pos.y, pos.z, 1 << lod));
-            propertyBlock.SetInt(BufferOffset, allocation.Index);
 
             shader.SetBuffer(kernel, BufferVertexBuffer, allocation.Source);
             shader.SetInt(BufferOffset, allocation.Index);
@@ -133,16 +125,17 @@ namespace Game.GraphicGenerator {
             }
         }
         
-        public void Recreate(byte[] data) {
-            if (data == null || data.Length == 0) return;
-
-            Dispose();
+        private void Recreate(byte[] data) {
+            if (data == null || data.Length == 0) 
+                throw new ArgumentException("Invalid Data", nameof(data));
 
             if (data.Length == 1) {
                 IsEmpty = true;
             } else if (Native) {
+                if (!IsBuffer(data)) throw new ArgumentException("Invalid Buffer Data", nameof(data));
                 RecreateBuffer(data);
             } else {
+                if (IsBuffer(data)) throw new ArgumentException("Invalid Mesh Data", nameof(data));
                 RecreateMesh(data);
             }
         }
@@ -154,18 +147,7 @@ namespace Game.GraphicGenerator {
             elements = data.Length / BufferStride;
             allocation = GraphicsBufferAllocator.Allocator.Alloc(elements);
             
-            var values = MemoryMarshal.Cast<byte, uint4>(data).ToArray();
-            allocation.Source.SetData(
-                values,
-                0, 
-                allocation.Index,
-                allocation.Count
-            );
-
-            propertyBlock = new MaterialPropertyBlock();
-            propertyBlock.SetBuffer(MeshVertexBuffer, allocation.Source);
-            propertyBlock.SetVector(ChunkPos, new Vector4(pos.x, pos.y, pos.z, 1 << lod));
-            propertyBlock.SetInt(BufferOffset, allocation.Index);
+            allocation.Source.SetData(data, 0, allocation.Index * BufferStride, allocation.Count * BufferStride);
         }
 
         private void RecreateMesh(byte[] data) {
@@ -223,14 +205,7 @@ namespace Game.GraphicGenerator {
         private void RenderBuffer(MeshRenderBuffer renderBuffer) {
             if (allocation == null) return;
 
-            /*var renderParams = renderBuffer.Params;
-            renderParams.matProps = propertyBlock;
-            renderParams.worldBounds = new Bounds(
-                new Vector3(16, 16, 16) * (1 << lod) + (Vector3)pos,
-                new Vector3(32, 32, 32) * (1 << lod)
-            );
-
-            Graphics.RenderPrimitives(renderParams, MeshTopology.Triangles, elements);*/
+            // Graphics.RenderPrimitives(renderParams, MeshTopology.Triangles, elements);
             renderBuffer.Add(pos, lod, allocation.Source, allocation.Index, allocation.Count);
         }
         
@@ -317,6 +292,43 @@ namespace Game.GraphicGenerator {
             allocation.Source.GetData(data, 0, allocation.Index * BufferStride, allocation.Count * BufferStride);
 
             return data;
+        }
+        
+        private static bool IsBuffer(byte[] data) {
+            if (data.Length < BufferStride * 3) return false;
+            if (data.Length % BufferStride != 0) return false;
+
+            uint v0x = BitConverter.ToUInt32(data, 0);
+            uint v0y = BitConverter.ToUInt32(data, 4);
+
+            uint v1x = BitConverter.ToUInt32(data, 16);
+            uint v1y = BitConverter.ToUInt32(data, 20);
+
+            uint v2x = BitConverter.ToUInt32(data, 32);
+            uint v2y = BitConverter.ToUInt32(data, 36);
+
+            float3 p0 = DecodePosition(v0x, v0y);
+            float3 p1 = DecodePosition(v1x, v1y);
+            float3 p2 = DecodePosition(v2x, v2y);
+
+            float3 e1 = p1 - p0;
+            float3 e2 = p2 - p0;
+
+            float3 cross = math.cross(e1, e2);
+
+            return math.lengthsq(cross) > 0.000001f;
+        }
+
+        private static float3 DecodePosition(uint data0, uint data1) {
+            return new float3(
+                DecodePosition(data0 & 0xFFFF),
+                DecodePosition(data0 >> 16),
+                DecodePosition(data1 & 0xFFFF)
+            );
+        }
+
+        private static float DecodePosition(uint value) {
+            return value * (32.0f / 65535.0f);
         }
     }
 }

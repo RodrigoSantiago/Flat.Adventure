@@ -8,6 +8,7 @@ using Game.DebugUtils;
 using Game.Entities.Player;
 using Game.GraphicGenerator;
 using Game.Worlds;
+using Game.Worlds.Generation;
 using UnityEngine;
 
 namespace Game {
@@ -24,6 +25,10 @@ namespace Game {
 
         [SerializeField] private ChunkMeshGenerator meshGenerator;
         public ChunkMeshGenerator MeshGenerator => meshGenerator;
+
+        [SerializeField] private WorldGenerator generator;
+        public WorldGenerator WorldGenerator => generator;
+        
         [SerializeField] private Camera playerCamera;
         public Camera PlayerCamera => playerCamera;
 
@@ -32,6 +37,9 @@ namespace Game {
 
         public bool frustumOcclusion;
         public bool terrainShadow = true;
+        public bool terrainColorOnly = true;
+        public bool debugShadow = false;
+        public bool debugRegions = false;
         public bool[] controlRender = new bool[4];
         public Mesh smallCube;
         public Material smallCubeMat;
@@ -50,7 +58,7 @@ namespace Game {
             GameData.Instance.players.Add(0, new PlayerData());
             
             // Setup WorldManagers
-            overWorld = new WorldManager(Application.persistentDataPath + "/OverWorld");
+            overWorld = new WorldManager("OverWorld", Application.persistentDataPath + "/OverWorld");
             overWorld.SetViewPoint(new IndexPos(0, 0, 0));
             
             // Setup Player
@@ -61,19 +69,10 @@ namespace Game {
             }
         }
 
-        private int a = 0;
         public void Update() {
-            var syncs = DateTime.Now;
             ExecuteSyncQueue();
-            var tasks = DateTime.Now;
             ExecuteTaskQueue(1000 / GameSpeed);
-            GameDebug.AddMetric("Syncs", tasks - syncs);
-            GameDebug.AddMetric("Tasks", DateTime.Now - tasks);
             overWorld.Update();
-            if (++a == 10) {
-                GameDebug.LodMetrics();
-                a = 0;
-            }
         }
 
         public void OnDestroy() {

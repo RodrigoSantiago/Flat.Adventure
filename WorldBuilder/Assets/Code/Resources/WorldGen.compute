@@ -1,0 +1,105 @@
+#pragma kernel Generate
+
+RWStructuredBuffer<uint> VoxelBuffer;
+
+#define CHUNK_SIZE (32 * 32 * 32)
+#define CHUNK_SIZE_LOD0 (CHUNK_SIZE * 8 * 8 * 8)
+#define CHUNK_SIZE_LOD1 (CHUNK_SIZE * 4 * 4 * 4)
+#define CHUNK_SIZE_LOD2 (CHUNK_SIZE * 2 * 2 * 2)
+#define CHUNK_SIZE_LOD3 (CHUNK_SIZE)
+
+#define DensityBufferLod0 (0)
+#define DensityBufferLod1 (CHUNK_SIZE_LOD0 + DensityBufferLod0)
+#define DensityBufferLod2 (CHUNK_SIZE_LOD1 + DensityBufferLod1)
+#define DensityBufferLod3 (CHUNK_SIZE_LOD2 + DensityBufferLod2)
+#define MaterialBufferLod0 (CHUNK_SIZE_LOD3 + DensityBufferLod3)
+#define MaterialBufferLod1 (CHUNK_SIZE_LOD0 + MaterialBufferLod0)
+#define MaterialBufferLod2 (CHUNK_SIZE_LOD1 + MaterialBufferLod1)
+#define MaterialBufferLod3 (CHUNK_SIZE_LOD2 + MaterialBufferLod2)
+
+uint4 BufferStride;
+float4 ChunkPos;
+
+uint QuantizeDensity(float value) {
+    if (value <= 0.00) return 0;
+    if (value < 0.50) return min(4, (uint)round(value * 10.0));
+    if (value <= 1.00) return 5 + clamp((int)round((value - 0.55) * 20.0), 0, 9);
+    return 15;
+}
+
+static const float CubeDensity[] = {
+    0.00, 0.10, 0.20, 0.30, 0.40,
+    0.55, 0.60, 0.65, 0.70, 0.75,
+    0.80, 0.85, 0.90, 0.95, 1.00, 2.00 // [Special Case]
+};
+
+uint GetVoxelIndex(uint3 pos, uint lod) {
+    uint localIndex = pos.x % 32
+                    + pos.z % 32 * 32
+                    + pos.y % 32 * 1024;
+    
+    uint chunkIndex = pos.x / 32
+                    + pos.z / 32 * (8 >> lod)
+                    + pos.y / 32 * (8 >> lod) * (8 >> lod);
+    
+    return localIndex + (chunkIndex * CHUNK_SIZE);
+}
+
+void StoreByte(uint byteIndex, uint value) {
+    const uint address = (byteIndex / 4);
+    const uint byteOffset = (byteIndex % 4) * 8;
+    
+    const uint clearMask = ~(0xFFu << byteOffset);
+    const uint shiftedValue = (value & 0xFFu) << byteOffset;
+    
+    InterlockedAnd(VoxelBuffer[address], clearMask);
+    InterlockedOr(VoxelBuffer[address], shiftedValue);
+}
+
+[numthreads(8, 8, 8)]
+void Generate(uint3 id : SV_DispatchThreadID) {
+    const uint3 pos = id + (uint3)ChunkPos.xyz;
+    const uint voxelIndex = GetVoxelIndex(id, 0);
+    
+    float density = 0.0;
+    uint material = 0;
+
+    if (
+        pos.x % 32 >= 8 && pos.x % 32 < 24 &&
+        pos.y % 32 >= 8 && pos.y % 32 < 24 &&
+        pos.z % 32 >= 8 && pos.z % 32 < 24
+    ) {
+        density = 1.0;
+        material = 1;
+    }
+
+    const uint densityQuantized = QuantizeDensity(density);
+    StoreByte(DensityBufferLod0 + voxelIndex, densityQuantized);
+    StoreByte(MaterialBufferLod0 + voxelIndex, material);
+
+    const float sDensity = CubeDensity[densityQuantized] - 0.5;
+    
+    if ((id.x & 1) == 0 && (id.y & 1) == 0 && (id.z & 1) == 0) {
+        const uint lodIndex = GetVoxelIndex(id >> 1, 1);
+        const float lodDensity = saturate(0.5 + sDensity * 2.0);
+
+        StoreByte(DensityBufferLod1 + lodIndex, QuantizeDensity(lodDensity));
+        StoreByte(MaterialBufferLod1 + lodIndex, material);
+    }
+
+    if ((id.x & 3) == 0 && (id.y & 3) == 0 && (id.z & 3) == 0) {
+        const uint lodIndex = GetVoxelIndex(id >> 2, 2);
+        const float lodDensity = saturate(0.5 + sDensity * 4.0);
+
+        StoreByte(DensityBufferLod2 + lodIndex, QuantizeDensity(lodDensity));
+        StoreByte(MaterialBufferLod2 + lodIndex, material);
+    }
+
+    if ((id.x & 7) == 0 && (id.y & 7) == 0 && (id.z & 7) == 0) {
+        const uint lodIndex = GetVoxelIndex(id >> 3, 3);
+        const float lodDensity = saturate(0.5 + sDensity * 8.0);
+
+        StoreByte(DensityBufferLod3 + lodIndex, QuantizeDensity(lodDensity));
+        StoreByte(MaterialBufferLod3 + lodIndex, material);
+    }
+}

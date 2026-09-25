@@ -18,7 +18,6 @@ namespace Game.Worlds {
         
         private WorldManager Manager { get; }
         private WorldCache Cache => Manager.Cache;
-        private WorldGenerator Generator => Manager.Generator;
 
         public WorldBuilder(WorldManager manager) {
             Manager = manager;
@@ -140,7 +139,7 @@ namespace Game.Worlds {
                 requests[regionPos] = request;
 
                 // If network => request.requiredChunks
-                Generator.EnqueueRegion(regionIndex, () => {
+                WorldGenerator.Instance.EnqueueRegion(Manager, regionIndex, () => {
                     GameManager.Instance.RunTask(() => OnRequestDone(request, false));
                 });
             }

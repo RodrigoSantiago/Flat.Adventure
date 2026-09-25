@@ -298,7 +298,14 @@ namespace Game.GraphicGenerator {
 						} else {
 							ResetMeshBuffers();	
 						}
-						mesh.Compose(shader, buildMesh, buildBuffer, vertexCount, index);
+
+						try {
+							mesh.Compose(shader, buildMesh, buildBuffer, vertexCount, index);
+						} catch (Exception e) {
+							Debug.LogError(e);
+							action?.Invoke(null);
+							return;
+						}
 						
 						action?.Invoke(mesh);
 					}

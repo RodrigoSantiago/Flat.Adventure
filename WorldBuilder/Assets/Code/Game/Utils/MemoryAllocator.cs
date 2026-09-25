@@ -66,6 +66,7 @@ namespace Game.Utils {
         
         private readonly List<Bucket> buckets = new ();
         private readonly Node[] bins = new Node[MaxBinCount];
+        private bool dispose;
         
         public MemoryAllocator(Func<int, T> factory, int minCapacity, int maxCapacity) {
             if (minCapacity <= 0)
@@ -83,7 +84,7 @@ namespace Game.Utils {
         }
 
         public Allocation<T> Alloc(int elements) {
-            if (elements <= 0 || elements > maxCapacity) return default;
+            if (elements <= 0 || elements > maxCapacity || dispose) return default;
 
             int alignedSize = GetAlignedCount(elements);
             bool p2 = (alignedSize & (alignedSize - 1)) == 0;
@@ -122,7 +123,7 @@ namespace Game.Utils {
         }
 
         public void Free(Allocation<T> allocation) {
-            if (allocation.Node is not Node node || node.owner != this || node.free) return;
+            if (dispose || allocation.Node is not Node node || node.owner != this || node.free) return;
             
             node.free = true;
             node.bucket.freeSpace += node.count;
@@ -234,6 +235,8 @@ namespace Game.Utils {
             foreach (var bucket in buckets) {
                 bucket.source.Dispose();
             }
+
+            dispose = true;
         }
 
         private int GetAlignedCount(int elements) {

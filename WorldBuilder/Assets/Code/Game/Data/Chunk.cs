@@ -1,5 +1,6 @@
 using System;
 using Game.GraphicGenerator;
+using UnityEngine;
 using UnityEngine.Rendering;
 
 namespace Game.Data {
@@ -125,6 +126,7 @@ namespace Game.Data {
                     SoilMesh = new MeshInterface(Pos, Lod, SoilMeshTempData);
                     SoilMesh.AddReference();
                 } catch (Exception e) {
+                    Debug.LogError(e);
                     return false;
                 } finally {
                     SoilMeshTempData = null;
