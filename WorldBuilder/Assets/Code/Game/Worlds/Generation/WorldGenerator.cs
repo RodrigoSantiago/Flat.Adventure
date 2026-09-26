@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Game.Data;
 using Game.Data.Queues;
+using Game.Worlds.Exceptions;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine;
@@ -71,7 +72,7 @@ namespace Game.Worlds.Generation {
 
         const int CHUNK_SIZE_DEN = 16388;
         const int CHUNK_SIZE_MAT = 24580;
-        const int MAT_OFFSET = (585 * CHUNK_SIZE_DEN);
+        const int CHUNK_SIZE = CHUNK_SIZE_DEN + CHUNK_SIZE_MAT;
         
         [SerializeField] private ComputeShader shader;
         private ComputeBuffer voxelBuffer;
@@ -94,7 +95,7 @@ namespace Game.Worlds.Generation {
             shader = Resources.Load<ComputeShader>("WorldGen");
             generate = shader.FindKernel("Generate");
             
-            int voxels = 585 * CHUNK_SIZE_DEN + 585 * CHUNK_SIZE_MAT;
+            int voxels = 585 * CHUNK_SIZE;
             voxelBuffer = new ComputeBuffer(voxels / sizeof(uint), sizeof(uint), ComputeBufferType.Raw);
         }
 
@@ -106,64 +107,79 @@ namespace Game.Worlds.Generation {
         public void Update() {
             consumer.Consume();
         }
+
+        private List<Chunk> requestChunks = new();
         
         private void Generate(Work work) {
+            requestChunks.Clear();
+            
             shader.SetBuffer(generate, VoxelBuffer, voxelBuffer);
             shader.SetVector(ChunkPos, (Vector3)work.Pos);
-
-            var now = DateTime.Now;
-            int size = 8 * 4;
-            shader.Dispatch(generate, size, size, size);
-            
-            AsyncGPUReadback.Request(voxelBuffer, request => {
-                var now2 = DateTime.Now;
-                OnRequestDone(work, request);
-                var now3 = DateTime.Now;
-                Debug.Log("GPU: " + (now2 - now) + " -- CPU: " + (now3 - now2));
-            });
+            Request(work, 0);
         }
 
-        private void OnRequestDone(Work work, AsyncGPUReadbackRequest request) {
-            if (dispose) return;
-                
+        private void Request(Work work, int piece) {
+            shader.SetVector(IndexPos, new Vector4(0, piece * 32, 0));
+            shader.Dispatch(generate, 8 * 4, 4, 8 * 4);
+
+            if (piece < 7) {
+                AsyncGPUReadback.Request(voxelBuffer, 
+                    CHUNK_SIZE * (64), 
+                    CHUNK_SIZE * (64 * piece), 
+                    request => { OnRequestDone(work, request, piece); });
+            } else {
+                AsyncGPUReadback.Request(voxelBuffer, 
+                    CHUNK_SIZE * (64 + 64 + 8 + 1), 
+                    CHUNK_SIZE * (64 * piece), 
+                    request => { OnRequestDone(work, request, piece); });
+            }
+        }
+
+        private void OnRequestDone(Work work, AsyncGPUReadbackRequest request, int piece) {
+            if (dispose) {
+                requestChunks.Clear();
+                work.SetError(new CacheCancelled());
+                return;
+            }
+            
             if (request.hasError) {
+                requestChunks.Clear();
                 work.SetError(new Exception("Failed to generate"));
                 return;
             }
 
             try {
                 var data = request.GetData<byte>();
-                int dOffset = 0;
-                int mOffset = MAT_OFFSET;
+                int chunkOffset = piece * 64;
+                int count = piece < 7 ? 64 : 64 + 64 + 8 + 1;
+                
+                Parallel.For(0, count, i => {
+                    int offset = i * CHUNK_SIZE;
+                    var den = GetPiece(data, offset, CHUNK_SIZE_DEN).ToArray();
+                    var mat = GetPiece(data, offset + CHUNK_SIZE_DEN, CHUNK_SIZE_MAT).ToArray();
+                    den[0] = 3;
+                    mat[0] = 4;
 
-                for (int lod = 0; lod < Region.TotalLods; lod++) {
-                    int count = Region.LodSize3[lod];
-                    var chunks = new Chunk[count];
-
-                    int lodDOffset = dOffset;
-                    int lodMOffset = mOffset;
-
-                    int localLod = lod;
-                    Parallel.For(0, count, i => {
-                        int offsetD = i * CHUNK_SIZE_DEN;
-                        int offsetM = i * CHUNK_SIZE_MAT;
-                        var den = GetPiece(data, lodDOffset + offsetD, CHUNK_SIZE_DEN).ToArray();
-                        var mat = GetPiece(data, lodMOffset + offsetM, CHUNK_SIZE_MAT).ToArray();
-                        den[0] = 3;
-                        mat[0] = 4;
-                        
-                        var soil = new ChunkSoil(den, mat);
-                        chunks[i] = new Chunk(work.Pos + Region.GetLocalPosition(localLod, i), localLod, soil, 1);
-                    });
-
-                    dOffset += count * CHUNK_SIZE_DEN;
-                    mOffset += count * CHUNK_SIZE_MAT;
-
-                    work.Manager.Cache.PutRegion(work.Pos, chunks);
+                    int chunkIndex = chunkOffset + i;
+                    int lod = Region.GetLod(chunkIndex);
+                    var pos = Region.GetLocalPosition(lod, Region.GetLocalGroupId(chunkIndex));
+                    var soil = new ChunkSoil(den, mat);
+                    var chunk = new Chunk(work.Pos + pos, lod, soil, 1);
+                    
+                    lock (requestChunks) {
+                        requestChunks.Add(chunk);
+                    }
+                });
+                
+                if (piece < 7) {
+                    Request(work, piece + 1);
+                } else {
+                    work.Manager.Cache.PutRegion(work.Pos, requestChunks);
+                    requestChunks.Clear();
+                    work.SetSuccess();
                 }
-
-                work.SetSuccess();
             } catch (Exception e) {
+                requestChunks.Clear();
                 work.SetError(e);
             }
         }

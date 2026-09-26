@@ -4,10 +4,11 @@ RWStructuredBuffer<uint> VoxelBuffer;
 
 #define CHUNK_SIZE_DEN (16388 / 4)
 #define CHUNK_SIZE_MAT (24580 / 4)
-#define MAT_OFFSET (585 * CHUNK_SIZE_DEN)
+#define CHUNK_SIZE (CHUNK_SIZE_DEN + CHUNK_SIZE_MAT)
 
 uint4 BufferStride;
 float4 ChunkPos;
+float4 IndexPos;
 
 uint QuantizeDensity(float value) {
     if (value <= 0.00) return 0;
@@ -37,7 +38,7 @@ void GetVoxelIndex(uint3 pos, uint lod, out uint localIndex, out uint chunkIndex
 }
 
 void StoreDenByte(uint localIndex, uint chunkIndex, uint val) {
-    const uint chunkAddress = CHUNK_SIZE_DEN * chunkIndex;
+    const uint chunkAddress = CHUNK_SIZE * chunkIndex;
     const uint bitOffset = 8 + localIndex * 4;
 
     const uint address = chunkAddress + bitOffset / 32;
@@ -65,7 +66,7 @@ void StoreDenByte(uint localIndex, uint chunkIndex, uint val) {
 }
 
 void StoreMatByte(uint localIndex, uint chunkIndex, uint val) {
-    const uint chunkAddress = MAT_OFFSET + CHUNK_SIZE_MAT * chunkIndex;
+    const uint chunkAddress = CHUNK_SIZE_DEN + CHUNK_SIZE * chunkIndex;
     const uint bitOffset = 8 + localIndex * 6;
 
     const uint address = chunkAddress + bitOffset / 32;
@@ -135,22 +136,21 @@ void StoreMatByte(uint localIndex, uint chunkIndex, uint val) {
 
 [numthreads(8, 8, 8)]
 void Generate(uint3 id : SV_DispatchThreadID) {
-    const uint3 pos = id + (uint3)ChunkPos.xyz;
+    const uint3 idx = id + IndexPos.xyz;
+    const uint3 pos = idx + (uint3)ChunkPos.xyz;
     
     uint localIndex0, chunkIndex0;
-    GetVoxelIndex(id, 0, localIndex0, chunkIndex0);
+    GetVoxelIndex(idx, 0, localIndex0, chunkIndex0);
     
-    float density = 0.0;
-    uint material = 0;
+    float height = 500.0
+             + sin(pos.x * 0.02) * 20.0
+             + cos(pos.z * 0.02) * 20.0;
 
-    if (
-        pos.x % 32 >= 8 && pos.x % 32 < 24 &&
-        pos.y % 32 >= 8 && pos.y % 32 < 24 &&
-        pos.z % 32 >= 8 && pos.z % 32 < 24
-    ) {
-        density = 1.0;
-        material = 1;
-    }
+    float distance = height - pos.y;
+    float density = 0.5 + distance;
+    density = clamp(density, 0.0, 1.0);
+
+    uint material = density > 0 ? 1 : 0;
 
     const uint densityQuantized = QuantizeDensity(density);
     StoreDenByte(localIndex0, chunkIndex0, densityQuantized);
@@ -158,27 +158,27 @@ void Generate(uint3 id : SV_DispatchThreadID) {
 
     const float sDensity = CubeDensity[densityQuantized] - 0.5;
     
-    if ((id.x & 1) == 0 && (id.y & 1) == 0 && (id.z & 1) == 0) {
+    if ((idx.x & 1) == 0 && (idx.y & 1) == 0 && (idx.z & 1) == 0) {
         uint localIndex1, chunkIndex1;
-        GetVoxelIndex(id, 1, localIndex1, chunkIndex1);
+        GetVoxelIndex(idx, 1, localIndex1, chunkIndex1);
         const float lodDensity = saturate(0.5 + sDensity * 2.0);
 
         StoreDenByte(localIndex1, chunkIndex1, QuantizeDensity(lodDensity));
         StoreMatByte(localIndex1, chunkIndex1, material);
     }
 
-    if ((id.x & 3) == 0 && (id.y & 3) == 0 && (id.z & 3) == 0) {
+    if ((idx.x & 3) == 0 && (idx.y & 3) == 0 && (idx.z & 3) == 0) {
         uint localIndex2, chunkIndex2;
-        GetVoxelIndex(id, 2, localIndex2, chunkIndex2);
+        GetVoxelIndex(idx, 2, localIndex2, chunkIndex2);
         const float lodDensity = saturate(0.5 + sDensity * 4.0);
 
         StoreDenByte(localIndex2, chunkIndex2, QuantizeDensity(lodDensity));
         StoreMatByte(localIndex2, chunkIndex2, material);
     }
 
-    if ((id.x & 7) == 0 && (id.y & 7) == 0 && (id.z & 7) == 0) {
+    if ((idx.x & 7) == 0 && (idx.y & 7) == 0 && (idx.z & 7) == 0) {
         uint localIndex3, chunkIndex3;
-        GetVoxelIndex(id, 3, localIndex3, chunkIndex3);
+        GetVoxelIndex(idx, 3, localIndex3, chunkIndex3);
         const float lodDensity = saturate(0.5 + sDensity * 8.0);
 
         StoreDenByte(localIndex3, chunkIndex3, QuantizeDensity(lodDensity));

@@ -1102,8 +1102,8 @@ MonoBehaviour:
   terrainShadow: 1
   terrainColorOnly: 1
   debugShadow: 0
-  debugRegions: 0
-  controlRender: 01000000
+  debugRegions: 1
+  controlRender: 01010101
   smallCube: {fileID: -5495902117074765545, guid: b119ab35f8139e24ca8992b513bf3ac4, type: 3}
   smallCubeMat: {fileID: 2100000, guid: 8d95cd43bdf1e734a96e383c59e2fe75, type: 2}
   DebugChunkPosition: 0

@@ -98,6 +98,7 @@ namespace Game.Worlds {
             Render.Dispose();
         }
 
+        private GameObject deb;
         private Dictionary<IndexPos, GameObject> debViews = new Dictionary<IndexPos, GameObject>();
 
         public void OnChunkLoaded(Chunk chunk) {
@@ -113,11 +114,15 @@ namespace Game.Worlds {
             }
 
             if (GameManager.Instance.debugRegions && !debViews.ContainsKey(chunk.Pos.GetChunkIndex(Region.MaxLod))) {
+                if (deb == null) {
+                    deb = new GameObject();
+                }
                 var reg = chunk.Pos.GetChunkIndex(Region.MaxLod);
                 var obj = new GameObject(Region.GenName(reg));
                 var col = obj.AddComponent<BoxCollider>();
                 col.center = new Vector3(128, 128, 128);
                 col.size = new Vector3(256, 256, 256);
+                obj.transform.SetParent(deb.transform, false);
                 obj.transform.position = (Vector3)reg;
                 debViews[reg] = obj;
             }

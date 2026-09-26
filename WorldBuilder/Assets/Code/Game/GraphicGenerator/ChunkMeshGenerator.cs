@@ -258,6 +258,7 @@ namespace Game.GraphicGenerator {
 
 			AsyncGPUReadback.Request(vertexCounter, request => {
 				workingTasks -= workCount;
+				if (disposed) return;
 				
 				if (request.hasError) {
 					if (UpgradeVertexBuffer()) {

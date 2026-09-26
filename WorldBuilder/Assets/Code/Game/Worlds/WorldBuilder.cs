@@ -142,8 +142,10 @@ namespace Game.Worlds {
                 WorldGenerator.Instance.EnqueueRegion(Manager, regionIndex, () => {
                     GameManager.Instance.RunTask(() => OnRequestDone(request, false));
                 }, (e) => {
-                    Debug.Log("WorldGenerator Failed " + Region.GenName(regionIndex));
-                    Debug.LogError(e);
+                    if (e is not CacheCancelled) {
+                        Debug.Log("WorldGenerator Failed " + Region.GenName(regionIndex));
+                        Debug.LogError(e);
+                    }
                 });
             }
 
