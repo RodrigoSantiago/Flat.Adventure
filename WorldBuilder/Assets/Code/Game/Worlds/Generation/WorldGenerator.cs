@@ -77,6 +77,7 @@ namespace Game.Worlds.Generation {
         [SerializeField] private ComputeShader shader;
         private ComputeBuffer voxelBuffer;
         private int generate;
+        private int mipmaps;
         
         private ManualConsumer<Work> consumer;
         private bool dispose;
@@ -94,6 +95,7 @@ namespace Game.Worlds.Generation {
             
             shader = Resources.Load<ComputeShader>("WorldGen");
             generate = shader.FindKernel("Generate");
+            mipmaps = shader.FindKernel("Mipmaps");
             
             int voxels = 585 * CHUNK_SIZE;
             voxelBuffer = new ComputeBuffer(voxels / sizeof(uint), sizeof(uint), ComputeBufferType.Raw);
@@ -113,23 +115,30 @@ namespace Game.Worlds.Generation {
         private void Generate(Work work) {
             requestChunks.Clear();
             
-            shader.SetBuffer(generate, VoxelBuffer, voxelBuffer);
-            shader.SetVector(ChunkPos, (Vector3)work.Pos);
             Request(work, 0);
         }
 
         private void Request(Work work, int piece) {
-            shader.SetVector(IndexPos, new Vector4(0, piece * 32, 0));
-            shader.Dispatch(generate, 8 * 4, 4, 8 * 4);
 
-            if (piece < 7) {
+            if (piece < 8) {
+                shader.SetBuffer(generate, VoxelBuffer, voxelBuffer);
+                shader.SetVector(ChunkPos, (Vector3)work.Pos);
+                shader.SetVector(IndexPos, new Vector4(0, piece * 32, 0, 0));
+                shader.Dispatch(generate, 8 * 4, 4, 8 * 4);
                 AsyncGPUReadback.Request(voxelBuffer, 
                     CHUNK_SIZE * (64), 
                     CHUNK_SIZE * (64 * piece), 
                     request => { OnRequestDone(work, request, piece); });
             } else {
+                shader.SetBuffer(mipmaps, VoxelBuffer, voxelBuffer);
+                shader.SetVector(IndexPos, new Vector4(0, 0, 0, 1));
+                shader.Dispatch(mipmaps, 64 * 4, 4, 4);
+                shader.SetVector(IndexPos, new Vector4(0, 0, 0, 2));
+                shader.Dispatch(mipmaps,  8 * 4, 4, 4);
+                shader.SetVector(IndexPos, new Vector4(0, 0, 0, 3));
+                shader.Dispatch(mipmaps,  1 * 4, 4, 4);
                 AsyncGPUReadback.Request(voxelBuffer, 
-                    CHUNK_SIZE * (64 + 64 + 8 + 1), 
+                    CHUNK_SIZE * (64 + 8 + 1), 
                     CHUNK_SIZE * (64 * piece), 
                     request => { OnRequestDone(work, request, piece); });
             }
@@ -151,7 +160,7 @@ namespace Game.Worlds.Generation {
             try {
                 var data = request.GetData<byte>();
                 int chunkOffset = piece * 64;
-                int count = piece < 7 ? 64 : 64 + 64 + 8 + 1;
+                int count = piece < 8 ? 64 : 64 + 8 + 1;
                 
                 Parallel.For(0, count, i => {
                     int offset = i * CHUNK_SIZE;
@@ -171,7 +180,7 @@ namespace Game.Worlds.Generation {
                     }
                 });
                 
-                if (piece < 7) {
+                if (piece < 8) {
                     Request(work, piece + 1);
                 } else {
                     work.Manager.Cache.PutRegion(work.Pos, requestChunks);
