@@ -28,6 +28,13 @@ namespace Game.Worlds.Rendering {
             Max.y = Math.Min(Max.y, Region.MaxHeight);
         }
 
+        public bool IsInsideCylinder(IndexPos pos) {
+            float dx = pos.x - cx;
+            float dz = pos.z - cz;
+
+            return (dx * dx + dz * dz) <= r2;
+        }
+
         public bool IsInside(IndexPos pos) {
             if (pos.y < ViewLod.y || pos.y >= Max.y) return false;
 

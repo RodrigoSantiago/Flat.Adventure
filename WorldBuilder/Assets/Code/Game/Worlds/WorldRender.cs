@@ -3,7 +3,11 @@ using System.Collections;
 using Game.Data;
 using Game.Worlds.Rendering;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 using Game.GraphicGenerator;
+using Game.Utils;
+using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
@@ -13,18 +17,29 @@ namespace Game.Worlds {
         private readonly WorldManager worldManager;
 
         private readonly Plane[] frustumPlanes = new Plane[6];
-        private readonly Plane[][] frustumShadowPlanes = new Plane[Region.TotalLods][];
-        private Vector3 lightDir;
+        public static readonly Plane[][] frustumShadowPlanes = new Plane[Region.TotalLods][];
+        private FrustumPlanesSoA frustumPlanesSoA = new FrustumPlanesSoA();
+        private readonly FrustumPlanesSoA[] frustumShadowPlanesSoA = new FrustumPlanesSoA[Region.TotalLods];
+        
+        private float3 lightDir;
         private float cachedShadowDistance;
+        private int maxVisibleLod = Region.MaxLod;
+
+        private enum RenderVisibility {
+            Hidden,
+            ShadowOnly,
+            ColorOnly,
+            Complete
+        }
 
         private struct RenderCommand {
             public ChunkRenderData chunk;
             public IndexPos pos;
-            public int lod;
             public RenderVisibility visibility;
         }
 
-        private readonly List<RenderCommand> pendingCommands = new ();
+        private readonly List<List<RenderCommand>> renderCommands = new ();
+        private readonly List<List<IndexLodPos>> collectedCommands = new ();
         
         private MeshRenderBuffer completeRenderBuffer = new();
         private MeshRenderBuffer colorOnlyRenderBuffer = new();
@@ -62,6 +77,7 @@ namespace Game.Worlds {
             }
 
             GeometryUtility.CalculateFrustumPlanes(cam, frustumPlanes);
+            frustumPlanesSoA.UpdatePlanes(frustumPlanes);
             if (cachedShadowDistance > 0) {
                 for (int i = 0; i < frustumShadowPlanes.Length; i++) {
                     GeometryUtility.CalculateFrustumPlanes(
@@ -72,6 +88,7 @@ namespace Game.Worlds {
                             cachedShadowDistance
                         ) * cam.worldToCameraMatrix, frustumShadowPlanes[i]);
                     ExpandFrustum(frustumShadowPlanes[i], (32 << i));
+                    frustumShadowPlanesSoA[i].UpdatePlanes(frustumShadowPlanes[i]);
                 }
             }
             
@@ -102,21 +119,34 @@ namespace Game.Worlds {
 
             lightDir = RenderSettings.sun != null ? RenderSettings.sun.transform.forward.normalized : Vector3.down;
 
-            int lod = 3;
+            int lod = maxVisibleLod;
             int size = (32 << lod);
-            var config = worldManager.lodConfig[3];
-            for (int y = 0; y < config.Height; y++)
-            for (int z = 0; z < config.Size; z++)
-            for (int x = 0; x < config.Size; x++) {
-                var pos = config.ViewLod + new IndexPos(x, y, z) * size;
-                RenderRegion(lod, pos, pendingCommands);
+            var config = worldManager.lodConfig[lod];
+
+            int minHeight = -Math.Min(0, config.ViewLod.y) / config.ChunkSize;
+            int maxHeight = (Math.Min(Region.MaxHeight, config.Max.y) - config.ViewLod.y) / config.ChunkSize;
+            while (renderCommands.Count < maxHeight) {
+                renderCommands.Add(new List<RenderCommand>());
             }
+
+            UtilsParallel.For(minHeight, maxHeight, y => {
+                // for (int y = minHeight; y < maxHeight; y++)
+                for (int z = 0; z < config.Size; z++)
+                for (int x = 0; x < config.Size; x++) {
+                    var pos = config.ViewLod + new IndexPos(x, y, z) * size;
+                    if (!config.IsInsideCylinder(pos)) continue;
+
+                    RenderRegion(lod, pos, renderCommands[y]);
+                }
+            });
             
-            foreach (var cmd in pendingCommands) {
-                if (GameManager.Instance.controlRender[cmd.chunk.Lod]) {
+            foreach (var list in renderCommands) {
+                foreach (var cmd in list) {
                     DrawChunk(cmd.chunk, cmd.pos, cmd.visibility);
                 }
+                list.Clear();
             }
+            
             completeRenderBuffer.Commit();
             colorOnlyRenderBuffer.Commit();
             shadowOnlyRenderBuffer.Commit();
@@ -128,35 +158,14 @@ namespace Game.Worlds {
             if (GameManager.Instance.terrainShadow) {
                 shadowOnlyRenderBuffer.Render();
             }
-
-            pendingCommands.Clear();
-        }
-
-        private List<ChunkRenderData> tempCollectChunks = new ();
-        
-        public void CollectFrame(HashSet<IndexPos>[] renderedPositions) {
-            int lod = 3;
-            int size = (32 << lod);
-            var config = worldManager.lodConfig[3];
-            for (int y = 0; y < config.Height; y++)
-            for (int z = 0; z < config.Size; z++)
-            for (int x = 0; x < config.Size; x++) {
-                var pos = config.ViewLod + new IndexPos(x, y, z) * size;
-                if (pos.y >= Region.MaxHeight || !config.IsInside(pos)) continue;
-                
-                CollectRegion(lod, pos, tempCollectChunks);
-            }
-
-            foreach (var chunk in tempCollectChunks) {
-                renderedPositions[chunk.Lod].Add(chunk.Pos);
-            }
-            tempCollectChunks.Clear();
         }
 
         private bool RenderRegion(int lod, IndexPos pos, List<RenderCommand> chunks) {
             int lSize = (32 << lod);
-            int lHSize = lSize >> 1;
-            var visibility = EvaluateVisibility((Vector3)(pos + lHSize), new Vector3(lSize, lSize, lSize), lod);
+            int hSize = (16 << lod);
+            var visibility = EvaluateVisibility(
+                new float3(pos.x + hSize, pos.y + hSize, pos.z + hSize), 
+                new float3(hSize, hSize, hSize), lod);
             
             if (visibility == RenderVisibility.Hidden) return true;
             
@@ -164,7 +173,7 @@ namespace Game.Worlds {
             bool highLodFound = (chunk != null && (chunk.IsEmpty || chunk.SoilMesh != null));
             bool findLowerLods = lod > 0 
                                  && (!highLodFound || (worldManager.lodConfig[lod - 1].IsInside(pos, lSize)))
-                                 && worldManager.HasAnyChunkData(pos);
+                                 && (lod < maxVisibleLod || worldManager.HasAnyInRegion(pos));
 
             if (findLowerLods) {
                 int bkp = chunks.Count;
@@ -194,7 +203,6 @@ namespace Game.Worlds {
                     chunks.Add(new RenderCommand {
                         chunk = chunk,
                         pos = pos,
-                        lod = lod,
                         visibility = visibility
                     });
                 }
@@ -204,15 +212,47 @@ namespace Game.Worlds {
             
             return false;
         }
+        
+        public void CollectFrame(HashSet<IndexPos>[] renderedPositions) {
+            int lod = maxVisibleLod;
+            int size = (32 << lod);
+            var config = worldManager.lodConfig[lod];
+            
+            int minHeight = -Math.Min(0, config.ViewLod.y) / config.ChunkSize;
+            int maxHeight = (Math.Min(Region.MaxHeight, config.Max.y) - config.ViewLod.y) / config.ChunkSize;
+            while (collectedCommands.Count < maxHeight) {
+                collectedCommands.Add(new List<IndexLodPos>());
+            }
 
-        private bool CollectRegion(int lod, IndexPos pos, List<ChunkRenderData> chunks) {
+            UtilsParallel.For(minHeight, maxHeight, y => {
+                // for (int y = 0; y < maxHeight; y++)
+                for (int z = 0; z < config.Size; z++)
+                for (int x = 0; x < config.Size; x++) {
+                    var pos = config.ViewLod + new IndexPos(x, y, z) * size;
+                    if (!config.IsInsideCylinder(pos)) continue;
+
+                    CollectRegion(lod, pos, collectedCommands[y]);
+                }
+            });
+
+            foreach (var list in collectedCommands) {
+                foreach (var cmd in list) {
+                    renderedPositions[cmd.lod].Add(cmd.pos);
+                }
+            }
+            foreach (var list in collectedCommands) {
+                list.Clear();
+            }
+        }
+
+        private bool CollectRegion(int lod, IndexPos pos, List<IndexLodPos> chunks) {
             int lSize = (32 << lod);
             
             var chunk = worldManager.FindChunkData(lod, pos);
             bool highLodFound = (chunk != null && (chunk.IsEmpty || chunk.SoilMesh != null));
             bool findLowerLods = lod > 0 
                                  && (!highLodFound || (worldManager.lodConfig[lod - 1].IsInside(pos, lSize)))
-                                 && worldManager.HasAnyChunkData(pos);
+                                 && (lod < maxVisibleLod || worldManager.HasAnyInRegion(pos));
 
             if (findLowerLods) {
                 int bkp = chunks.Count;
@@ -239,27 +279,21 @@ namespace Game.Worlds {
             } 
             
             if (highLodFound) {
-                chunks.Add(chunk);
+                chunks.Add(new IndexLodPos(chunk.Pos, chunk.Lod));
                 return true;
             }
             
             return false;
         }
 
-        private enum RenderVisibility {
-            Hidden,
-            ShadowOnly,
-            ColorOnly,
-            Complete
-        }
-
-        private RenderVisibility EvaluateVisibility(Vector3 center, Vector3 size, int lod) {
+        private RenderVisibility EvaluateVisibility(float3 center, float3 extent, int lod) {
+            #if UNITY_EDITOR
             if (!GameManager.Instance.frustumOcclusion) return RenderVisibility.Complete;
-
-            var bounds = new Bounds(center, size);
-            if (GeometryUtility.TestPlanesAABB(frustumPlanes, bounds)) {
+            #endif
+            
+            if (UtilsCulling.TestAABBFrustum(in center, in extent, in frustumPlanesSoA)) {
                 if (cachedShadowDistance > 0f) {
-                    if (RayIntersectsFrustum(center, lightDir, frustumShadowPlanes[lod])) {
+                    if (UtilsCulling.RayIntersectsFrustum(in center, in lightDir, in frustumShadowPlanesSoA[lod])) {
                         return RenderVisibility.Complete;
                     }
                 }
@@ -268,14 +302,29 @@ namespace Game.Worlds {
             }
 
             if (cachedShadowDistance > 0f) {
-                if (RayIntersectsFrustum(center, lightDir, frustumShadowPlanes[lod])) {
+                if (UtilsCulling.RayIntersectsFrustum(in center, in lightDir, in frustumShadowPlanesSoA[lod])) {
                     return RenderVisibility.ShadowOnly;
                 }
             }
 
             return RenderVisibility.Hidden;
         }
+        
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        static bool TestPlanesAABB(Plane[] planes, Vector3 min, Vector3 max) {
+            for (int i = 0; i < 6; i++) {
+                Vector3 n = planes[i].normal;
+                float x = n.x >= 0f ? max.x : min.x;
+                float y = n.y >= 0f ? max.y : min.y;
+                float z = n.z >= 0f ? max.z : min.z;
 
+                if (n.x * x + n.y * y + n.z * z + planes[i].distance < 0f) return false;
+            }
+
+            return true;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         static bool RayIntersectsFrustum(Vector3 origin, Vector3 direction, Plane[] planes) {
             float tMin = 0f;
             float tMax = float.MaxValue;
@@ -314,9 +363,7 @@ namespace Game.Worlds {
 
         static void ExpandFrustum(Plane[] planes, float amount) {
             for (int i = 0; i < 6; i++) {
-                Plane p = planes[i];
-                p.distance += amount;
-                planes[i] = p;
+                planes[i].distance += amount;
             }
         }
         

@@ -1,11 +1,7 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using Game.Data;
-using Game.DebugUtils;
-using Game.Worlds.Generation;
 using Game.Worlds.Rendering;
 using UnityEngine;
 using WorldCache = Game.Worlds.CacheManagement.WorldCache;
@@ -36,8 +32,9 @@ namespace Game.Worlds {
 
         private Dictionary<IndexPos, ChunkRenderData>[] AllChunksData { get; }
         private readonly Dictionary<IndexPos, int> AnyChunksData = new();
-        private readonly HashSet<IndexLodPos> delayedRequest = new();
-        private readonly HashSet<IndexLodPos> delayedRequestTemp = new();
+        private HashSet<IndexLodPos> delayedRequestSwipe;
+        private readonly HashSet<IndexLodPos> delayedRequest1 = new();
+        private readonly HashSet<IndexLodPos> delayedRequest2 = new();
 
         private readonly HashSet<IndexPos>[] requestedPositions;
         private readonly HashSet<IndexPos>[] renderedPositions;
@@ -149,7 +146,7 @@ namespace Game.Worlds {
             return null;
         }
 
-        public bool HasAnyChunkData(IndexPos pos) {
+        public bool HasAnyInRegion(IndexPos pos) {
             return AnyChunksData.ContainsKey(pos.GetChunkIndex(Region.MaxLod));
         }
 
@@ -217,20 +214,27 @@ namespace Game.Worlds {
         }
 
         public void RequestChunk(int lod, IndexPos chunkIndex) {
-            delayedRequestTemp.Add(new IndexLodPos(chunkIndex, lod));
+            delayedRequestSwipe.Add(new IndexLodPos(chunkIndex, lod));
         }
 
         public void Update() {
             RequestChunks();
-            
-            delayedRequest.UnionWith(delayedRequestTemp);
-            delayedRequestTemp.Clear();
-            foreach (var request in delayedRequest) {
-                Builder.RequestChunk(request.pos, request.lod);
+
+            if (delayedRequestSwipe == delayedRequest1) {
+                delayedRequestSwipe = delayedRequest2;
+                
+                foreach (var request in delayedRequest1) {
+                    Builder.RequestChunk(request.pos, request.lod);
+                }
+                delayedRequest1.Clear();
+            } else {
+                delayedRequestSwipe = delayedRequest1;
+                
+                foreach (var request in delayedRequest2) {
+                    Builder.RequestChunk(request.pos, request.lod);
+                }
+                delayedRequest2.Clear();
             }
-            delayedRequest.Clear();
-            
-            Render.RenderFrame();
 
             if (Time.time - unloadTimer > 3.0f) {
                 Render.CollectFrame(renderedPositions);
@@ -248,11 +252,13 @@ namespace Game.Worlds {
                         chunkData.ReleaseData();
                     }
                 }
+            
+                ReleaseUnusedChunkData();
                 
                 unloadTimer = Time.time;
             }
             
-            ReleaseUnusedChunkData();
+            Render.RenderFrame();
         }
 
         public void RequestChunks() {

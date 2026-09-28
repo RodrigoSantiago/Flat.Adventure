@@ -2,20 +2,21 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
-using System.Threading;
 using Game.Data;
 using UnityEngine;
 
 namespace Game.GraphicGenerator {
     public class MeshRenderBuffer : IDisposable {
         private sealed class Group {
-            public readonly GraphicsBuffer sourceBuffer;
-            public readonly MaterialPropertyBlock props = new();
+            public GraphicsBuffer sourceBuffer;
             public readonly List<Command> commands = new();
+            public readonly MaterialPropertyBlock props = new();
 
-            public Group(GraphicsBuffer sourceBuffer) {
+            public void Reset(GraphicsBuffer sourceBuffer) {
                 this.sourceBuffer = sourceBuffer;
+                commands.Clear();
             }
+            
         }
 
         private struct Command {
@@ -36,7 +37,10 @@ namespace Game.GraphicGenerator {
             public uint offset;
         }
         
+        private readonly Stack<Group> pool = new(256);
+        
         private readonly Dictionary<GraphicsBuffer, Group> groups = new();
+        private int totalCommands;
 
         // CPU data.
         private ChunkPos[] posLodData = Array.Empty<ChunkPos>();
@@ -57,12 +61,19 @@ namespace Game.GraphicGenerator {
 
         public void Begin(RenderParams renderParams) {
             this.renderParams = renderParams;
+            foreach (var group in groups.Values) {
+                pool.Push(group);
+            }
             groups.Clear();
+            totalCommands = 0;
         }
 
         public void Add(IndexPos pos, int lod, GraphicsBuffer buffer, int elementsOffset, int elementsSize) {
             if (!groups.TryGetValue(buffer, out var group)) {
-                group = new Group(buffer);
+                if (!pool.TryPop(out group)) {
+                    group = new Group(); 
+                }
+                group.Reset(buffer);
                 groups.Add(buffer, group);
             }
 
@@ -73,14 +84,14 @@ namespace Game.GraphicGenerator {
                offset = (uint)elementsOffset
             };
             group.commands.Add(new Command(packed, elementsSize));
+            totalCommands++;
         }
         
         public void Commit() {
-            int total = groups.Values.Sum(g => g.commands.Count);
-            if (total == 0) return;
+            if (totalCommands == 0) return;
             
-            EnsureArgsCapacity(total);
-            EnsurePosLodCapacity(total);
+            EnsureArgsCapacity(totalCommands);
+            EnsurePosLodCapacity(totalCommands);
 
             int index = 0;
             foreach (Group group in groups.Values) {
@@ -96,8 +107,8 @@ namespace Game.GraphicGenerator {
                 }
             }
 
-            posLodBuffer.SetData(posLodData, 0, 0, total);
-            argsBuffer.SetData(argsData, 0, 0, total);
+            posLodBuffer.SetData(posLodData, 0, 0, totalCommands);
+            argsBuffer.SetData(argsData, 0, 0, totalCommands);
         }
 
         public void Render() {

@@ -1,10 +1,7 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Threading;
-using Code;
 using Game.Data;
-using Game.DebugUtils;
 using Game.Entities.Player;
 using Game.GraphicGenerator;
 using Game.Worlds;

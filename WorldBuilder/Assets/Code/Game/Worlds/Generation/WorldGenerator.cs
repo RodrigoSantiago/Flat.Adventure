@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Game.Data;
 using Game.Data.Queues;
+using Game.Utils;
 using Game.Worlds.Exceptions;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
@@ -110,11 +111,15 @@ namespace Game.Worlds.Generation {
             consumer.Consume();
         }
 
-        private List<Chunk> requestChunks = new();
+        private Chunk[] requestChunks = new Chunk[Region.TotalChunks];
+        private void ClearRequestChunks() {
+            for (int i = 0; i < requestChunks.Length; i++) {
+                requestChunks[i] = null;
+            }
+        }
         
         private void Generate(Work work) {
-            requestChunks.Clear();
-            
+            ClearRequestChunks();
             Request(work, 0);
         }
 
@@ -146,13 +151,13 @@ namespace Game.Worlds.Generation {
 
         private void OnRequestDone(Work work, AsyncGPUReadbackRequest request, int piece) {
             if (dispose) {
-                requestChunks.Clear();
+                ClearRequestChunks();
                 work.SetError(new CacheCancelled());
                 return;
             }
             
             if (request.hasError) {
-                requestChunks.Clear();
+                ClearRequestChunks();
                 work.SetError(new Exception("Failed to generate"));
                 return;
             }
@@ -162,7 +167,7 @@ namespace Game.Worlds.Generation {
                 int chunkOffset = piece * 64;
                 int count = piece < 8 ? 64 : 64 + 8 + 1;
                 
-                Parallel.For(0, count, i => {
+                UtilsParallel.For(0, count, i => {
                     int offset = i * CHUNK_SIZE;
                     var den = GetPiece(data, offset, CHUNK_SIZE_DEN).ToArray();
                     var mat = GetPiece(data, offset + CHUNK_SIZE_DEN, CHUNK_SIZE_MAT).ToArray();
@@ -175,20 +180,18 @@ namespace Game.Worlds.Generation {
                     var soil = new ChunkSoil(den, mat);
                     var chunk = new Chunk(work.Pos + pos, lod, soil, 1);
                     
-                    lock (requestChunks) {
-                        requestChunks.Add(chunk);
-                    }
+                    requestChunks[chunkIndex] = chunk;
                 });
                 
                 if (piece < 8) {
                     Request(work, piece + 1);
                 } else {
                     work.Manager.Cache.PutRegion(work.Pos, requestChunks);
-                    requestChunks.Clear();
+                    ClearRequestChunks();
                     work.SetSuccess();
                 }
             } catch (Exception e) {
-                requestChunks.Clear();
+                ClearRequestChunks();
                 work.SetError(e);
             }
         }
