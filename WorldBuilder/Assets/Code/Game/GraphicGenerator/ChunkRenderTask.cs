@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Game.Data;
 using Game.Data.Queues;
+using Game.Worlds;
 
 namespace Game.GraphicGenerator {
     public class ChunkRenderTask : IAccumulateTask<ChunkRenderTask> {
@@ -10,13 +11,15 @@ namespace Game.GraphicGenerator {
         public IndexPos Pos { get; private set; }
         public Chunk[] Chunks { get; private set; }
         public Action<MeshInterface> Action { get; private set; }
-
+        public WorldManager Manager { get; }
+        
         public int Count => tasks.Count;
         private int compare;
 
         public List<ChunkRenderTask> tasks = new();
 
-        public ChunkRenderTask(int lod, IndexPos pos, Chunk[] chunks, Action<MeshInterface> action) {
+        public ChunkRenderTask(WorldManager manager, int lod, IndexPos pos, Chunk[] chunks, Action<MeshInterface> action) {
+            Manager = manager;
             Lod = lod;
             Pos = pos;
             Chunks = chunks;
@@ -34,7 +37,7 @@ namespace Game.GraphicGenerator {
         }
 
         public bool IsReplaceable(ChunkRenderTask task) {
-            if (task.Pos == Pos && task.Lod == Lod) {
+            if (task.Manager == Manager && task.Pos == Pos && task.Lod == Lod) {
                 return true;
             }
 

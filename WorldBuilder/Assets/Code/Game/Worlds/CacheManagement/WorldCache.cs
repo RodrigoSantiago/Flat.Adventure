@@ -17,13 +17,14 @@ namespace Game.Worlds.CacheManagement {
         private readonly string cacheDirectory;
         
         private readonly Dictionary<IndexPos, Region> cache = new();
-        private readonly List<CacheWriteRequest> writeRequests = new();
+        private readonly Dictionary<IndexPos, CacheWriteRequest> writeRequests = new();
+        private readonly HashSet<IndexPos> storeRequests = new();
 
         private readonly TaskConsumer<CacheWork> consumer;
 
         public WorldCache(WorldManager manager) {
             Manager = manager;
-            cacheDirectory = Manager.Storage;
+            cacheDirectory = Manager.Storage + "/Cache";
 
             consumer = new TaskConsumer<CacheWork>("World-Cache-" + manager.Name);
             consumer.Init();
@@ -39,7 +40,7 @@ namespace Game.Worlds.CacheManagement {
 
         public void ConsumeAndDispose() {
             while (writeRequests.Count > 0) {
-                writeRequests[0].WaitForGpuCompletion();
+                writeRequests.First().Value.WaitForGpuCompletion();
             }
             consumer.CancelWhere(work => work.IsRead);
             var tasks = consumer.Dispose();
@@ -97,7 +98,9 @@ namespace Game.Worlds.CacheManagement {
 
         private void RequestUnloadRegion(IndexPos regionIndex, int lod) {
             lock (cache) {
-                if (!cache.TryGetValue(regionIndex, out var region) || region.chunks[lod] == null) return;
+                if (!cache.TryGetValue(regionIndex, out var region) 
+                    || region.chunks[lod] == null 
+                    || storeRequests.Contains(regionIndex)) return;
 
                 var updatedChunks = new List<Chunk>();
                 foreach (var chunk in region.chunks[lod]) {
@@ -107,12 +110,34 @@ namespace Game.Worlds.CacheManagement {
                 }
 
                 if (updatedChunks.Count == 0) {
-                    UpdateRegion(regionIndex, new ChunkCacheUpdate[0]);
+                    RemoveReleasedRegion(regionIndex);
                 } else {
-                    var writeRequest = new CacheWriteRequest(this, regionIndex, lod, updatedChunks, new TaskListener(() => {}, Debug.LogError));
-                    writeRequests.Add(writeRequest);
+                    var writeRequest = new CacheWriteRequest(this, regionIndex, lod, updatedChunks, 
+                        new TaskListener(
+                            () => {
+                                lock (cache) {
+                                    storeRequests.Remove(regionIndex);
+                                }
+                            }, 
+                            (e) => {
+                                lock (cache) {
+                                    storeRequests.Remove(regionIndex);
+                                }
+                                Debug.LogError(e); 
+                            }));
+                    writeRequests.Add(regionIndex, writeRequest);
+                    storeRequests.Add(regionIndex);
                     
                     writeRequest.CreateExport();
+                }
+            }
+        }
+
+        public void ReleaseUnusedChunkCache() {
+            lock (cache) {
+                var keys = cache.Keys.Where(k => !storeRequests.Contains(k)).ToList();
+                foreach (var key in keys) {
+                    RemoveReleasedRegion(key);
                 }
             }
         }
@@ -122,7 +147,7 @@ namespace Game.Worlds.CacheManagement {
         }
         
         public void ScheduleWriteRequest(CacheWriteRequest request) {
-            writeRequests.Remove(request);
+            writeRequests.Remove(request.RegionIndex);
             consumer.Enqueue(new CacheWorkWrite(this, request.RegionIndex, request.Pairs.ToArray(), request.Listener));
         }
         
@@ -168,6 +193,16 @@ namespace Game.Worlds.CacheManagement {
                     if (region.chunks[lod] != null && region.chunks[lod][localId] != null) {
                         region.chunks[lod][localId].UpdateVersion(update);
                     }
+                }
+
+                RemoveReleasedRegion(regionIndex);
+            }
+        }
+
+        private void RemoveReleasedRegion(IndexPos regionIndex) {
+            lock (cache) {
+                if (!cache.TryGetValue(regionIndex, out var region)) {
+                    return;
                 }
                 
                 for (int i = 0; i < Region.TotalLods; i++) {

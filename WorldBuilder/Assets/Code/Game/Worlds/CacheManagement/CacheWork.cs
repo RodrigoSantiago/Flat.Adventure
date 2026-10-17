@@ -130,6 +130,9 @@ namespace Game.Worlds.CacheManagement {
             }
         }
 
+        public void RequestCancel() {
+        }
+
         public void Cancel() {
             Attempts = 0;
         }

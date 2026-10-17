@@ -4,6 +4,7 @@ using System.Runtime.InteropServices;
 using Code;
 using Game.Data;
 using Game.Data.Queues;
+using Game.Worlds;
 using UnityEngine;
 using UnityEngine.Rendering;
 
@@ -39,6 +40,7 @@ namespace Game.GraphicGenerator {
 			public int lod;
 			public long soilVersion;
 			public bool reserved;
+			public long managerId;
 		}
 		
 		private readonly ChunkDataEntry[] entries = new ChunkDataEntry[27 * TaskGroupCount];
@@ -198,12 +200,12 @@ namespace Game.GraphicGenerator {
 		public void SimpleMesh(IndexPos pos, ChunkSoil chunk, Action<Mesh> onChunkRemesh) {
 			var chunks = new Chunk[27];
 			chunks[13] = new Chunk(pos, 0, chunk, -1);
-			Remesh(chunks, a => onChunkRemesh.Invoke(a?.Mesh));
+			Remesh(null, chunks, a => onChunkRemesh.Invoke(a?.Mesh));
 		}
 
-		public void Remesh(Chunk[] chunks, Action<MeshInterface> action) {
+		public void Remesh(WorldManager manager, Chunk[] chunks, Action<MeshInterface> action) {
 			var center = chunks[13];
-			var task = new ChunkRenderTask(center.Lod, center.Pos, chunks, action);
+			var task = new ChunkRenderTask(manager, center.Lod, center.Pos, chunks, action);
 			queue.Accumulate(task);
 		}
 
@@ -227,7 +229,7 @@ namespace Game.GraphicGenerator {
 			for (var i = 0; i < taskGroup.Count; i++) {
 				var task = taskGroup[i];
 				for (var j = 0; j < task.Chunks.Length; j++) {
-					chunkIndex[i * NearCount + j] = (uint)FindChunkEntry(task.Chunks[j], true);
+					chunkIndex[i * NearCount + j] = (uint)FindChunkEntry(task.Manager.Id, task.Chunks[j], true);
 				}
 			}
 			
@@ -236,7 +238,7 @@ namespace Game.GraphicGenerator {
 				var task = taskGroup[i];
 				for (var j = 0; j < task.Chunks.Length; j++) {
 					if (chunkIndex[i * NearCount + j] == 404) {
-						chunkIndex[i * NearCount + j] = (uint)FindChunkEntry(task.Chunks[j], false);
+						chunkIndex[i * NearCount + j] = (uint)FindChunkEntry(task.Manager.Id, task.Chunks[j], false);
 					}
 				}
 			}
@@ -314,7 +316,7 @@ namespace Game.GraphicGenerator {
 			});
 		}
 
-		private int FindChunkEntry(Chunk chunk, bool skipUpload) {
+		private int FindChunkEntry(long managerId, Chunk chunk, bool skipUpload) {
 			if (chunk == null || chunk.Soil.IsEmpty()) {
 				for (int i = 0; i < entries.Length; i++) {
 					var entry = entries[i];
@@ -344,7 +346,11 @@ namespace Game.GraphicGenerator {
 			
 			for (int i = 0; i < entries.Length; i++) {
 				var entry = entries[i];
-				if (entry.lod == chunk.Lod && entry.pos == chunk.Pos && entry.soilVersion == chunk.CurrentSoilVersion) {
+				if (entry.managerId == managerId && 
+				    entry.lod == chunk.Lod && 
+				    entry.pos == chunk.Pos && 
+				    entry.soilVersion == chunk.CurrentSoilVersion) {
+					
 					entry.reserved = true;
 					entries[i] = entry;
 					return i;
@@ -356,6 +362,7 @@ namespace Game.GraphicGenerator {
 			for (int i = 0; i < entries.Length; i++) {
 				var entry = entries[i];
 				if (!entry.reserved) {
+					entry.managerId = managerId;
 					entry.lod = chunk.Lod;
 					entry.pos = chunk.Pos;
 					entry.soilVersion = chunk.CurrentSoilVersion;

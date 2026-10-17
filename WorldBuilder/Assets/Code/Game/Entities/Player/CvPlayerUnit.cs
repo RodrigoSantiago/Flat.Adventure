@@ -1,10 +1,13 @@
 using System;
+using Game.Worlds;
 using UnityEngine;
 
 namespace Game.Entities.Player {
     public class CvPlayerUnit : MonoBehaviour {
-
-        public CvPlayerUnit Setup() {
+        public WorldManager Manager { get; private set; }
+        
+        public CvPlayerUnit Setup(WorldManager manager) {
+            Manager = manager;
             return this;
         }
         

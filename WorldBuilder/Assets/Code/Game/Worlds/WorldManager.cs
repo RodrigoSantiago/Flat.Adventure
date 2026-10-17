@@ -1,9 +1,18 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading;
+using System.Threading.Tasks;
 using Game.Data;
+using Game.Data.Queues;
+using Game.Entities.Player;
+using Game.Utils;
+using Game.Worlds.Generation;
 using Game.Worlds.Rendering;
+using K4os.Compression.LZ4;
 using UnityEngine;
+using Random = UnityEngine.Random;
 using WorldCache = Game.Worlds.CacheManagement.WorldCache;
 
 namespace Game.Worlds {
@@ -16,6 +25,7 @@ namespace Game.Worlds {
         public IndexPos viewLod2;
         public IndexPos viewLod3;
         public LodConfig[] lodConfig = new LodConfig[4];
+        public int maxLodView = Region.MaxLod;
 
         private bool init;
         private IndexPos prevCenter;
@@ -26,12 +36,16 @@ namespace Game.Worlds {
 
         public string Storage { get; }
         public string Name { get; }
+        public long Id { get; private set; }
         public WorldCache Cache { get; }
         public WorldBuilder Builder { get; }
         public WorldRender Render { get; }
+        
+        public WorldData Data { get; private set; }
+        public WorldHeightMap Height { get; private set; }
 
         private Dictionary<IndexPos, ChunkRenderData>[] AllChunksData { get; }
-        private readonly Dictionary<IndexPos, int> AnyChunksData = new();
+        private Dictionary<IndexPos, int> AnyChunksData { get; } = new();
         private HashSet<IndexLodPos> delayedRequestSwipe;
         private readonly HashSet<IndexLodPos> delayedRequest1 = new();
         private readonly HashSet<IndexLodPos> delayedRequest2 = new();
@@ -40,14 +54,26 @@ namespace Game.Worlds {
         private readonly HashSet<IndexPos>[] renderedPositions;
         private readonly List<IndexPos> toRemoveList = new ();
 
+        public Exception LoadingError { get; private set; }
+        public bool IsLoading => loading != null;
+        public float LoadingProgress => token?.Progress ?? 0;
+        
+        private bool cancelled;
         private float unloadTimer;
         
         public WorldManager(string name, string storage) {
             Name = name;
             Storage = storage;
+            Id = 100;
             
             if (!Directory.Exists(storage)) {
                 Directory.CreateDirectory(storage);
+            }
+            if (!Directory.Exists(storage + "/Cache")) {
+                Directory.CreateDirectory(storage + "/Cache");
+            }
+            if (!Directory.Exists(storage + "/WorldMapCache")) {
+                Directory.CreateDirectory(storage + "/WorldMapCache");
             }
 
             Cache = new WorldCache(this);
@@ -61,6 +87,7 @@ namespace Game.Worlds {
             lodConfig[1] = new LodConfig(viewLod1, 64, 12, 12, false);
             lodConfig[2] = new LodConfig(viewLod2, 128, 14, 14, false);
             lodConfig[3] = new LodConfig(viewLod3, 256, 16, 7, true);
+            SetViewPoint(new IndexPos(0, 0, 0));
 
             AllChunksData = new Dictionary<IndexPos, ChunkRenderData>[Region.TotalLods];
             requestedPositions = new HashSet<IndexPos>[Region.TotalLods];
@@ -75,8 +102,138 @@ namespace Game.Worlds {
             Render = new WorldRender(this);
         }
 
+        private IEnumerator loading;
+
+        public void Load() {
+            loading = Loading().GetEnumerator();
+        }
+
+        private class ByteReference {
+            public byte[] data;
+        }
+
+        private ProgressToken token;
+
+        private IEnumerable Loading() {
+            token = new();
+            if (File.Exists(Storage + "/World.data")) {
+                var worldDataRef = new ByteReference();
+                var it = ReadDataFile(Storage + "/World.data", worldDataRef);
+                while (it.MoveNext()) {
+                    if (cancelled || LoadingError != null) yield break;
+                    yield return 0;
+                }
+                if (cancelled || LoadingError != null) yield break;
+                
+                Data = BinarySerializer.Read<WorldData>(worldDataRef.data);
+            } else {
+                Data = new WorldData();
+                int high = Random.Range(int.MinValue, int.MaxValue);
+                int low = Random.Range(int.MinValue, int.MaxValue);
+                Data.seed = ((long)high << 32) | (uint)low;
+                Data.width = 1024 * 16;
+                Data.height = 1024 * 8;
+                Data.depth = 1024;
+                
+                var it = WriteDataFile(Storage + "/World.data", BinarySerializer.Write(Data));
+                while (it.MoveNext()) {
+                    if (cancelled || LoadingError != null) yield break;
+                    yield return 0;
+                }
+                if (cancelled || LoadingError != null) yield break;
+                
+            }
+            token.Advance(0.1f);
+
+            var worldHeightDataRef = new ByteReference();
+            var genIt = GenerateMapData(token.Derive(0.9f), worldHeightDataRef);
+            while (genIt.MoveNext()) {
+                if (cancelled || LoadingError != null) yield break;
+                yield return 0;
+            }
+            if (cancelled || LoadingError != null) yield break;
+                
+            Height = new WorldHeightMap(worldHeightDataRef.data);
+            token.Advance(1f);
+            
+            // Setup Player
+            foreach (var player in GameData.Instance.players) {
+                // if (player.world == this)
+                var cvPlayer = new GameObject("Player").AddComponent<CvPlayerUnit>().Setup(this);
+                cvPlayer.transform.position = new Vector3(2048, 512, 2048);
+            }
+        }
+
+        private IEnumerator ReadDataFile(string path, ByteReference data) {
+            var source = new CancellationTokenSource();
+            var token = source.Token;
+            
+            var readTask = Task.Run(() => File.ReadAllBytesAsync(path, token), token);
+            
+            while (!readTask.IsCompleted && !cancelled) {
+                yield return null; 
+            }
+            if (cancelled) {
+                source.Cancel();
+                yield break;
+            }
+
+            if (readTask.IsFaulted) {
+                LoadingError = readTask.Exception;
+                yield break;
+            }
+            data.data = readTask.Result;
+            if (data.data == null) {
+                LoadingError = new Exception("Failed to read: " + path);
+            }
+        }
+
+        private IEnumerator WriteDataFile(string path, byte[] data) {
+            var source = new CancellationTokenSource();
+            var token = source.Token;
+            
+            var readTask = Task.Run(() => File.WriteAllBytesAsync(path, data, token), token);
+            
+            while (!readTask.IsCompleted && !cancelled) {
+                yield return null; 
+            }
+            if (cancelled) {
+                source.Cancel();
+                yield break;
+            }
+
+            if (readTask.IsFaulted) {
+                LoadingError = readTask.Exception;
+                yield break;
+            }
+        }
+
+        private IEnumerator GenerateMapData(ProgressToken progress, ByteReference data) {
+            WorldMapGenerator.Instance.Generate(this, progress,
+                (height) => { data.data = height; },
+                (e) => { LoadingError = e; });
+            
+            while (LoadingError == null && data.data == null && !cancelled) {
+                yield return null; 
+            }
+            if (LoadingError != null) {
+                yield break;
+            }
+            if (cancelled) {
+                WorldMapGenerator.Instance.Cancel(this);
+                yield break;
+            }
+            if (data.data == null) {
+                LoadingError = new Exception("Failed to GenerateMapData");
+            }
+        }
+        
         public void SaveAndExit() {
+            cancelled = true;
+            loading = null;
             Builder.Cancel();
+            WorldGenerator.Instance.Cancel(this);
+            WorldMapGenerator.Instance.Cancel(this);
             
             for (int lod = 0; lod < Region.TotalLods; lod++) {
                 var activeDict = AllChunksData[lod];
@@ -202,8 +359,8 @@ namespace Game.Worlds {
             viewLod3 = viewLod3.RoundSnapTo(256);
             
             lodConfig[0] = new LodConfig(viewLod0, 32, 8, 8, false);
-            lodConfig[1] = new LodConfig(viewLod1, 64, 12, 12, false);
-            lodConfig[2] = new LodConfig(viewLod2, 128, 14, 12, false);
+            lodConfig[1] = new LodConfig(viewLod1, 64, 12, 12, maxLodView <= 1);
+            lodConfig[2] = new LodConfig(viewLod2, 128, 14, 12, maxLodView <= 2);
             lodConfig[3] = new LodConfig(viewLod3, 256, 16, 6, true);
         }
 
@@ -218,6 +375,12 @@ namespace Game.Worlds {
         }
 
         public void Update() {
+            if (loading != null) {
+                if (loading.MoveNext()) {
+                    return;
+                }
+                loading = null;
+            }
             RequestChunks();
 
             if (delayedRequestSwipe == delayedRequest1) {
@@ -249,6 +412,7 @@ namespace Game.Worlds {
                     var activeDict = AllChunksData[lod];
 
                     foreach (var chunkData in activeDict.Values) {
+                        chunkData.RequestMesh();
                         chunkData.ReleaseData();
                     }
                 }
@@ -268,7 +432,8 @@ namespace Game.Worlds {
                 if (prevViewLod0 == viewLod0
                     && prevViewLod1 == viewLod1 
                     && prevViewLod2 == viewLod2 
-                    && prevViewLod3 == viewLod3) {
+                    && prevViewLod3 == viewLod3
+                    && maxLodView == GameManager.Instance.maxLodView) {
                     return;
                 }
             }
@@ -284,17 +449,16 @@ namespace Game.Worlds {
             prevViewLod1 = viewLod1;
             prevViewLod2 = viewLod2;
             prevViewLod3 = viewLod3;
+            maxLodView = GameManager.Instance.maxLodView;
 
             foreach (var requestedPosition in requestedPositions) {
                 requestedPosition.Clear();
             }
-
-            RequestLod(0, lodConfig[0], null);
-            RequestLod(1, lodConfig[1], lodConfig[0].Padding());
-            RequestLod(2, lodConfig[2], lodConfig[1].Padding());
-            RequestLod(3, lodConfig[3], lodConfig[2].Padding());
             
-            unloadTimer = Time.time;
+            RequestLod(0, lodConfig[0], null);
+            if (maxLodView >= 1) RequestLod(1, lodConfig[1], lodConfig[0].Padding());
+            if (maxLodView >= 2) RequestLod(2, lodConfig[2], lodConfig[1].Padding());
+            if (maxLodView >= 3) RequestLod(3, lodConfig[3], lodConfig[2].Padding());
         }
 
         public bool IsChunkRenderRequired(int lod, IndexPos pos) {
@@ -316,8 +480,6 @@ namespace Game.Worlds {
             LodConfig config,
             LodConfig? excludeViewLod
         ) {
-            if (!GameManager.Instance.controlRender[lod]) return;
-            
             for (int y = -1; y <= config.Height; y++)
             for (int z = -1; z <= config.Size; z++)
             for (int x = -1; x <= config.Size; x++) {
@@ -393,6 +555,8 @@ namespace Game.Worlds {
                     }
                 }
             }
+
+            Cache.ReleaseUnusedChunkCache();
         }
     }
 }

@@ -3,11 +3,11 @@ using System.Collections.Generic;
 using System.Threading;
 
 namespace Game.Data.Queues {
-    public class ManualConsumer<T> where T : ITaskGroup<T> {
+    public class ManualConsumer<T> where T : class, ITaskGroup<T> {
         
         private readonly TaskQueue<T> queue = new();
         private string name;
-        private T runningTask;
+        public T RunningTask { get; private set; }
 
         public ManualConsumer(string name) {
             this.name = name;
@@ -24,6 +24,11 @@ namespace Game.Data.Queues {
         
         public void CancelWhere(Func<T, bool> predicate) {
             queue.RemoveWhere(predicate);
+            if (RunningTask != null) {
+                if (!RunningTask.IsCompleted && predicate.Invoke(RunningTask)) {
+                    RunningTask.RequestCancel();
+                }
+            }
         }
         
         public void CancelAll() {
@@ -31,9 +36,18 @@ namespace Game.Data.Queues {
         }
 
         public void Consume() {
-            if (queue.IsEmpty || (runningTask != null && !runningTask.IsCompleted)) return;
-            runningTask = queue.Dequeue();
-            runningTask.Execute();
+            if (RunningTask != null) {
+                if (RunningTask.IsCompleted) {
+                    RunningTask = null;
+                } else {
+                    return;
+                }
+            }
+            if (queue.IsEmpty) {
+                return;
+            }
+            RunningTask = queue.Dequeue();
+            RunningTask.Execute();
         }
     }
 }

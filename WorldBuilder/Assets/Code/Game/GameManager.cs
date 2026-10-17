@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using System.Threading.Tasks;
 using Game.Data;
 using Game.Entities.Player;
 using Game.GraphicGenerator;
@@ -16,7 +17,6 @@ namespace Game {
         private readonly int GameSpeed = 60;
 
         private Thread mainThread;
-        private List<Action> syncQueue = new();
         private List<Action> tempSyncQueue = new();
         private readonly Queue<Action> taskQueue = new();
 
@@ -37,7 +37,7 @@ namespace Game {
         public bool terrainColorOnly = true;
         public bool debugShadow = false;
         public bool debugRegions = false;
-        public bool[] controlRender = new bool[4];
+        [Range(0, 3)] public int maxLodView = 3;
         public Mesh smallCube;
         public Material smallCubeMat;
         
@@ -56,25 +56,25 @@ namespace Game {
             
             // Setup WorldManagers
             overWorld = new WorldManager("OverWorld", Application.persistentDataPath + "/OverWorld");
-            overWorld.SetViewPoint(new IndexPos(0, 0, 0));
-            
-            // Setup Player
-            foreach (var player in GameData.Instance.players) {
-                var cvPlayer = new GameObject("Player").AddComponent<CvPlayerUnit>().Setup();
-                cvPlayer.transform.position = new Vector3(2048, 512, 2048);
-                PlayerSetView(cvPlayer);
-            }
+            overWorld.Load();
         }
 
         public void Update() {
-            ExecuteSyncQueue();
             ExecuteTaskQueue(1000 / GameSpeed);
+            if (overWorld.IsLoading) {
+                if (overWorld.LoadingError != null) {
+                    // Show exception and Close
+                    Debug.Log("Progress Error: " + overWorld.LoadingError);
+                } else {
+                    // Show progress bar
+                    Debug.Log("Progress: " + overWorld.LoadingProgress);
+                }
+            }
             overWorld.Update();
         }
 
         public void OnDestroy() {
             overWorld.SaveAndExit();
-            ExecuteSyncQueue();
             ExecuteTaskQueue(-1);
             GraphicsBufferAllocator.Allocator.Dispose();
         }
@@ -83,19 +83,33 @@ namespace Game {
             overWorld.SetViewPoint((IndexPos)cvPlayerUnit.transform.position);
         }
 
-        public void RunSync(Action action) {
-            if (Thread.CurrentThread == mainThread) {
-                action.Invoke();
-            } else {
-                lock (syncQueue) {
-                    syncQueue.Add(action);
-                }
-            }
-        }
-
         public void RunTask(Action action) {
             lock (taskQueue) {
                 taskQueue.Enqueue(action);
+            }
+        }
+        
+        public async void TaskListener(Task task, Action onCompleted, Action<Exception> onError)  {
+            try {
+                await task;
+                RunTask(onCompleted);
+            } catch (OperationCanceledException) {
+                RunTask(() => onError(null));
+            } catch (Exception ex) {
+                Debug.LogException(ex);
+                RunTask(() => onError(ex));
+            }
+        }
+        
+        public async void TaskListener<T>(Task<T> task, Action<T> onCompleted, Action<Exception> onError) where T : class {
+            try {
+                var result = await task;
+                RunTask(() => onCompleted(result));
+            } catch (OperationCanceledException) {
+                RunTask(() => onError(null));
+            } catch (Exception ex) {
+                Debug.LogException(ex);
+                RunTask(() => onError(ex));
             }
         }
 
@@ -119,18 +133,6 @@ namespace Game {
                     taskQueue.TryDequeue(out action);
                 }
             }
-        }
-
-        private void ExecuteSyncQueue() {
-            lock (syncQueue) {
-                (syncQueue, tempSyncQueue) = (tempSyncQueue, syncQueue);
-            }
-
-            foreach (var action in tempSyncQueue) {
-                action.Invoke();
-            }
-
-            tempSyncQueue.Clear();
         }
     }
 

@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
+using System.Linq;
 using Game.Data;
 using Game.Data.Queues;
 using Game.Utils;
@@ -24,6 +24,7 @@ namespace Game.Worlds.Generation {
             
             public int Attempts { get; set; }
             public bool IsCompleted { get; private set; }
+            public bool IsCancelled { get; private set; }
             private readonly List<TaskListener> listeners;
 
             public Work(WorldGenerator generator, WorldManager manager, IndexPos pos, TaskListener listener) {
@@ -43,7 +44,7 @@ namespace Game.Worlds.Generation {
             }
 
             public bool Group(Work task) {
-                if (task.Pos == Pos) {
+                if (task.Manager == Manager && task.Pos == Pos) {
                     listeners.AddRange(task.listeners);
                     return true;
                 }
@@ -68,6 +69,10 @@ namespace Game.Worlds.Generation {
                     listener.OnError?.Invoke(message);
                 }
             }
+
+            public void RequestCancel() {
+                IsCancelled = true;
+            }
         }
 
 
@@ -85,6 +90,15 @@ namespace Game.Worlds.Generation {
         private static readonly int VoxelBuffer = Shader.PropertyToID("VoxelBuffer");
         private static readonly int ChunkPos = Shader.PropertyToID("ChunkPos");
         private static readonly int IndexPos = Shader.PropertyToID("IndexPos");
+        private Chunk[] requestChunks = new Chunk[Region.TotalChunks];
+
+        private class MapBuffer {
+            public float lastTimeUsed;
+            public ComputeBuffer buffer;
+        }
+
+        private int maxCachedBuffers = 8;
+        private Dictionary<(IndexPos, long), MapBuffer> cachedBuffers = new();
 
         private void Awake() {
             Instance = this;
@@ -104,14 +118,20 @@ namespace Game.Worlds.Generation {
 
         public void OnDestroy() {
             voxelBuffer.Dispose();
+            foreach (var cached in cachedBuffers.Values) {
+                cached.buffer.Dispose();
+            }
             dispose = true;
+        }
+
+        public void Cancel(WorldManager manager) {
+            consumer.CancelWhere(w => w.Manager == manager);
         }
 
         public void Update() {
             consumer.Consume();
         }
 
-        private Chunk[] requestChunks = new Chunk[Region.TotalChunks];
         private void ClearRequestChunks() {
             for (int i = 0; i < requestChunks.Length; i++) {
                 requestChunks[i] = null;
@@ -120,11 +140,56 @@ namespace Game.Worlds.Generation {
         
         private void Generate(Work work) {
             ClearRequestChunks();
-            Request(work, 0);
+
+            if (work.Manager.Height.GetMaxHeight(work.Pos) < work.Pos.y) {
+                Debug.Log(work.Pos + " " + work.Manager.Height.GetMaxHeight(work.Pos));
+                for (int i = 0; i < requestChunks.Length; i++) {
+                    int lod = Region.GetLod(i);
+                    var pos = Region.GetLocalPosition(lod, Region.GetLocalGroupId(i));
+                    requestChunks[i] = new Chunk(work.Pos + pos, lod, new ChunkSoil(), 1);
+                }
+                work.Manager.Cache.PutRegion(work.Pos, requestChunks);
+                ClearRequestChunks();
+                work.SetSuccess();
+                return;
+            }
+            
+            var piece = work.Pos.GetChunkIndex(5);
+            if (!cachedBuffers.TryGetValue((piece, work.Manager.Id), out var cached)) {
+                if (cachedBuffers.Count < maxCachedBuffers) {
+                    cached = new MapBuffer();
+                    int bytes = (1024 * 1024) * 4;
+                    cached.buffer = new ComputeBuffer(bytes / sizeof(uint), sizeof(uint), ComputeBufferType.Raw);
+                } else {
+                    var older = cachedBuffers.First();
+                    float olderTime = cachedBuffers[older.Key].lastTimeUsed;
+                    foreach (var entry in cachedBuffers) {
+                        if (entry.Value.lastTimeUsed < olderTime) {
+                            olderTime = entry.Value.lastTimeUsed;
+                            older = entry;
+                        }
+                    }
+                    cachedBuffers.Remove(older.Key);
+                    cached = older.Value;
+                }
+                cached.lastTimeUsed = Time.time;
+                cachedBuffers[(piece, work.Manager.Id)] = cached;
+            
+                WorldMapGenerator.Instance.GetBuffer(work.Manager, work.Pos, (buffer) => {
+                    cached.buffer.SetData(buffer, 0, 0, buffer.Length);
+                    Request(work, 0);
+                }, (e) => {
+                    ClearRequestChunks();
+                    work.SetError(e);
+                });
+            } else {
+                // cached
+                cached.lastTimeUsed = Time.time;
+                Request(work, 0);
+            }
         }
 
         private void Request(Work work, int piece) {
-
             if (piece < 8) {
                 shader.SetBuffer(generate, VoxelBuffer, voxelBuffer);
                 shader.SetVector(ChunkPos, (Vector3)work.Pos);
@@ -150,7 +215,7 @@ namespace Game.Worlds.Generation {
         }
 
         private void OnRequestDone(Work work, AsyncGPUReadbackRequest request, int piece) {
-            if (dispose) {
+            if (dispose || work.IsCancelled) {
                 ClearRequestChunks();
                 work.SetError(new CacheCancelled());
                 return;

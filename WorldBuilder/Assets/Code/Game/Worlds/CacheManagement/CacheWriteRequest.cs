@@ -72,6 +72,10 @@ namespace Game.Worlds.CacheManagement {
             }
             
             creating = false;
+
+            if (GpuTasks.Count == 0) {
+                RefreshTasks();
+            }
         }
     }
 }

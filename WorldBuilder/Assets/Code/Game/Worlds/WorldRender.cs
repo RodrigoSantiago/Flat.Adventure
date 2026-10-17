@@ -1,10 +1,8 @@
 using System;
-using System.Collections;
 using Game.Data;
 using Game.Worlds.Rendering;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using System.Threading.Tasks;
 using Game.GraphicGenerator;
 using Game.Utils;
 using Unity.Mathematics;
@@ -23,7 +21,6 @@ namespace Game.Worlds {
         
         private float3 lightDir;
         private float cachedShadowDistance;
-        private int maxVisibleLod = Region.MaxLod;
 
         private enum RenderVisibility {
             Hidden,
@@ -119,7 +116,7 @@ namespace Game.Worlds {
 
             lightDir = RenderSettings.sun != null ? RenderSettings.sun.transform.forward.normalized : Vector3.down;
 
-            int lod = maxVisibleLod;
+            int lod = worldManager.maxLodView;
             int size = (32 << lod);
             var config = worldManager.lodConfig[lod];
 
@@ -134,7 +131,7 @@ namespace Game.Worlds {
                 for (int z = 0; z < config.Size; z++)
                 for (int x = 0; x < config.Size; x++) {
                     var pos = config.ViewLod + new IndexPos(x, y, z) * size;
-                    if (!config.IsInsideCylinder(pos)) continue;
+                    if (lod > 0 && !config.IsInsideCylinder(pos)) continue;
 
                     RenderRegion(lod, pos, renderCommands[y]);
                 }
@@ -173,7 +170,7 @@ namespace Game.Worlds {
             bool highLodFound = (chunk != null && (chunk.IsEmpty || chunk.SoilMesh != null));
             bool findLowerLods = lod > 0 
                                  && (!highLodFound || (worldManager.lodConfig[lod - 1].IsInside(pos, lSize)))
-                                 && (lod < maxVisibleLod || worldManager.HasAnyInRegion(pos));
+                                 && (lod < worldManager.maxLodView || worldManager.HasAnyInRegion(pos));
 
             if (findLowerLods) {
                 int bkp = chunks.Count;
@@ -214,7 +211,7 @@ namespace Game.Worlds {
         }
         
         public void CollectFrame(HashSet<IndexPos>[] renderedPositions) {
-            int lod = maxVisibleLod;
+            int lod = worldManager.maxLodView;
             int size = (32 << lod);
             var config = worldManager.lodConfig[lod];
             
@@ -229,7 +226,7 @@ namespace Game.Worlds {
                 for (int z = 0; z < config.Size; z++)
                 for (int x = 0; x < config.Size; x++) {
                     var pos = config.ViewLod + new IndexPos(x, y, z) * size;
-                    if (!config.IsInsideCylinder(pos)) continue;
+                    if (lod > 0 && !config.IsInsideCylinder(pos)) continue;
 
                     CollectRegion(lod, pos, collectedCommands[y]);
                 }
@@ -252,7 +249,7 @@ namespace Game.Worlds {
             bool highLodFound = (chunk != null && (chunk.IsEmpty || chunk.SoilMesh != null));
             bool findLowerLods = lod > 0 
                                  && (!highLodFound || (worldManager.lodConfig[lod - 1].IsInside(pos, lSize)))
-                                 && (lod < maxVisibleLod || worldManager.HasAnyInRegion(pos));
+                                 && (lod < worldManager.maxLodView || worldManager.HasAnyInRegion(pos));
 
             if (findLowerLods) {
                 int bkp = chunks.Count;
@@ -393,7 +390,7 @@ namespace Game.Worlds {
         }
 
         public void RequestMesh(Chunk[] chunks, Action<MeshInterface> action) {
-            GameManager.Instance.MeshGenerator.Remesh(chunks, action);
+            GameManager.Instance.MeshGenerator.Remesh(worldManager, chunks, action);
         }
     }
 }

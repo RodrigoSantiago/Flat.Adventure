@@ -114,7 +114,10 @@ namespace Game.Worlds.Storage {
                 
                 if (waste >= MaxSpaceWaste) {
                     var allChunks = ReadChunkUpdateRaw(iStream, originalHeader, -1);
-                    
+                    for (var i = 0; i < allChunks.Length; i++) {
+                        allChunks[i] ??= new ChunkCacheUpdate(i);
+                    }
+
                     foreach (var chunk in compressedInputChunks) {
                         var chunkUpdate = allChunks[chunk.chunkEntryId];
                         chunkUpdate.version = chunk.version;
@@ -430,7 +433,7 @@ namespace Game.Worlds.Storage {
         }
 
         private ChunkCacheUpdate[] ReadChunkUpdateRaw(Stream stream, RegionHeader header, int requiredLods) {
-            var caches = new List<ChunkCacheUpdate>(header.entries.Length);
+            var caches = new ChunkCacheUpdate[Region.TotalChunks];
             for (int i = 0; i < header.entries.Length; i++) {
                 var entry = header.entries[i];
                 int lod = Region.GetLod(i);
@@ -462,9 +465,9 @@ namespace Game.Worlds.Storage {
                     ReadData(stream, cache.listData, 0, entry.listLength);
                 }
 
-                caches.Add(cache);
+                caches[cache.chunkEntryId] = cache;
             }
-            return caches.ToArray();
+            return caches;
         }
 
         private void WriteData(Stream stream, byte[] data) {

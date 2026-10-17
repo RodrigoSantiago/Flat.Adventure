@@ -74,7 +74,10 @@ namespace Game.Worlds.Rendering {
             if (Chunk != null && Chunk.CanCreateMesh()) {
                 IsMeshBuilding = true;
                 GameManager.Instance.RunTask(() => {
-                    if (disposed || !manager.IsChunkRenderRequired(Lod, Pos)) return;
+                    if (disposed || !manager.IsChunkRenderRequired(Lod, Pos)) {
+                        IsMeshBuilding = false;
+                        return;
+                    }
                     
                     if (Chunk != null && (Chunk.CreateMesh() || Chunk.SoilMesh != null)) {
                         SoilMesh = Chunk.SoilMesh;

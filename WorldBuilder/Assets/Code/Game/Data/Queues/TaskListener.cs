@@ -10,4 +10,13 @@ namespace Game.Data.Queues {
             OnError = onError;
         }
     }
+    public class TaskListener<T> {
+        public Action<T> OnSuccess { get; }
+        public Action<Exception> OnError { get; }
+
+        public TaskListener(Action<T> onSuccess, Action<Exception> onError) {
+            OnSuccess = onSuccess;
+            OnError = onError;
+        }
+    }
 }

@@ -12,5 +12,6 @@ namespace Game.Data.Queues {
         public void Execute();
         public void SetSuccess();
         public void SetError(Exception e);
+        public void RequestCancel();
     }
 }

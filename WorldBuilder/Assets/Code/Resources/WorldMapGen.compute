@@ -1,0 +1,73 @@
+#pragma kernel Generate
+
+RWStructuredBuffer<uint> MapBuffer;
+RWStructuredBuffer<uint> HeightBuffer;
+
+float4 PiecePos;
+
+static const float CubeDensity[] = {
+    0.00, 0.10, 0.20, 0.30, 0.40,
+    0.55, 0.60, 0.65, 0.70, 0.75,
+    0.80, 0.85, 0.90, 0.95, 1.00, 2.00 // [Special Case]
+};
+
+uint QuantizeDensity(float value) {
+    if (value <= 0.00) return 0;
+    if (value < 0.50) return min(4u, (uint)round(value * 10.0));
+    if (value <= 1.00) return 5u + clamp((uint)round((value - 0.55) * 20.0), 0u, 9u);
+    return 15u;
+}
+
+uint GenerateMapPoint(uint2 pos) {
+    float rawHeight = 500.0
+                    + sin(pos.x * 0.02) * 20.0
+                    + cos(pos.y * 0.02) * 20.0;
+
+    uint heightInt = clamp((uint)rawHeight, 0u, 1023u);
+    float densityFraction = frac(rawHeight);
+    uint subLevel = QuantizeDensity(densityFraction);
+
+    uint packedValue = ((heightInt & 0x3FF) << 4) | (subLevel & 0x0F);
+    return packedValue;
+}
+
+[numthreads(8, 1, 8)]
+void Generate(uint3 id : SV_DispatchThreadID) {
+    const uint2 pos = uint2(id.x + (uint)PiecePos.x, id.z + (uint)PiecePos.z);
+    const uint index = pos.x + pos.y * 1024;
+    const uint heightIndex = (pos.x / 256) + (pos.y / 256) * 64;
+
+    uint genValue = GenerateMapPoint(pos);
+    MapBuffer[index] = genValue;
+
+    uint currentHeight = genValue & 0x3FFF; // 14 bits (0-1023(.0-15))
+    bool isWater = false;
+    bool isMountain = false;
+
+    // To 16 bits
+    uint myFlags = (isWater ? (1u << 14) : 0u) | (isMountain ? (1u << 15) : 0u);
+    
+    uint targetUintIndex = heightIndex >> 1; // heightIndex / 2
+    uint shift = (heightIndex & 1) * 16;
+
+    uint originalValue = HeightBuffer[targetUintIndex];
+    uint expectedValue;
+    do {
+        expectedValue = originalValue;
+
+        uint currentSlot16 = (expectedValue >> shift) & 0xFFFF;
+
+        uint existingHeight = currentSlot16 & 0x3FFF;
+        uint existingFlags  = currentSlot16 & 0xC000;
+
+        uint newMaxHeight = max(existingHeight, currentHeight);
+        uint newFlags     = existingFlags | myFlags;
+        uint newSlot16    = (newMaxHeight & 0x3FFF) | newFlags;
+
+        uint maskOtherSlot = ~(0xFFFFu << shift);
+        uint newValue32    = (expectedValue & maskOtherSlot) | (newSlot16 << shift);
+
+        if (newValue32 == expectedValue) break;
+        InterlockedCompareExchange(HeightBuffer[targetUintIndex], expectedValue, newValue32, originalValue);
+    } while (originalValue != expectedValue);
+}
